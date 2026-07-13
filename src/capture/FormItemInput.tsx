@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import type { Item } from '../api/types';
@@ -14,6 +15,7 @@ interface Props {
 /** Renders the right input for an item type and reports changes as an AnswerValue. */
 export function FormItemInput({ item, value, onChange }: Props) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const label = (
     <Text style={[styles.label, { color: theme.text }]}>
@@ -82,6 +84,8 @@ export function FormItemInput({ item, value, onChange }: Props) {
     );
   }
 
+  const isNumber = item.type === 'number';
+
   return (
     <View style={styles.field}>
       {label}
@@ -93,9 +97,10 @@ export function FormItemInput({ item, value, onChange }: Props) {
         ]}
         value={typeof value === 'string' ? value : ''}
         onChangeText={onChange}
-        keyboardType={item.type === 'number' ? 'numeric' : 'default'}
+        keyboardType={isNumber ? 'numeric' : 'default'}
+        autoCapitalize={isNumber ? 'none' : 'sentences'}
+        placeholder={isNumber ? undefined : t('interview.answerPlaceholder')}
         placeholderTextColor={theme.muted}
-        autoCapitalize="none"
       />
     </View>
   );
