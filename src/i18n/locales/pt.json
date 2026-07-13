@@ -15,6 +15,9 @@
       "generic": "Não foi possível entrar. Tente novamente."
     }
   },
+  "common": {
+    "cancel": "Cancelar"
+  },
   "tabs": {
     "projects": "Projetos",
     "interviews": "Entrevistas"
@@ -39,6 +42,8 @@
     "set": "Registro {{number}}",
     "addSet": "Adicionar registro",
     "removeSet": "Remover registro",
+    "removeSetTitle": "Remover este registro?",
+    "removeSetMessage": "As respostas dele serão apagadas. Esta ação não pode ser desfeita.",
     "savedLocally": "Rascunho salvo neste dispositivo",
     "audioTitle": "Áudio",
     "recordHint": "Você pode gravar áudio antes ou durante a entrevista.",

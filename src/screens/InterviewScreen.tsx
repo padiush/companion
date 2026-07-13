@@ -2,6 +2,7 @@ import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -34,6 +35,17 @@ export function InterviewScreen() {
       </View>
     );
   }
+
+  const confirmRemoveSet = (sectionId: number) => {
+    Alert.alert(t('interview.removeSetTitle'), t('interview.removeSetMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('interview.removeSet'),
+        style: 'destructive',
+        onPress: () => removeRepeat(sectionId),
+      },
+    ]);
+  };
 
   const renderItem = (item: Item, sectionId: number, repeatableIndex: number | null) => (
     <FormItemInput
@@ -81,7 +93,7 @@ export function InterviewScreen() {
                 {(repeats[section.id] ?? 1) > 1 ? (
                   <TouchableOpacity
                     testID={`remove-set-${section.id}`}
-                    onPress={() => removeRepeat(section.id)}
+                    onPress={() => confirmRemoveSet(section.id)}
                     accessibilityRole="button"
                   >
                     <Text style={[styles.addSetText, { color: theme.danger }]}>

@@ -15,6 +15,9 @@
       "generic": "Couldn't sign in. Please try again."
     }
   },
+  "common": {
+    "cancel": "Cancel"
+  },
   "tabs": {
     "projects": "Projects",
     "interviews": "Interviews"
@@ -39,6 +42,8 @@
     "set": "Entry {{number}}",
     "addSet": "Add entry",
     "removeSet": "Remove entry",
+    "removeSetTitle": "Remove this entry?",
+    "removeSetMessage": "Its answers will be deleted. This can't be undone.",
     "savedLocally": "Draft saved on this device",
     "audioTitle": "Audio",
     "recordHint": "You can record audio before or during the interview.",
