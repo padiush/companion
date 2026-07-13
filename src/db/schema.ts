@@ -3,8 +3,10 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 /**
  * The offline capture store. `projects` and `forms` are the read-side cache
  * pulled from the API; `instances`, `answers` and `media` hold device-authored
- * captures until they sync (used by the capture flow). `sync_meta` keeps cursors
- * such as each project's bundle `form_version_cursor`.
+ * captures until they sync (used by the capture flow). `media_blobs` holds the
+ * media bytes themselves, chunked, so they sit inside the encrypted store
+ * rather than as plaintext files. `sync_meta` keeps cursors such as each
+ * project's bundle `form_version_cursor`.
  *
  * Timestamps are ISO-8601 strings; booleans are 0/1.
  */
@@ -72,6 +74,14 @@ CREATE TABLE IF NOT EXISTS media (
   transcription_status TEXT,
   captured_at          TEXT,
   FOREIGN KEY (instance_id) REFERENCES instances(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS media_blobs (
+  client_id TEXT NOT NULL,
+  seq       INTEGER NOT NULL,
+  data      BLOB NOT NULL,
+  PRIMARY KEY (client_id, seq),
+  FOREIGN KEY (client_id) REFERENCES media(client_id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_forms_project ON forms(project_id);

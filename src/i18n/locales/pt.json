@@ -42,7 +42,8 @@
     "stopRecording": "Parar",
     "photo": "Foto",
     "audio": "Áudio",
-    "mediaPermission": "É necessária permissão para câmera ou microfone."
+    "mediaPermission": "É necessária permissão para câmera ou microfone.",
+    "mediaSaveFailed": "Não foi possível salvar o arquivo. Tente novamente."
   },
   "drafts": {
     "title": "Entrevistas",
