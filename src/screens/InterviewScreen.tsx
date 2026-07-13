@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import type { Item } from '../api/types';
+import { AudioRecorder } from '../capture/AudioRecorder';
 import { FormItemInput } from '../capture/FormItemInput';
 import { MediaSection } from '../capture/MediaSection';
 import { useInterview } from '../capture/useInterview';
@@ -49,6 +50,8 @@ export function InterviewScreen() {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
+      {instanceId ? <AudioRecorder instanceId={instanceId} /> : null}
+
       {form.sections.map((section) => (
         <View key={section.id} style={styles.section}>
           <Text style={[styles.sectionName, { color: theme.text }]}>{section.name}</Text>
