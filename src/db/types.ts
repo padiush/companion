@@ -64,3 +64,18 @@ export interface AnswerRow {
   value: string | null;
   edited_at: string | null;
 }
+
+/** A row of the `media` table — an audio/photo capture and its upload state. */
+export interface MediaRow {
+  client_id: string;
+  instance_id: string;
+  kind: string;
+  local_uri: string | null;
+  storage_key: string | null;
+  content_type: string | null;
+  byte_size: number | null;
+  duration_s: number | null;
+  upload_status: string;
+  transcription_status: string | null;
+  captured_at: string | null;
+}

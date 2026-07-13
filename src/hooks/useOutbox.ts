@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { getDatabase } from '../db/database';
 import { countDrafts } from '../db/instancesRepository';
 import { pushDrafts, type PushSummary } from '../sync/push';
+import { uploadMedia } from '../sync/uploadMedia';
 
 export interface OutboxState {
   /** Draft interviews waiting to be sent. */
@@ -41,6 +42,8 @@ export function useOutbox(): OutboxState {
     try {
       const db = await getDatabase();
       const result = await pushDrafts(db);
+      // Instances are on the server now, so their media can upload (best effort).
+      await uploadMedia(db);
       setLastResult(result);
       setCount(await countDrafts(db));
     } catch {
