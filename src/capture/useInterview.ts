@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { deleteAnswersForSet } from '../db/answersRepository';
 import { getDatabase } from '../db/database';
@@ -13,6 +13,8 @@ export interface InterviewState {
   form: CachedForm | null;
   instanceId: string | null;
   loading: boolean;
+  /** True while an answer write is in flight, for the save indicator. */
+  saving: boolean;
   /** Current answers, keyed by answerKey(itemId, repeatableIndex). */
   answers: Record<string, AnswerValue>;
   /** Number of sets rendered per repeatable section. */
@@ -41,8 +43,10 @@ export function useInterview(
   const [form, setForm] = useState<CachedForm | null>(null);
   const [instanceId, setInstanceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [repeats, setRepeats] = useState<Record<number, number>>({});
+  const pendingSaves = useRef(0);
 
   useEffect(() => {
     let active = true;
@@ -84,9 +88,16 @@ export function useInterview(
       setAnswers((prev) => ({ ...prev, [answerKey(itemId, repeatableIndex)]: value }));
 
       if (instanceId) {
-        void getDatabase().then((db) =>
-          saveAnswer(db, { instanceId, sectionId, itemId, repeatableIndex, value })
-        );
+        pendingSaves.current += 1;
+        setSaving(true);
+        void getDatabase()
+          .then((db) => saveAnswer(db, { instanceId, sectionId, itemId, repeatableIndex, value }))
+          .finally(() => {
+            pendingSaves.current -= 1;
+            if (pendingSaves.current === 0) {
+              setSaving(false);
+            }
+          });
       }
     },
     [instanceId]
@@ -129,5 +140,5 @@ export function useInterview(
     [instanceId, form]
   );
 
-  return { form, instanceId, loading, answers, repeats, setAnswer, addRepeat, removeRepeat };
+  return { form, instanceId, loading, saving, answers, repeats, setAnswer, addRepeat, removeRepeat };
 }
