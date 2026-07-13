@@ -124,8 +124,9 @@ const styles = StyleSheet.create({
   },
   chip: {
     borderWidth: 1,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    minHeight: 44,
+    justifyContent: 'center',
   },
 });
