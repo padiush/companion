@@ -22,7 +22,12 @@
     "projects": "Proyectos",
     "sync": "Sincronizar",
     "empty": "Aún no hay proyectos. Sincroniza para cargarlos.",
-    "syncError": "No se pudo sincronizar. Revisa tu conexión."
+    "syncError": "No se pudo sincronizar. Revisa tu conexión.",
+    "outbox_one": "{{count}} entrevista por enviar",
+    "outbox_other": "{{count}} entrevistas por enviar",
+    "send": "Enviar",
+    "sendError": "No se pudieron enviar. Revisa tu conexión.",
+    "someRejected": "{{count}} entrevistas fueron rechazadas."
   },
   "project": {
     "forms": "Formularios",

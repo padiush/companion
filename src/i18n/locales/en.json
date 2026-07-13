@@ -22,7 +22,12 @@
     "projects": "Projects",
     "sync": "Sync",
     "empty": "No projects yet. Sync to load them.",
-    "syncError": "Couldn't sync. Check your connection."
+    "syncError": "Couldn't sync. Check your connection.",
+    "outbox_one": "{{count}} interview to send",
+    "outbox_other": "{{count}} interviews to send",
+    "send": "Send",
+    "sendError": "Couldn't send. Check your connection.",
+    "someRejected": "{{count}} interviews were rejected."
   },
   "project": {
     "forms": "Forms",
