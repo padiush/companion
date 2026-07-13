@@ -15,6 +15,10 @@
       "generic": "No se pudo iniciar sesión. Inténtalo de nuevo."
     }
   },
+  "tabs": {
+    "projects": "Proyectos",
+    "interviews": "Entrevistas"
+  },
   "home": {
     "greeting": "Hola, {{name}}",
     "subtitle": "Listo para registrar entrevistas en campo.",

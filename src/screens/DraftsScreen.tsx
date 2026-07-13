@@ -1,5 +1,3 @@
-import { useNavigation } from '@react-navigation/native';
-import { useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -14,17 +12,12 @@ import { useDrafts } from '../hooks/useDrafts';
 import { useOutbox } from '../hooks/useOutbox';
 import { useTheme } from '../theme';
 
-/** The recorder's interviews with their sync status, and a Send action. */
+/** The Entrevistas tab: recorded interviews with their sync status, and a Send action. */
 export function DraftsScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const navigation = useNavigation();
   const { drafts, loading, refresh } = useDrafts();
   const { count, sending, error, send } = useOutbox();
-
-  useLayoutEffect(() => {
-    navigation.setOptions({ title: t('drafts.title') });
-  }, [navigation, t]);
 
   const statusColor = (status: string) => {
     if (status === 'synced') return theme.primary;
@@ -39,6 +32,8 @@ export function DraftsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
+      <Text style={[styles.title, { color: theme.text }]}>{t('drafts.title')}</Text>
+
       {count > 0 ? (
         <TouchableOpacity
           testID="send"
@@ -98,6 +93,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    paddingTop: 72,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 20,
   },
   send: {
     borderRadius: 10,
