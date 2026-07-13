@@ -20,7 +20,7 @@ the authoritative contract is that repo's `docs/api/openapi.yaml`.
   encrypted at rest with a device-generated key held in the secure store
 - `expo-location` — GPS for interview location
 - `expo-audio` — interview audio recording
-- `expo-file-system` — media files for direct-to-storage upload
+- `expo-file-system` — reading captures for ingest into the encrypted store
 - `expo-crypto` — client-generated UUIDs (the sync idempotency keys)
 
 ## Getting started
@@ -62,7 +62,9 @@ sync is push-dominant:
    gets a client UUID at creation.
 4. **Push** — `POST /projects/{p}/instances:sync`, an idempotent batch upsert;
    retries are safe.
-5. **Media** — upload audio/photos via presigned URLs, out of band.
+5. **Media** — audio/photos are ingested into the encrypted store at capture
+   (the plaintext original is deleted), then uploaded via presigned URLs out of
+   band and cleared from the device once stored server-side.
 
 Conflicts on the same answer resolve by last-writer-wins on the device edit-time.
 The local store is encrypted at rest with SQLCipher (it holds informant responses

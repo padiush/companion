@@ -1,22 +1,30 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { api } from '../api/client';
-import { listPendingMedia, setMediaUploaded } from '../db/mediaRepository';
+import {
+  deleteMediaBytes,
+  listPendingMedia,
+  readMediaBytes,
+  setMediaUploaded,
+} from '../db/mediaRepository';
 import type { MediaRow } from '../db/types';
 import { uploadMedia } from './uploadMedia';
 
-jest.mock('expo-file-system', () => ({ File: class {}, UploadType: { BINARY_CONTENT: 0 } }));
+jest.mock('expo/fetch', () => ({ fetch: jest.fn() }));
 jest.mock('../api/client', () => ({
   api: { mediaIntent: jest.fn(), mediaComplete: jest.fn() },
 }));
 jest.mock('../db/mediaRepository', () => ({
   listPendingMedia: jest.fn(),
+  readMediaBytes: jest.fn(),
+  deleteMediaBytes: jest.fn(),
   setMediaUploaded: jest.fn(),
 }));
 
 const mockIntent = api.mediaIntent as jest.Mock;
 const mockComplete = api.mediaComplete as jest.Mock;
 const mockList = listPendingMedia as jest.Mock;
+const mockRead = readMediaBytes as jest.Mock;
 
 const db = {} as SQLiteDatabase;
 
@@ -25,7 +33,7 @@ function media(overrides: Partial<MediaRow> = {}): MediaRow {
     client_id: 'm1',
     instance_id: 'inst-1',
     kind: 'photo',
-    local_uri: 'file:///p.jpg',
+    local_uri: null,
     storage_key: null,
     content_type: 'image/jpeg',
     byte_size: 1234,
@@ -42,8 +50,10 @@ beforeEach(() => {
 });
 
 describe('uploadMedia', () => {
-  it('registers intent, uploads the file, completes, and marks it uploaded', async () => {
+  it('registers intent, uploads the bytes, completes, and clears them from the store', async () => {
+    const bytes = Uint8Array.from([1, 2, 3]);
     mockList.mockResolvedValue([media()]);
+    mockRead.mockResolvedValue(bytes);
     mockIntent.mockResolvedValue({
       upload_url: 'https://storage/p.jpg',
       headers: { 'Content-Type': 'image/jpeg' },
@@ -51,17 +61,18 @@ describe('uploadMedia', () => {
       expires_at: 'x',
     });
     mockComplete.mockResolvedValue({ id: 1, status: 'stored' });
-    const uploadFile = jest.fn().mockResolvedValue(undefined);
+    const uploadBytes = jest.fn().mockResolvedValue(undefined);
 
-    const summary = await uploadMedia(db, uploadFile);
+    const summary = await uploadMedia(db, uploadBytes);
 
+    // byte_size comes from the stored bytes, not the row.
     expect(mockIntent).toHaveBeenCalledWith('inst-1', {
       client_id: 'm1',
       kind: 'photo',
       content_type: 'image/jpeg',
-      byte_size: 1234,
+      byte_size: 3,
     });
-    expect(uploadFile).toHaveBeenCalledWith('https://storage/p.jpg', 'file:///p.jpg', {
+    expect(uploadBytes).toHaveBeenCalledWith('https://storage/p.jpg', bytes, {
       'Content-Type': 'image/jpeg',
     });
     expect(mockComplete).toHaveBeenCalledWith('inst-1', {
@@ -70,33 +81,37 @@ describe('uploadMedia', () => {
       duration_s: undefined,
     });
     expect(setMediaUploaded).toHaveBeenCalledWith(db, 'm1', 'projects/9/p.jpg');
+    expect(deleteMediaBytes).toHaveBeenCalledWith(db, 'm1');
     expect(summary).toEqual({ uploaded: 1, failed: 0 });
   });
 
-  it('counts a failed upload and does not complete it', async () => {
+  it('counts a failed upload, keeping the bytes to retry', async () => {
     mockList.mockResolvedValue([media()]);
+    mockRead.mockResolvedValue(Uint8Array.from([1]));
     mockIntent.mockResolvedValue({
       upload_url: 'u',
       headers: {},
       storage_key: 'k',
       expires_at: 'x',
     });
-    const uploadFile = jest.fn().mockRejectedValue(new Error('offline'));
+    const uploadBytes = jest.fn().mockRejectedValue(new Error('offline'));
 
-    const summary = await uploadMedia(db, uploadFile);
+    const summary = await uploadMedia(db, uploadBytes);
 
     expect(mockComplete).not.toHaveBeenCalled();
     expect(setMediaUploaded).not.toHaveBeenCalled();
+    expect(deleteMediaBytes).not.toHaveBeenCalled();
     expect(summary).toEqual({ uploaded: 0, failed: 1 });
   });
 
-  it('skips media that has no local file', async () => {
-    mockList.mockResolvedValue([media({ local_uri: null })]);
-    const uploadFile = jest.fn();
+  it('skips media that has no stored bytes', async () => {
+    mockList.mockResolvedValue([media()]);
+    mockRead.mockResolvedValue(null);
+    const uploadBytes = jest.fn();
 
-    const summary = await uploadMedia(db, uploadFile);
+    const summary = await uploadMedia(db, uploadBytes);
 
-    expect(uploadFile).not.toHaveBeenCalled();
+    expect(uploadBytes).not.toHaveBeenCalled();
     expect(summary).toEqual({ uploaded: 0, failed: 1 });
   });
 });

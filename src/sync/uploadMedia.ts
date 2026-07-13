@@ -1,61 +1,68 @@
-import { File, UploadType } from 'expo-file-system';
+import { fetch } from 'expo/fetch';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { api } from '../api/client';
 import type { MediaKind } from '../api/types';
-import { listPendingMedia, setMediaUploaded } from '../db/mediaRepository';
+import {
+  deleteMediaBytes,
+  listPendingMedia,
+  readMediaBytes,
+  setMediaUploaded,
+} from '../db/mediaRepository';
 
 export interface MediaUploadSummary {
   uploaded: number;
   failed: number;
 }
 
-/** Uploads a local file to a presigned URL. Injectable so the engine is testable. */
-export type FileUploader = (
+/** PUTs media bytes to a presigned URL. Injectable so the engine is testable. */
+export type BytesUploader = (
   url: string,
-  localUri: string,
+  data: Uint8Array<ArrayBuffer>,
   headers: Record<string, string>
 ) => Promise<void>;
 
-const uploadViaFileSystem: FileUploader = async (url, localUri, headers) => {
-  const result = await new File(localUri).upload(url, {
-    httpMethod: 'PUT',
-    uploadType: UploadType.BINARY_CONTENT,
-    headers,
-  });
+const uploadViaFetch: BytesUploader = async (url, data, headers) => {
+  // expo/fetch normalizes typed-array bodies natively (ArrayBuffer.isView in
+  // its RequestUtils), but the BodyInit type it references omits them.
+  const response = await fetch(url, { method: 'PUT', headers, body: data as unknown as BodyInit });
 
-  if (result.status >= 400) {
-    throw new Error(`Upload failed with status ${result.status}`);
+  if (!response.ok) {
+    throw new Error(`Upload failed with status ${response.status}`);
   }
 };
 
 /**
- * Upload each pending media file for an already-synced interview: register
- * intent, PUT the bytes direct to storage, then complete. Per-item failures are
- * counted and left pending to retry; the batch never throws.
+ * Upload each pending media item for an already-synced interview: register
+ * intent, PUT the bytes direct to storage, then complete. Media bytes live only
+ * inside the encrypted store, so they are read from their blob chunks and sent
+ * from memory — never through a plaintext temp file — and deleted from the
+ * device once the server has them. Per-item failures are counted and left
+ * pending to retry; the batch never throws.
  */
 export async function uploadMedia(
   db: SQLiteDatabase,
-  uploadFile: FileUploader = uploadViaFileSystem
+  uploadBytes: BytesUploader = uploadViaFetch
 ): Promise<MediaUploadSummary> {
   const pending = await listPendingMedia(db);
   const summary: MediaUploadSummary = { uploaded: 0, failed: 0 };
 
   for (const media of pending) {
-    if (!media.local_uri || media.byte_size == null) {
-      summary.failed += 1;
-      continue;
-    }
-
     try {
+      const data = await readMediaBytes(db, media.client_id);
+      if (!data) {
+        summary.failed += 1;
+        continue;
+      }
+
       const intent = await api.mediaIntent(media.instance_id, {
         client_id: media.client_id,
         kind: media.kind as MediaKind,
         content_type: media.content_type ?? 'application/octet-stream',
-        byte_size: media.byte_size,
+        byte_size: data.byteLength,
       });
 
-      await uploadFile(intent.upload_url, media.local_uri, intent.headers);
+      await uploadBytes(intent.upload_url, data, intent.headers);
 
       await api.mediaComplete(media.instance_id, {
         client_id: media.client_id,
@@ -64,6 +71,7 @@ export async function uploadMedia(
       });
 
       await setMediaUploaded(db, media.client_id, intent.storage_key);
+      await deleteMediaBytes(db, media.client_id);
       summary.uploaded += 1;
     } catch {
       summary.failed += 1;

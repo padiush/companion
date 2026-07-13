@@ -1,5 +1,4 @@
 import { RecordingPresets, requestRecordingPermissionsAsync, useAudioRecorder } from 'expo-audio';
-import { File } from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -56,16 +55,16 @@ export function MediaSection({ instanceId }: { instanceId: string }) {
     setBusy(true);
     try {
       const asset = result.assets[0];
-      const byteSize = asset.fileSize ?? new File(asset.uri).size ?? 0;
       const db = await getDatabase();
       await attachMedia(db, {
         instanceId,
         kind: 'photo',
         localUri: asset.uri,
         contentType: asset.mimeType ?? 'image/jpeg',
-        byteSize,
       });
       await refresh();
+    } catch {
+      setError(t('interview.mediaSaveFailed'));
     } finally {
       setBusy(false);
     }
@@ -93,10 +92,11 @@ export function MediaSection({ instanceId }: { instanceId: string }) {
           kind: 'audio',
           localUri: uri,
           contentType: 'audio/mp4',
-          byteSize: new File(uri).size ?? 0,
           durationS,
         });
         await refresh();
+      } catch {
+        setError(t('interview.mediaSaveFailed'));
       } finally {
         setBusy(false);
       }

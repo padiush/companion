@@ -42,7 +42,8 @@
     "stopRecording": "Detener",
     "photo": "Foto",
     "audio": "Audio",
-    "mediaPermission": "Se necesita permiso para la cámara o el micrófono."
+    "mediaPermission": "Se necesita permiso para la cámara o el micrófono.",
+    "mediaSaveFailed": "No se pudo guardar el archivo. Inténtalo de nuevo."
   },
   "drafts": {
     "title": "Entrevistas",

@@ -21,11 +21,6 @@ jest.mock('expo-image-picker', () => ({
   requestCameraPermissionsAsync: jest.fn(),
   launchCameraAsync: jest.fn(),
 }));
-jest.mock('expo-file-system', () => ({
-  File: class {
-    size = 4444;
-  },
-}));
 jest.mock('../db/database', () => ({ getDatabase: jest.fn().mockResolvedValue({}) }));
 jest.mock('../db/mediaRepository', () => ({
   listMediaForInstance: jest.fn().mockResolvedValue([]),
@@ -60,10 +55,23 @@ describe('MediaSection', () => {
           kind: 'photo',
           localUri: 'file:///p.jpg',
           contentType: 'image/jpeg',
-          byteSize: 2000,
         })
       )
     );
+  });
+
+  it('shows a message when the capture cannot be saved', async () => {
+    mockCameraPermission.mockResolvedValue({ granted: true });
+    mockLaunchCamera.mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///p.jpg', mimeType: 'image/jpeg' }],
+    });
+    (attachMedia as jest.Mock).mockRejectedValue(new Error('ingest failed'));
+
+    const { getByTestId, findByText } = await render(<MediaSection instanceId="inst-1" />);
+    await fireEvent.press(getByTestId('add-photo'));
+
+    expect(await findByText('interview.mediaSaveFailed')).toBeTruthy();
   });
 
   it('records audio and attaches it on stop', async () => {
