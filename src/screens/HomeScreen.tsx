@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +13,7 @@ import {
 } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
+import { useOutbox } from '../hooks/useOutbox';
 import { useProjects } from '../hooks/useProjects';
 import type { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
@@ -27,16 +29,30 @@ export function HomeScreen() {
   const theme = useTheme();
   const { user, signOut } = useAuth();
   const { projects, loading, syncing, error, sync } = useProjects();
+  const { count } = useOutbox();
   const navigation = useNavigation<Nav>();
   const [signingOut, setSigningOut] = useState(false);
 
-  const onSignOut = async () => {
+  const doSignOut = async () => {
     setSigningOut(true);
     try {
       await signOut();
     } finally {
       setSigningOut(false);
     }
+  };
+
+  const onSignOut = () => {
+    // Unsynced interviews stay on this device until sent — warn before leaving,
+    // especially on a shared device.
+    Alert.alert(
+      t('home.signOutTitle'),
+      count > 0 ? t('home.signOutUnsynced', { count }) : t('home.signOutMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('home.signOut'), style: 'destructive', onPress: doSignOut },
+      ]
+    );
   };
 
   return (
