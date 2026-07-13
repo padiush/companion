@@ -12,6 +12,11 @@ jest.mock('react-i18next', () => ({
 jest.mock('../auth/AuthContext', () => ({ useAuth: jest.fn() }));
 jest.mock('../hooks/useProjects', () => ({ useProjects: jest.fn() }));
 
+const mockNavigate = jest.fn();
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({ navigate: mockNavigate }),
+}));
+
 const mockUseAuth = useAuth as jest.Mock;
 const mockUseProjects = useProjects as jest.Mock;
 
@@ -64,6 +69,18 @@ describe('HomeScreen', () => {
     const { getByText, getByTestId } = await render(<HomeScreen />);
     expect(getByText('Cloud forest')).toBeTruthy();
     expect(getByTestId('project-2')).toBeTruthy();
+  });
+
+  it('opens a project when tapped', async () => {
+    mockProjects({ projects: [{ id: 5, name: 'Cloud forest' }] });
+
+    const { getByTestId } = await render(<HomeScreen />);
+    await fireEvent.press(getByTestId('project-5'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('Project', {
+      projectId: 5,
+      projectName: 'Cloud forest',
+    });
   });
 
   it('shows the empty state when there are no projects', async () => {
