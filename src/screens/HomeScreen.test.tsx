@@ -1,6 +1,8 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
+import { useOutbox } from '../hooks/useOutbox';
 import { useProjects } from '../hooks/useProjects';
 import { HomeScreen } from './HomeScreen';
 
@@ -11,6 +13,7 @@ jest.mock('react-i18next', () => ({
 }));
 jest.mock('../auth/AuthContext', () => ({ useAuth: jest.fn() }));
 jest.mock('../hooks/useProjects', () => ({ useProjects: jest.fn() }));
+jest.mock('../hooks/useOutbox', () => ({ useOutbox: jest.fn() }));
 
 const mockNavigate = jest.fn();
 jest.mock('@react-navigation/native', () => ({
@@ -19,6 +22,15 @@ jest.mock('@react-navigation/native', () => ({
 
 const mockUseAuth = useAuth as jest.Mock;
 const mockUseProjects = useProjects as jest.Mock;
+const mockUseOutbox = useOutbox as jest.Mock;
+
+type AlertButton = { text?: string; style?: string; onPress?: () => void };
+
+function pressAlertButton(style: 'cancel' | 'destructive') {
+  const spy = Alert.alert as jest.Mock;
+  const buttons = spy.mock.calls.at(-1)?.[2] as AlertButton[] | undefined;
+  buttons?.find((button) => button.style === style)?.onPress?.();
+}
 
 function mockAuth(signOut = jest.fn()) {
   mockUseAuth.mockReturnValue({
@@ -40,14 +52,26 @@ function mockProjects(overrides: Record<string, unknown> = {}) {
   });
 }
 
+function mockOutbox(count = 0) {
+  mockUseOutbox.mockReturnValue({
+    count,
+    sending: false,
+    error: false,
+    lastResult: null,
+    send: jest.fn(),
+  });
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockAuth();
   mockProjects();
+  mockOutbox();
+  jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 });
 
 describe('HomeScreen', () => {
-  it('greets the signed-in user and signs out on tap', async () => {
+  it('greets the signed-in user and signs out after confirming', async () => {
     const signOut = jest.fn().mockResolvedValue(undefined);
     mockAuth(signOut);
 
@@ -55,7 +79,38 @@ describe('HomeScreen', () => {
     expect(getByText('home.greeting:Field')).toBeTruthy();
 
     await fireEvent.press(getByTestId('sign-out'));
+    // Confirmation first; sign-out only on confirm.
+    expect(Alert.alert).toHaveBeenCalled();
+    expect(signOut).not.toHaveBeenCalled();
+
+    pressAlertButton('destructive');
     await waitFor(() => expect(signOut).toHaveBeenCalled());
+  });
+
+  it('warns about unsynced interviews when signing out with a full outbox', async () => {
+    mockOutbox(3);
+
+    const { getByTestId } = await render(<HomeScreen />);
+    await fireEvent.press(getByTestId('sign-out'));
+
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'home.signOutTitle',
+      'home.signOutUnsynced',
+      expect.any(Array)
+    );
+  });
+
+  it('does not warn about unsynced interviews when the outbox is empty', async () => {
+    mockOutbox(0);
+
+    const { getByTestId } = await render(<HomeScreen />);
+    await fireEvent.press(getByTestId('sign-out'));
+
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'home.signOutTitle',
+      'home.signOutMessage',
+      expect.any(Array)
+    );
   });
 
   it('lists the cached projects', async () => {
