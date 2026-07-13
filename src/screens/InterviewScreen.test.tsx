@@ -1,8 +1,18 @@
 import { fireEvent, render } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 
 import type { Item } from '../api/types';
 import { useInterview } from '../capture/useInterview';
 import { InterviewScreen } from './InterviewScreen';
+
+type AlertButton = { text?: string; style?: string; onPress?: () => void };
+
+/** Simulate the user tapping the alert button with the given style. */
+function pressAlertButton(style: 'cancel' | 'destructive') {
+  const spy = Alert.alert as jest.Mock;
+  const buttons = spy.mock.calls.at(-1)?.[2] as AlertButton[] | undefined;
+  buttons?.find((button) => button.style === style)?.onPress?.();
+}
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -60,6 +70,7 @@ function mockInterview(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 });
 
 describe('InterviewScreen', () => {
@@ -93,13 +104,29 @@ describe('InterviewScreen', () => {
     expect(addRepeat).toHaveBeenCalledWith(1);
   });
 
-  it('removes a set when there is more than one', async () => {
+  it('removes a set only after the removal is confirmed', async () => {
     const removeRepeat = jest.fn();
     mockInterview({ form: form(true), repeats: { 1: 2 }, removeRepeat });
 
     const { getByTestId } = await render(<InterviewScreen />);
     await fireEvent.press(getByTestId('remove-set-1'));
 
+    // The press asks for confirmation instead of removing outright.
+    expect(Alert.alert).toHaveBeenCalled();
+    expect(removeRepeat).not.toHaveBeenCalled();
+
+    pressAlertButton('destructive');
     expect(removeRepeat).toHaveBeenCalledWith(1);
+  });
+
+  it('keeps the set when removal is cancelled', async () => {
+    const removeRepeat = jest.fn();
+    mockInterview({ form: form(true), repeats: { 1: 2 }, removeRepeat });
+
+    const { getByTestId } = await render(<InterviewScreen />);
+    await fireEvent.press(getByTestId('remove-set-1'));
+    pressAlertButton('cancel');
+
+    expect(removeRepeat).not.toHaveBeenCalled();
   });
 });
