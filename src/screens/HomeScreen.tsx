@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 
+import { Chevron } from '../components/Chevron';
 import { useAuth } from '../auth/AuthContext';
 import { useOutbox } from '../hooks/useOutbox';
 import { useProjects } from '../hooks/useProjects';
@@ -113,6 +114,7 @@ export function HomeScreen() {
               accessibilityRole="button"
             >
               <Text style={[styles.projectName, { color: theme.text }]}>{project.name}</Text>
+              <Chevron color={theme.muted} />
             </TouchableOpacity>
           ))
         )}
@@ -183,11 +185,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   projectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
     borderWidth: 1,
     borderRadius: 10,
     padding: 16,
   },
   projectName: {
+    flexShrink: 1,
     fontSize: 16,
     fontWeight: '500',
   },
