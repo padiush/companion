@@ -73,3 +73,21 @@ export async function countDraftsForForm(db: SQLiteDatabase, formId: number): Pr
   );
   return row?.count ?? 0;
 }
+
+/** Every unsynced interview, oldest first — the outbox the push engine drains. */
+export async function listDraftInstances(db: SQLiteDatabase): Promise<InstanceRow[]> {
+  return db.getAllAsync<InstanceRow>(
+    "SELECT * FROM instances WHERE sync_status = 'draft' ORDER BY created_at"
+  );
+}
+
+export async function countDrafts(db: SQLiteDatabase): Promise<number> {
+  const row = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) AS count FROM instances WHERE sync_status = 'draft'"
+  );
+  return row?.count ?? 0;
+}
+
+export async function setSyncStatus(db: SQLiteDatabase, id: string, status: string): Promise<void> {
+  await db.runAsync('UPDATE instances SET sync_status = ? WHERE id = ?', [status, id]);
+}
