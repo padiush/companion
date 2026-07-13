@@ -1,27 +1,33 @@
 import { useColorScheme } from 'react-native';
 
+/**
+ * The Padiush brand palette, ported from the web app's daisyUI themes
+ * (`padiushlight`/`padiushdark`) — the oklch values converted to hex. Roles map
+ * to daisyUI tokens: bg = base-200, card = base-100, border = base-300,
+ * text = base-content, primary/onPrimary = primary/primary-content, danger = error.
+ */
 const light = {
-  bg: '#f7f7f5',
-  card: '#ffffff',
-  border: '#e3e3df',
-  text: '#1b1b18',
-  muted: '#6b6b64',
-  primary: '#2f7d4f',
-  onPrimary: '#ffffff',
-  danger: '#b3261e',
+  bg: '#e4e4e4',
+  card: '#f5f5f5',
+  border: '#d4d4d4',
+  text: '#0b0908',
+  muted: '#6f7268',
+  primary: '#3c6200',
+  onPrimary: '#f5fce5',
+  danger: '#ea003e',
   inputBg: '#ffffff',
 };
 
 const dark = {
-  bg: '#16161a',
-  card: '#1f1f24',
-  border: '#2c2c33',
-  text: '#f2f2ef',
-  muted: '#9a9a92',
-  primary: '#4ba572',
-  onPrimary: '#0d0d0f',
-  danger: '#f2b8b5',
-  inputBg: '#26262c',
+  bg: '#131712',
+  card: '#1a1e19',
+  border: '#2a2f28',
+  text: '#dbe5d8',
+  muted: '#97a091',
+  primary: '#6c9543',
+  onPrimary: '#071001',
+  danger: '#fb5669',
+  inputBg: '#30342e',
 };
 
 export type Theme = typeof light;

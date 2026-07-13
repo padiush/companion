@@ -13,6 +13,7 @@ import {
 
 import { ApiError } from '../api/client';
 import { useAuth } from '../auth/AuthContext';
+import { AppLogo } from '../components/AppLogo';
 import { useTheme } from '../theme';
 
 export function SignInScreen() {
@@ -57,6 +58,7 @@ export function SignInScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.header}>
+        <AppLogo size={64} color={theme.primary} style={styles.logo} />
         <Text style={[styles.brand, { color: theme.text }]}>{t('app.name')}</Text>
         <Text style={[styles.tagline, { color: theme.muted }]}>{t('app.tagline')}</Text>
       </View>
@@ -120,6 +122,9 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 32,
+  },
+  logo: {
+    marginBottom: 16,
   },
   brand: {
     fontSize: 26,
