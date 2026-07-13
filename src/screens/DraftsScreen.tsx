@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -26,6 +27,7 @@ export function DraftsScreen() {
   const navigation = useNavigation<Nav>();
   const { drafts, loading, refresh } = useDrafts();
   const { count, sending, error, send } = useOutbox();
+  const [sentCount, setSentCount] = useState<number | null>(null);
 
   const statusColor = (status: string) => {
     if (status === 'synced') return theme.primary;
@@ -34,8 +36,12 @@ export function DraftsScreen() {
   };
 
   const onSend = async () => {
-    await send();
+    setSentCount(null);
+    const result = await send();
     await refresh();
+    if (result && result.synced > 0) {
+      setSentCount(result.synced);
+    }
   };
 
   return (
@@ -62,6 +68,10 @@ export function DraftsScreen() {
 
       {error ? (
         <Text style={[styles.error, { color: theme.danger }]}>{t('drafts.sendError')}</Text>
+      ) : sentCount !== null ? (
+        <Text style={[styles.sent, { color: theme.primary }]}>
+          {t('drafts.sent', { count: sentCount })}
+        </Text>
       ) : null}
 
       <ScrollView contentContainerStyle={styles.list}>
@@ -137,6 +147,11 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: 14,
+    marginBottom: 12,
+  },
+  sent: {
+    fontSize: 14,
+    fontWeight: '600',
     marginBottom: 12,
   },
   list: {

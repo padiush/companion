@@ -146,13 +146,22 @@ describe('HomeScreen', () => {
   });
 
   it('triggers a sync when the sync button is pressed', async () => {
-    const sync = jest.fn().mockResolvedValue(undefined);
+    const sync = jest.fn().mockResolvedValue(true);
     mockProjects({ sync });
 
     const { getByTestId } = await render(<HomeScreen />);
     await fireEvent.press(getByTestId('sync'));
 
     expect(sync).toHaveBeenCalled();
+  });
+
+  it('confirms a successful sync', async () => {
+    mockProjects({ sync: jest.fn().mockResolvedValue(true) });
+
+    const { getByTestId, findByText } = await render(<HomeScreen />);
+    await fireEvent.press(getByTestId('sync'));
+
+    expect(await findByText('home.synced')).toBeTruthy();
   });
 
   it('surfaces a sync error', async () => {

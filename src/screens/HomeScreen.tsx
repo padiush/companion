@@ -33,6 +33,12 @@ export function HomeScreen() {
   const { count } = useOutbox();
   const navigation = useNavigation<Nav>();
   const [signingOut, setSigningOut] = useState(false);
+  const [syncedOk, setSyncedOk] = useState(false);
+
+  const onSync = async () => {
+    setSyncedOk(false);
+    setSyncedOk(await sync());
+  };
 
   const doSignOut = async () => {
     setSigningOut(true);
@@ -81,7 +87,12 @@ export function HomeScreen() {
 
       <View style={styles.projectsHeader}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('home.projects')}</Text>
-        <TouchableOpacity testID="sync" onPress={sync} disabled={syncing} accessibilityRole="button">
+        <TouchableOpacity
+          testID="sync"
+          onPress={onSync}
+          disabled={syncing}
+          accessibilityRole="button"
+        >
           {syncing ? (
             <ActivityIndicator color={theme.primary} />
           ) : (
@@ -92,6 +103,8 @@ export function HomeScreen() {
 
       {error ? (
         <Text style={[styles.error, { color: theme.danger }]}>{t('home.syncError')}</Text>
+      ) : syncedOk ? (
+        <Text style={[styles.success, { color: theme.primary }]}>{t('home.synced')}</Text>
       ) : null}
 
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
@@ -171,6 +184,11 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: 14,
+    marginBottom: 12,
+  },
+  success: {
+    fontSize: 14,
+    fontWeight: '600',
     marginBottom: 12,
   },
   list: {

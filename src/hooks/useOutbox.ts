@@ -12,7 +12,8 @@ export interface OutboxState {
   sending: boolean;
   error: boolean;
   lastResult: PushSummary | null;
-  send: () => Promise<void>;
+  /** Drain the outbox; resolves the push summary, or null if it failed. */
+  send: () => Promise<PushSummary | null>;
 }
 
 /**
@@ -46,8 +47,10 @@ export function useOutbox(): OutboxState {
       await uploadMedia(db);
       setLastResult(result);
       setCount(await countDrafts(db));
+      return result;
     } catch {
       setError(true);
+      return null;
     } finally {
       setSending(false);
     }

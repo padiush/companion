@@ -34,6 +34,7 @@
     "sync": "Sincronizar",
     "empty": "Aún no hay proyectos. Sincroniza para cargarlos.",
     "syncError": "No se pudo sincronizar. Revisa tu conexión.",
+    "synced": "Proyectos actualizados",
     "drafts": "Mis entrevistas"
   },
   "project": {
@@ -72,6 +73,8 @@
     "title": "Entrevistas",
     "send": "Enviar",
     "sendError": "No se pudieron enviar. Revisa tu conexión.",
+    "sent_one": "1 entrevista enviada",
+    "sent_other": "{{count}} entrevistas enviadas",
     "empty": "Aún no hay entrevistas.",
     "summary": "{{answers}} respuestas · {{media}} archivos",
     "status": {
