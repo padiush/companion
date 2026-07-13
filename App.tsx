@@ -1,9 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import './src/i18n';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
-import { HomeScreen } from './src/screens/HomeScreen';
+import { RootNavigator } from './src/navigation/RootNavigator';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { useTheme } from './src/theme';
 
@@ -19,15 +20,17 @@ function AuthGate() {
     );
   }
 
-  return status === 'signedIn' ? <HomeScreen /> : <SignInScreen />;
+  return status === 'signedIn' ? <RootNavigator /> : <SignInScreen />;
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AuthGate />
-      <StatusBar style="auto" />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AuthGate />
+        <StatusBar style="auto" />
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 

@@ -23,5 +23,13 @@
     "sync": "Sincronizar",
     "empty": "Aún no hay proyectos. Sincroniza para cargarlos.",
     "syncError": "No se pudo sincronizar. Revisa tu conexión."
+  },
+  "project": {
+    "forms": "Formularios",
+    "newInterview": "Nueva entrevista",
+    "empty": "Este proyecto no tiene formularios activos."
+  },
+  "interview": {
+    "preparing": "Preparando la entrevista…"
   }
 }

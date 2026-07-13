@@ -1,3 +1,5 @@
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -11,7 +13,10 @@ import {
 
 import { useAuth } from '../auth/AuthContext';
 import { useProjects } from '../hooks/useProjects';
+import type { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
+
+type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 /**
  * Home for a signed-in recorder: the cached project list with a sync action.
@@ -22,6 +27,7 @@ export function HomeScreen() {
   const theme = useTheme();
   const { user, signOut } = useAuth();
   const { projects, loading, syncing, error, sync } = useProjects();
+  const navigation = useNavigation<Nav>();
   const [signingOut, setSigningOut] = useState(false);
 
   const onSignOut = async () => {
@@ -69,16 +75,23 @@ export function HomeScreen() {
           <Text style={[styles.empty, { color: theme.muted }]}>{t('home.empty')}</Text>
         ) : (
           projects.map((project) => (
-            <View
+            <TouchableOpacity
               key={project.id}
               testID={`project-${project.id}`}
               style={[
                 styles.projectRow,
                 { backgroundColor: theme.card, borderColor: theme.border },
               ]}
+              onPress={() =>
+                navigation.navigate('Project', {
+                  projectId: project.id,
+                  projectName: project.name,
+                })
+              }
+              accessibilityRole="button"
             >
               <Text style={[styles.projectName, { color: theme.text }]}>{project.name}</Text>
-            </View>
+            </TouchableOpacity>
           ))
         )}
       </ScrollView>

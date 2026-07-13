@@ -23,5 +23,13 @@
     "sync": "Sync",
     "empty": "No projects yet. Sync to load them.",
     "syncError": "Couldn't sync. Check your connection."
+  },
+  "project": {
+    "forms": "Forms",
+    "newInterview": "New interview",
+    "empty": "This project has no active forms."
+  },
+  "interview": {
+    "preparing": "Preparing interview…"
   }
 }
