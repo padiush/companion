@@ -37,3 +37,30 @@ export interface CachedForm {
   updatedAt: string | null;
   sections: Section[];
 }
+
+/** A row of the `instances` table — a draft interview captured on device. */
+export interface InstanceRow {
+  id: string;
+  form_id: number;
+  project_id: number;
+  captured_at: string | null;
+  location_lat: number | null;
+  location_lng: number | null;
+  location_accuracy_m: number | null;
+  location_captured_at: string | null;
+  form_version_cursor: string | null;
+  sync_status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** A row of the `answers` table — one device-authored answer. */
+export interface AnswerRow {
+  client_id: string;
+  instance_id: string;
+  section_id: number;
+  item_id: number;
+  repeatable_index: number | null;
+  value: string | null;
+  edited_at: string | null;
+}
