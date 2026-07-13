@@ -99,7 +99,12 @@ export async function listInstancesWithMeta(db: SQLiteDatabase): Promise<DraftLi
        i.id, i.form_id, i.project_id, i.captured_at, i.created_at, i.sync_status,
        f.name AS form_name,
        (SELECT COUNT(*) FROM answers a WHERE a.instance_id = i.id) AS answer_count,
-       (SELECT COUNT(*) FROM media m WHERE m.instance_id = i.id) AS media_count
+       (SELECT COUNT(*) FROM media m WHERE m.instance_id = i.id) AS media_count,
+       (SELECT a.value FROM answers a
+          WHERE a.instance_id = i.id
+            AND a.value IS NOT NULL AND a.value != '' AND a.value NOT LIKE '[%'
+          ORDER BY a.section_id, a.item_id
+          LIMIT 1) AS preview
      FROM instances i
      LEFT JOIN forms f ON f.id = i.form_id
      ORDER BY i.created_at DESC`

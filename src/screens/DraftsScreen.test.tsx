@@ -28,6 +28,7 @@ function draft(overrides: Record<string, unknown> = {}) {
     sync_status: 'draft',
     answer_count: 3,
     media_count: 1,
+    preview: 'Ruda',
     ...overrides,
   };
 }
@@ -64,6 +65,15 @@ describe('DraftsScreen', () => {
     expect(getByText('Plant uses')).toBeTruthy();
     expect(getByText('drafts.status.draft')).toBeTruthy();
     expect(getByText('drafts.status.rejected')).toBeTruthy();
+  });
+
+  it('shows a content preview to tell same-form drafts apart', async () => {
+    mockDrafts({ drafts: [draft({ preview: 'Ruda' }), draft({ id: 'd2', preview: 'Sábila' })] });
+
+    const { getByText } = await render(<DraftsScreen />);
+
+    expect(getByText('Ruda')).toBeTruthy();
+    expect(getByText('Sábila')).toBeTruthy();
   });
 
   it('shows the empty state when there are no interviews', async () => {

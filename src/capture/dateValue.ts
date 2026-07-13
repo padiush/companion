@@ -20,3 +20,10 @@ export function parseDate(value: string | null): Date {
   }
   return new Date();
 }
+
+/** `YYYY-MM-DD HH:MM` in local time — for showing when a draft was captured. */
+export function formatDateTime(date: Date): string {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${formatDate(date)} ${hours}:${minutes}`;
+}

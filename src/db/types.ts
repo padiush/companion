@@ -76,6 +76,8 @@ export interface DraftListItem {
   sync_status: string;
   answer_count: number;
   media_count: number;
+  /** The first plain-text answer, shown to tell same-form drafts apart. */
+  preview: string | null;
 }
 
 /** A row of the `media` table — an audio/photo capture and its upload state. */
