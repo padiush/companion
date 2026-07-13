@@ -65,6 +65,18 @@ export interface AnswerRow {
   edited_at: string | null;
 }
 
+/** A recorded interview with its form name and answer/media counts, for the list. */
+export interface DraftListItem {
+  id: string;
+  form_id: number;
+  form_name: string | null;
+  captured_at: string | null;
+  created_at: string;
+  sync_status: string;
+  answer_count: number;
+  media_count: number;
+}
+
 /** A row of the `media` table — an audio/photo capture and its upload state. */
 export interface MediaRow {
   client_id: string;

@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import type { InstanceRow } from './types';
+import type { DraftListItem, InstanceRow } from './types';
 
 export interface DraftLocation {
   lat: number;
@@ -90,4 +90,18 @@ export async function countDrafts(db: SQLiteDatabase): Promise<number> {
 
 export async function setSyncStatus(db: SQLiteDatabase, id: string, status: string): Promise<void> {
   await db.runAsync('UPDATE instances SET sync_status = ? WHERE id = ?', [status, id]);
+}
+
+/** Every recorded interview, newest first, with its form name and answer/media counts. */
+export async function listInstancesWithMeta(db: SQLiteDatabase): Promise<DraftListItem[]> {
+  return db.getAllAsync<DraftListItem>(
+    `SELECT
+       i.id, i.form_id, i.captured_at, i.created_at, i.sync_status,
+       f.name AS form_name,
+       (SELECT COUNT(*) FROM answers a WHERE a.instance_id = i.id) AS answer_count,
+       (SELECT COUNT(*) FROM media m WHERE m.instance_id = i.id) AS media_count
+     FROM instances i
+     LEFT JOIN forms f ON f.id = i.form_id
+     ORDER BY i.created_at DESC`
+  );
 }

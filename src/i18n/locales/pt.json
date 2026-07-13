@@ -23,11 +23,7 @@
     "sync": "Sincronizar",
     "empty": "Ainda não há projetos. Sincronize para carregá-los.",
     "syncError": "Não foi possível sincronizar. Verifique sua conexão.",
-    "outbox_one": "{{count}} entrevista para enviar",
-    "outbox_other": "{{count}} entrevistas para enviar",
-    "send": "Enviar",
-    "sendError": "Não foi possível enviar. Verifique sua conexão.",
-    "someRejected": "{{count}} entrevistas foram rejeitadas."
+    "drafts": "Minhas entrevistas"
   },
   "project": {
     "forms": "Formulários",
@@ -47,5 +43,17 @@
     "photo": "Foto",
     "audio": "Áudio",
     "mediaPermission": "É necessária permissão para câmera ou microfone."
+  },
+  "drafts": {
+    "title": "Entrevistas",
+    "send": "Enviar",
+    "sendError": "Não foi possível enviar. Verifique sua conexão.",
+    "empty": "Ainda não há entrevistas.",
+    "summary": "{{answers}} respostas · {{media}} arquivos",
+    "status": {
+      "draft": "Rascunho",
+      "synced": "Enviada",
+      "rejected": "Rejeitada"
+    }
   }
 }

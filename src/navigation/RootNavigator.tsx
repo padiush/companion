@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useColorScheme } from 'react-native';
 
+import { DraftsScreen } from '../screens/DraftsScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { InterviewScreen } from '../screens/InterviewScreen';
 import { ProjectScreen } from '../screens/ProjectScreen';
@@ -17,6 +18,7 @@ export function RootNavigator() {
     <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack.Navigator>
         <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Drafts" component={DraftsScreen} />
         <Stack.Screen
           name="Project"
           component={ProjectScreen}

@@ -122,28 +122,20 @@ describe('HomeScreen', () => {
     expect(getByText('home.syncError')).toBeTruthy();
   });
 
-  it('shows the outbox and sends drafts', async () => {
-    const send = jest.fn().mockResolvedValue(undefined);
-    mockOutbox({ count: 3, send });
+  it('shows the pending draft count on the drafts button', async () => {
+    mockOutbox({ count: 3 });
 
     const { getByTestId, getByText } = await render(<HomeScreen />);
-    expect(getByText('home.outbox')).toBeTruthy();
-
-    await fireEvent.press(getByTestId('send-drafts'));
-    expect(send).toHaveBeenCalled();
+    expect(getByTestId('open-drafts')).toBeTruthy();
+    expect(getByText('3')).toBeTruthy();
   });
 
-  it('hides the outbox when there is nothing to send', async () => {
+  it('opens the drafts screen when the drafts button is tapped', async () => {
     mockOutbox({ count: 0 });
 
-    const { queryByTestId } = await render(<HomeScreen />);
-    expect(queryByTestId('send-drafts')).toBeNull();
-  });
+    const { getByTestId } = await render(<HomeScreen />);
+    await fireEvent.press(getByTestId('open-drafts'));
 
-  it('surfaces a send error', async () => {
-    mockOutbox({ count: 1, error: true });
-
-    const { getByText } = await render(<HomeScreen />);
-    expect(getByText('home.sendError')).toBeTruthy();
+    expect(mockNavigate).toHaveBeenCalledWith('Drafts');
   });
 });
