@@ -82,8 +82,7 @@ export const api = {
   createToken: (payload: TokenRequest) =>
     request<TokenResponse>('/tokens', { method: 'POST', body: payload, auth: false }),
 
-  revokeCurrentToken: () =>
-    request<{ message: string }>('/tokens/current', { method: 'DELETE' }),
+  revokeCurrentToken: () => request<{ message: string }>('/tokens/current', { method: 'DELETE' }),
 
   me: () => request<MeResponse>('/me'),
 
@@ -99,8 +98,7 @@ export const api = {
       idempotencyKey,
     }),
 
-  getInstance: (instanceId: string) =>
-    request<InstanceDetail>(`/instances/${instanceId}`),
+  getInstance: (instanceId: string) => request<InstanceDetail>(`/instances/${instanceId}`),
 
   mediaIntent: (instanceId: string, payload: MediaIntentRequest) =>
     request<MediaIntentResponse>(`/instances/${instanceId}/media/intent`, {
