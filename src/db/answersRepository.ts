@@ -1,0 +1,73 @@
+import type { SQLiteDatabase } from 'expo-sqlite';
+
+import type { AnswerRow } from './types';
+
+export interface AnswerInsert {
+  clientId: string;
+  instanceId: string;
+  sectionId: number;
+  itemId: number;
+  repeatableIndex: number | null;
+  value: string | null;
+  editedAt: string;
+}
+
+/**
+ * Find the existing answer for a slot — (instance, item, repeatable set). NULL
+ * and integer repeatable indices are matched distinctly (SQLite treats NULL as
+ * not equal to anything, so `IS NULL` is required for non-repeatable items).
+ */
+export async function findAnswer(
+  db: SQLiteDatabase,
+  instanceId: string,
+  itemId: number,
+  repeatableIndex: number | null
+): Promise<AnswerRow | null> {
+  if (repeatableIndex === null) {
+    return db.getFirstAsync<AnswerRow>(
+      'SELECT * FROM answers WHERE instance_id = ? AND item_id = ? AND repeatable_index IS NULL',
+      [instanceId, itemId]
+    );
+  }
+
+  return db.getFirstAsync<AnswerRow>(
+    'SELECT * FROM answers WHERE instance_id = ? AND item_id = ? AND repeatable_index = ?',
+    [instanceId, itemId, repeatableIndex]
+  );
+}
+
+export async function insertAnswer(db: SQLiteDatabase, answer: AnswerInsert): Promise<void> {
+  await db.runAsync(
+    `INSERT INTO answers (client_id, instance_id, section_id, item_id, repeatable_index, value, edited_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [
+      answer.clientId,
+      answer.instanceId,
+      answer.sectionId,
+      answer.itemId,
+      answer.repeatableIndex,
+      answer.value,
+      answer.editedAt,
+    ]
+  );
+}
+
+export async function updateAnswerValue(
+  db: SQLiteDatabase,
+  clientId: string,
+  value: string | null,
+  editedAt: string
+): Promise<void> {
+  await db.runAsync('UPDATE answers SET value = ?, edited_at = ? WHERE client_id = ?', [
+    value,
+    editedAt,
+    clientId,
+  ]);
+}
+
+export async function getAnswersForInstance(
+  db: SQLiteDatabase,
+  instanceId: string
+): Promise<AnswerRow[]> {
+  return db.getAllAsync<AnswerRow>('SELECT * FROM answers WHERE instance_id = ?', [instanceId]);
+}
