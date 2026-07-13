@@ -16,7 +16,8 @@ the authoritative contract is that repo's `docs/api/openapi.yaml`.
 
 - Expo SDK 57, React 19, React Native 0.86, TypeScript
 - `expo-secure-store` — the bearer token, in Keychain / Keystore (never the password)
-- `expo-sqlite` — the offline local store for captured records
+- `expo-sqlite` (SQLCipher) — the offline local store for captured records,
+  encrypted at rest with a device-generated key held in the secure store
 - `expo-location` — GPS for interview location
 - `expo-audio` — interview audio recording
 - `expo-file-system` — media files for direct-to-storage upload
@@ -63,6 +64,6 @@ sync is push-dominant:
    retries are safe.
 5. **Media** — upload audio/photos via presigned URLs, out of band.
 
-Conflicts on the same answer resolve by last-writer-wins on the device edit-time;
-the local store **must** be encrypted at rest (it holds informant responses until
-synced).
+Conflicts on the same answer resolve by last-writer-wins on the device edit-time.
+The local store is encrypted at rest with SQLCipher (it holds informant responses
+until synced); the key is minted on-device and lives in Keychain / Keystore.
