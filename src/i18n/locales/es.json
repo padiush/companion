@@ -49,6 +49,8 @@
     "removeSetTitle": "¿Quitar este registro?",
     "removeSetMessage": "Se borrarán sus respuestas. Esta acción no se puede deshacer.",
     "savedLocally": "Borrador guardado en este dispositivo",
+    "saving": "Guardando…",
+    "done": "Listo",
     "audioTitle": "Audio",
     "recordHint": "Puedes grabar audio antes o durante la entrevista.",
     "recordAudio": "Grabar audio",

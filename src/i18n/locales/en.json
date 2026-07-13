@@ -49,6 +49,8 @@
     "removeSetTitle": "Remove this entry?",
     "removeSetMessage": "Its answers will be deleted. This can't be undone.",
     "savedLocally": "Draft saved on this device",
+    "saving": "Saving…",
+    "done": "Done",
     "audioTitle": "Audio",
     "recordHint": "You can record audio before or during the interview.",
     "recordAudio": "Record audio",

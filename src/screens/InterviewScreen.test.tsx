@@ -19,8 +19,10 @@ jest.mock('react-i18next', () => ({
     t: (key: string, opts?: { number?: number }) => (opts?.number ? `${key}:${opts.number}` : key),
   }),
 }));
+const mockGoBack = jest.fn();
 jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: { formId: 27, projectId: 9, formName: 'Plant uses' } }),
+  useNavigation: () => ({ goBack: mockGoBack }),
 }));
 jest.mock('../capture/useInterview', () => ({ useInterview: jest.fn() }));
 jest.mock('../capture/MediaSection', () => ({ MediaSection: () => null }));
@@ -59,6 +61,7 @@ function mockInterview(overrides: Record<string, unknown> = {}) {
   mockUseInterview.mockReturnValue({
     form: form(false),
     loading: false,
+    saving: false,
     answers: {},
     repeats: {},
     setAnswer: jest.fn(),
@@ -128,5 +131,22 @@ describe('InterviewScreen', () => {
     pressAlertButton('cancel');
 
     expect(removeRepeat).not.toHaveBeenCalled();
+  });
+
+  it('reflects the save state and returns on Done', async () => {
+    mockInterview({ saving: false });
+    const saved = await render(<InterviewScreen />);
+    expect(saved.getByText('interview.savedLocally')).toBeTruthy();
+
+    await fireEvent.press(saved.getByTestId('interview-done'));
+    expect(mockGoBack).toHaveBeenCalled();
+  });
+
+  it('shows a saving indicator while an answer is being written', async () => {
+    mockInterview({ saving: true });
+    const { getByText, queryByText } = await render(<InterviewScreen />);
+
+    expect(getByText('interview.saving')).toBeTruthy();
+    expect(queryByText('interview.savedLocally')).toBeNull();
   });
 });

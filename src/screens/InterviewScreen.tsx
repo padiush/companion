@@ -1,4 +1,4 @@
-import { useRoute, type RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -23,8 +23,9 @@ import { useTheme } from '../theme';
 export function InterviewScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
+  const navigation = useNavigation();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Interview'>>();
-  const { form, instanceId, loading, answers, repeats, setAnswer, addRepeat, removeRepeat } =
+  const { form, instanceId, loading, saving, answers, repeats, setAnswer, addRepeat, removeRepeat } =
     useInterview(params.formId, params.projectId, params.instanceId);
 
   if (loading || !form) {
@@ -111,7 +112,18 @@ export function InterviewScreen() {
 
       {instanceId ? <MediaSection instanceId={instanceId} /> : null}
 
-      <Text style={[styles.saved, { color: theme.muted }]}>{t('interview.savedLocally')}</Text>
+      <Text style={[styles.saved, { color: theme.muted }]}>
+        {saving ? t('interview.saving') : t('interview.savedLocally')}
+      </Text>
+
+      <TouchableOpacity
+        testID="interview-done"
+        onPress={() => navigation.goBack()}
+        accessibilityRole="button"
+        style={[styles.done, { backgroundColor: theme.primary }]}
+      >
+        <Text style={[styles.doneText, { color: theme.onPrimary }]}>{t('interview.done')}</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -167,5 +179,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     marginTop: 8,
+  },
+  done: {
+    borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+    marginTop: 16,
+  },
+  doneText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

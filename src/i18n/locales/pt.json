@@ -49,6 +49,8 @@
     "removeSetTitle": "Remover este registro?",
     "removeSetMessage": "As respostas dele serão apagadas. Esta ação não pode ser desfeita.",
     "savedLocally": "Rascunho salvo neste dispositivo",
+    "saving": "Salvando…",
+    "done": "Concluir",
     "audioTitle": "Áudio",
     "recordHint": "Você pode gravar áudio antes ou durante a entrevista.",
     "recordAudio": "Gravar áudio",
