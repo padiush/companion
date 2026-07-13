@@ -49,6 +49,8 @@ export function InterviewScreen() {
       style={[styles.container, { backgroundColor: theme.bg }]}
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
+      automaticallyAdjustKeyboardInsets
     >
       {instanceId ? <AudioRecorder instanceId={instanceId} /> : null}
 
