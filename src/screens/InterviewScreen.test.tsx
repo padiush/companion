@@ -14,6 +14,7 @@ jest.mock('@react-navigation/native', () => ({
 }));
 jest.mock('../capture/useInterview', () => ({ useInterview: jest.fn() }));
 jest.mock('../capture/MediaSection', () => ({ MediaSection: () => null }));
+jest.mock('../capture/AudioRecorder', () => ({ AudioRecorder: () => null }));
 
 const mockUseInterview = useInterview as jest.Mock;
 
