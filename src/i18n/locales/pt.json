@@ -3,7 +3,21 @@
     "name": "Padiush Companion",
     "tagline": "Registro de campo para pesquisa etnobotânica"
   },
-  "landing": {
-    "apiLabel": "API"
+  "auth": {
+    "emailLabel": "E-mail",
+    "emailPlaceholder": "voce@email.org",
+    "passwordLabel": "Senha",
+    "passwordPlaceholder": "Sua senha",
+    "submit": "Entrar",
+    "errors": {
+      "missingFields": "Digite seu e-mail e senha.",
+      "invalidCredentials": "E-mail ou senha incorretos.",
+      "generic": "Não foi possível entrar. Tente novamente."
+    }
+  },
+  "home": {
+    "greeting": "Olá, {{name}}",
+    "subtitle": "Pronto para registrar entrevistas em campo.",
+    "signOut": "Sair"
   }
 }
