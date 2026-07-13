@@ -1,6 +1,7 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
 import { useAuth } from '../auth/AuthContext';
+import { useOutbox } from '../hooks/useOutbox';
 import { useProjects } from '../hooks/useProjects';
 import { HomeScreen } from './HomeScreen';
 
@@ -11,6 +12,7 @@ jest.mock('react-i18next', () => ({
 }));
 jest.mock('../auth/AuthContext', () => ({ useAuth: jest.fn() }));
 jest.mock('../hooks/useProjects', () => ({ useProjects: jest.fn() }));
+jest.mock('../hooks/useOutbox', () => ({ useOutbox: jest.fn() }));
 
 const mockNavigate = jest.fn();
 jest.mock('@react-navigation/native', () => ({
@@ -19,6 +21,7 @@ jest.mock('@react-navigation/native', () => ({
 
 const mockUseAuth = useAuth as jest.Mock;
 const mockUseProjects = useProjects as jest.Mock;
+const mockUseOutbox = useOutbox as jest.Mock;
 
 function mockAuth(signOut = jest.fn()) {
   mockUseAuth.mockReturnValue({
@@ -40,10 +43,22 @@ function mockProjects(overrides: Record<string, unknown> = {}) {
   });
 }
 
+function mockOutbox(overrides: Record<string, unknown> = {}) {
+  mockUseOutbox.mockReturnValue({
+    count: 0,
+    sending: false,
+    error: false,
+    lastResult: null,
+    send: jest.fn(),
+    ...overrides,
+  });
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   mockAuth();
   mockProjects();
+  mockOutbox();
 });
 
 describe('HomeScreen', () => {
@@ -105,5 +120,30 @@ describe('HomeScreen', () => {
 
     const { getByText } = await render(<HomeScreen />);
     expect(getByText('home.syncError')).toBeTruthy();
+  });
+
+  it('shows the outbox and sends drafts', async () => {
+    const send = jest.fn().mockResolvedValue(undefined);
+    mockOutbox({ count: 3, send });
+
+    const { getByTestId, getByText } = await render(<HomeScreen />);
+    expect(getByText('home.outbox')).toBeTruthy();
+
+    await fireEvent.press(getByTestId('send-drafts'));
+    expect(send).toHaveBeenCalled();
+  });
+
+  it('hides the outbox when there is nothing to send', async () => {
+    mockOutbox({ count: 0 });
+
+    const { queryByTestId } = await render(<HomeScreen />);
+    expect(queryByTestId('send-drafts')).toBeNull();
+  });
+
+  it('surfaces a send error', async () => {
+    mockOutbox({ count: 1, error: true });
+
+    const { getByText } = await render(<HomeScreen />);
+    expect(getByText('home.sendError')).toBeTruthy();
   });
 });

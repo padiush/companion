@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
+import { useOutbox } from '../hooks/useOutbox';
 import { useProjects } from '../hooks/useProjects';
 import type { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
@@ -19,14 +20,15 @@ import { useTheme } from '../theme';
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 /**
- * Home for a signed-in recorder: the cached project list with a sync action.
- * The capture flows (form fill, record, media) will open from a project here.
+ * Home for a signed-in recorder: the outbox of unsent interviews and the cached
+ * project list. Interviews open from a project; drafts are sent from here.
  */
 export function HomeScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const { user, signOut } = useAuth();
   const { projects, loading, syncing, error, sync } = useProjects();
+  const outbox = useOutbox();
   const navigation = useNavigation<Nav>();
   const [signingOut, setSigningOut] = useState(false);
 
@@ -47,6 +49,36 @@ export function HomeScreen() {
         </Text>
         <Text style={[styles.subtitle, { color: theme.muted }]}>{t('home.subtitle')}</Text>
       </View>
+
+      {outbox.count > 0 ? (
+        <View style={[styles.outbox, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.outboxText, { color: theme.text }]}>
+            {t('home.outbox', { count: outbox.count })}
+          </Text>
+          <TouchableOpacity
+            testID="send-drafts"
+            onPress={outbox.send}
+            disabled={outbox.sending}
+            accessibilityRole="button"
+          >
+            {outbox.sending ? (
+              <ActivityIndicator color={theme.primary} />
+            ) : (
+              <Text style={[styles.sendText, { color: theme.primary }]}>{t('home.send')}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      {outbox.error ? (
+        <Text style={[styles.error, { color: theme.danger }]}>{t('home.sendError')}</Text>
+      ) : null}
+
+      {outbox.lastResult && outbox.lastResult.rejected > 0 ? (
+        <Text style={[styles.error, { color: theme.danger }]}>
+          {t('home.someRejected', { count: outbox.lastResult.rejected })}
+        </Text>
+      ) : null}
 
       <View style={styles.projectsHeader}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('home.projects')}</Text>
@@ -130,6 +162,26 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 15,
     marginTop: 8,
+  },
+  outbox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  outboxText: {
+    fontSize: 15,
+    fontWeight: '500',
+    flexShrink: 1,
+    paddingRight: 12,
+  },
+  sendText: {
+    fontSize: 15,
+    fontWeight: '700',
   },
   projectsHeader: {
     flexDirection: 'row',
