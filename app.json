@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "padiush-companion",
+    "name": "Padiush Companion",
     "slug": "padiush-companion",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
     },
@@ -20,6 +20,23 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-sqlite",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Padiush records interview audio so it can be transcribed later."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Padiush tags each interview with where in the field it was recorded."
+        }
+      ],
+      "expo-asset"
+    ]
   }
 }
