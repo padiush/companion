@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -28,6 +29,16 @@ export function DraftsScreen() {
   const { drafts, loading, refresh } = useDrafts();
   const { count, sending, error, send } = useOutbox();
   const [sentCount, setSentCount] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refresh();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const statusColor = (status: string) => {
     if (status === 'synced') return theme.primary;
@@ -74,7 +85,13 @@ export function DraftsScreen() {
         </Text>
       ) : null}
 
-      <ScrollView contentContainerStyle={styles.list}>
+      <ScrollView
+        testID="drafts-scroll"
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
+        }
+      >
         {loading ? (
           <ActivityIndicator color={theme.primary} />
         ) : drafts.length === 0 ? (

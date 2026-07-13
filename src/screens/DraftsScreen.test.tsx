@@ -117,4 +117,14 @@ describe('DraftsScreen', () => {
     const { queryByTestId } = await render(<DraftsScreen />);
     expect(queryByTestId('send')).toBeNull();
   });
+
+  it('refreshes the list on pull-to-refresh', async () => {
+    const refresh = jest.fn().mockResolvedValue(undefined);
+    mockDrafts({ refresh });
+
+    const { getByTestId } = await render(<DraftsScreen />);
+    getByTestId('drafts-scroll').props.refreshControl.props.onRefresh();
+
+    await waitFor(() => expect(refresh).toHaveBeenCalled());
+  });
 });

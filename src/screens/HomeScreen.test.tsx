@@ -164,6 +164,16 @@ describe('HomeScreen', () => {
     expect(await findByText('home.synced')).toBeTruthy();
   });
 
+  it('syncs on pull-to-refresh', async () => {
+    const sync = jest.fn().mockResolvedValue(true);
+    mockProjects({ sync });
+
+    const { getByTestId } = await render(<HomeScreen />);
+    getByTestId('projects-scroll').props.refreshControl.props.onRefresh();
+
+    expect(sync).toHaveBeenCalled();
+  });
+
   it('surfaces a sync error', async () => {
     mockProjects({ error: true });
 
