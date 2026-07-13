@@ -3,7 +3,21 @@
     "name": "Padiush Companion",
     "tagline": "Field capture for ethnobotanical research"
   },
-  "landing": {
-    "apiLabel": "API"
+  "auth": {
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@email.org",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Your password",
+    "submit": "Sign in",
+    "errors": {
+      "missingFields": "Enter your email and password.",
+      "invalidCredentials": "Incorrect email or password.",
+      "generic": "Couldn't sign in. Please try again."
+    }
+  },
+  "home": {
+    "greeting": "Hi, {{name}}",
+    "subtitle": "Ready to record interviews in the field.",
+    "signOut": "Sign out"
   }
 }
