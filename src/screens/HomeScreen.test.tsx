@@ -11,6 +11,9 @@ jest.mock('react-i18next', () => ({
     t: (key: string, opts?: { name?: string }) => (opts?.name ? `${key}:${opts.name}` : key),
   }),
 }));
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
 jest.mock('../auth/AuthContext', () => ({ useAuth: jest.fn() }));
 jest.mock('../hooks/useProjects', () => ({ useProjects: jest.fn() }));
 jest.mock('../hooks/useOutbox', () => ({ useOutbox: jest.fn() }));

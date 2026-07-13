@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatDateTime } from '../capture/dateValue';
 import { Chevron } from '../components/Chevron';
@@ -26,6 +27,7 @@ export function DraftsScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation<Nav>();
+  const insets = useSafeAreaInsets();
   const { drafts, loading, refresh } = useDrafts();
   const { count, sending, error, send } = useOutbox();
   const [sentCount, setSentCount] = useState<number | null>(null);
@@ -56,7 +58,7 @@ export function DraftsScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.bg }]}>
+    <View style={[styles.container, { backgroundColor: theme.bg, paddingTop: insets.top + 12 }]}>
       <Text style={[styles.title, { color: theme.text }]}>{t('drafts.title')}</Text>
 
       {count > 0 ? (
@@ -142,8 +144,7 @@ export function DraftsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    paddingTop: 72,
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 24,
