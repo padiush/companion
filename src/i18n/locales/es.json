@@ -38,6 +38,7 @@
     "preparing": "Preparando la entrevista…",
     "set": "Registro {{number}}",
     "addSet": "Agregar registro",
+    "removeSet": "Quitar registro",
     "savedLocally": "Borrador guardado en este dispositivo",
     "media": "Fotos y audio",
     "addPhoto": "Agregar foto",
