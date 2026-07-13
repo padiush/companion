@@ -12,6 +12,7 @@ import Svg, { Path } from 'react-native-svg';
 import { getDatabase } from '../db/database';
 import { listMediaForInstance } from '../db/mediaRepository';
 import type { MediaRow } from '../db/types';
+import { impact } from '../haptics';
 import { useTheme } from '../theme';
 import { formatClock, meteringToLevel } from './audioLevels';
 import { attachMedia } from './mediaService';
@@ -90,6 +91,7 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
       await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
       await recorder.prepareToRecordAsync();
       recorder.record();
+      impact();
       setLevels([]);
       setDurationMillis(0);
       setPhase('recording');
@@ -121,6 +123,7 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
     // Read the recorded length before stopping — the status resets afterward.
     // Paused time is not counted, so this is the real audio duration.
     const durationS = Math.max(1, Math.round(recorder.getStatus().durationMillis / 1000));
+    impact();
     setBusy(true);
     try {
       await recorder.stop();

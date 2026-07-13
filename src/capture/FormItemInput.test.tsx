@@ -1,11 +1,13 @@
 import { fireEvent, render } from '@testing-library/react-native';
 
 import type { Item, ItemType } from '../api/types';
+import { selectionTick } from '../haptics';
 import { FormItemInput } from './FormItemInput';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
+jest.mock('../haptics', () => ({ selectionTick: jest.fn() }));
 
 function item(overrides: Partial<Item> & { type: ItemType }): Item {
   return {
@@ -42,6 +44,7 @@ describe('FormItemInput', () => {
     const { getByTestId, rerender } = await render(<FormItemInput {...props} value="" />);
     await fireEvent.press(getByTestId('option-10-fresh'));
     expect(onChange).toHaveBeenCalledWith('fresh');
+    expect(selectionTick).toHaveBeenCalled();
 
     await rerender(<FormItemInput {...props} value="fresh" />);
     await fireEvent.press(getByTestId('option-10-fresh'));

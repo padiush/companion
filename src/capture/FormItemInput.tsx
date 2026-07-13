@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import type { Item } from '../api/types';
+import { selectionTick } from '../haptics';
 import { useTheme } from '../theme';
 import { DateField } from './DateField';
 import type { AnswerValue } from './values';
@@ -30,6 +31,7 @@ export function FormItemInput({ item, value, onChange }: Props) {
       item.type === 'multi' ? Array.isArray(value) && value.includes(option) : value === option;
 
     const toggle = (option: string) => {
+      selectionTick();
       if (item.type === 'multi') {
         const current = Array.isArray(value) ? value : [];
         onChange(
