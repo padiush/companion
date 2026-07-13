@@ -12,9 +12,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Chevron } from '../components/Chevron';
 import { useAuth } from '../auth/AuthContext';
+import { Chevron } from '../components/Chevron';
 import { useOutbox } from '../hooks/useOutbox';
 import { useProjects } from '../hooks/useProjects';
 import type { RootStackParamList } from '../navigation/types';
@@ -33,6 +34,7 @@ export function HomeScreen() {
   const { projects, loading, syncing, error, sync } = useProjects();
   const { count } = useOutbox();
   const navigation = useNavigation<Nav>();
+  const insets = useSafeAreaInsets();
   const [signingOut, setSigningOut] = useState(false);
   const [syncedOk, setSyncedOk] = useState(false);
 
@@ -64,7 +66,7 @@ export function HomeScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.bg }]}>
+    <View style={[styles.container, { backgroundColor: theme.bg, paddingTop: insets.top + 12 }]}>
       <View style={styles.header}>
         <View style={styles.headerText}>
           <Text style={[styles.greeting, { color: theme.text }]}>
@@ -147,8 +149,7 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
-    paddingTop: 72,
+    paddingHorizontal: 24,
     paddingBottom: 12,
   },
   header: {
