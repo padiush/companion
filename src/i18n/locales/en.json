@@ -34,6 +34,7 @@
     "sync": "Sync",
     "empty": "No projects yet. Sync to load them.",
     "syncError": "Couldn't sync. Check your connection.",
+    "synced": "Projects updated",
     "drafts": "My interviews"
   },
   "project": {
@@ -72,6 +73,8 @@
     "title": "Interviews",
     "send": "Send",
     "sendError": "Couldn't send. Check your connection.",
+    "sent_one": "1 interview sent",
+    "sent_other": "{{count}} interviews sent",
     "empty": "No interviews yet.",
     "summary": "{{answers}} answers · {{media}} media",
     "status": {

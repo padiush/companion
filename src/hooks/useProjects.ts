@@ -13,7 +13,8 @@ export interface ProjectsState {
   syncing: boolean;
   /** The last sync failed (e.g. offline). */
   error: boolean;
-  sync: () => Promise<void>;
+  /** Refresh from the API; resolves true on success, false on failure. */
+  sync: () => Promise<boolean>;
 }
 
 /**
@@ -51,8 +52,10 @@ export function useProjects(): ProjectsState {
       const db = await getDatabase();
       await pull(db);
       setProjects(await getProjects(db));
+      return true;
     } catch {
       setError(true);
+      return false;
     } finally {
       setSyncing(false);
     }

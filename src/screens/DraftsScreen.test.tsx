@@ -97,17 +97,18 @@ describe('DraftsScreen', () => {
     });
   });
 
-  it('sends and then refreshes the list', async () => {
-    const send = jest.fn().mockResolvedValue(undefined);
+  it('sends, refreshes the list, and confirms how many went', async () => {
+    const send = jest.fn().mockResolvedValue({ synced: 2, rejected: 0 });
     const refresh = jest.fn().mockResolvedValue(undefined);
     mockDrafts({ refresh });
     mockOutbox({ count: 2, send });
 
-    const { getByTestId } = await render(<DraftsScreen />);
+    const { getByTestId, findByText } = await render(<DraftsScreen />);
     await fireEvent.press(getByTestId('send'));
 
     expect(send).toHaveBeenCalled();
     await waitFor(() => expect(refresh).toHaveBeenCalled());
+    expect(await findByText('drafts.sent')).toBeTruthy();
   });
 
   it('hides the send button when there is nothing to send', async () => {
