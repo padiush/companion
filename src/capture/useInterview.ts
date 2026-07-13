@@ -9,6 +9,7 @@ import { answerKey, type AnswerValue } from './values';
 
 export interface InterviewState {
   form: CachedForm | null;
+  instanceId: string | null;
   loading: boolean;
   /** Current answers, keyed by answerKey(itemId, repeatableIndex). */
   answers: Record<string, AnswerValue>;
@@ -82,5 +83,5 @@ export function useInterview(formId: number, projectId: number): InterviewState 
     setRepeats((prev) => ({ ...prev, [sectionId]: (prev[sectionId] ?? 1) + 1 }));
   }, []);
 
-  return { form, loading, answers, repeats, setAnswer, addRepeat };
+  return { form, instanceId, loading, answers, repeats, setAnswer, addRepeat };
 }
