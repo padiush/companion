@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { formatDateTime } from '../capture/dateValue';
 import { useDrafts } from '../hooks/useDrafts';
 import { useOutbox } from '../hooks/useOutbox';
 import type { RootStackParamList } from '../navigation/types';
@@ -87,8 +88,13 @@ export function DraftsScreen() {
                 <Text style={[styles.formName, { color: theme.text }]}>
                   {draft.form_name ?? '—'}
                 </Text>
+                {draft.preview ? (
+                  <Text style={[styles.preview, { color: theme.text }]} numberOfLines={1}>
+                    {draft.preview}
+                  </Text>
+                ) : null}
                 <Text style={[styles.meta, { color: theme.muted }]}>
-                  {(draft.captured_at ?? draft.created_at).slice(0, 10)}
+                  {formatDateTime(new Date(draft.captured_at ?? draft.created_at))}
                   {'  ·  '}
                   {t('drafts.summary', { answers: draft.answer_count, media: draft.media_count })}
                 </Text>
@@ -156,8 +162,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  preview: {
+    fontSize: 14,
+    marginTop: 2,
+  },
   meta: {
     fontSize: 13,
+    marginTop: 2,
   },
   status: {
     fontSize: 13,
