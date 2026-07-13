@@ -5,6 +5,8 @@ import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { useTheme } from '../theme';
 import { formatDate, parseDate } from './dateValue';
 
+const CLEAR_HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
+
 interface Props {
   itemId: number;
   value: string;
@@ -33,9 +35,19 @@ export function DateField({ itemId, value, placeholder, onChange }: Props) {
         accessibilityRole="button"
         style={[styles.field, { borderColor: theme.border, backgroundColor: theme.inputBg }]}
       >
-        <Text style={{ color: value ? theme.text : theme.muted, fontSize: 16 }}>
+        <Text style={[styles.value, { color: value ? theme.text : theme.muted }]}>
           {value || placeholder}
         </Text>
+        {value ? (
+          <TouchableOpacity
+            testID={`date-clear-${itemId}`}
+            onPress={() => onChange('')}
+            accessibilityRole="button"
+            hitSlop={CLEAR_HIT_SLOP}
+          >
+            <Text style={[styles.clear, { color: theme.muted }]}>✕</Text>
+          </TouchableOpacity>
+        ) : null}
       </TouchableOpacity>
 
       {show ? (
@@ -52,9 +64,19 @@ export function DateField({ itemId, value, placeholder, onChange }: Props) {
 
 const styles = StyleSheet.create({
   field: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 13,
+  },
+  value: {
+    flex: 1,
+    fontSize: 16,
+  },
+  clear: {
+    fontSize: 16,
+    paddingLeft: 10,
   },
 });

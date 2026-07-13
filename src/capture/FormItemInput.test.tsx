@@ -74,4 +74,14 @@ describe('FormItemInput', () => {
 
     expect(onChange).toHaveBeenCalledWith('2026-07-13');
   });
+
+  it('clears a set date', async () => {
+    const onChange = jest.fn();
+    const { getByTestId } = await render(
+      <FormItemInput item={item({ type: 'date' })} value="2026-07-13" onChange={onChange} />
+    );
+
+    await fireEvent.press(getByTestId('date-clear-10'));
+    expect(onChange).toHaveBeenCalledWith('');
+  });
 });
