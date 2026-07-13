@@ -7,8 +7,9 @@ import { DraftsScreen } from './DraftsScreen';
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
+const mockNavigate = jest.fn();
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({ setOptions: jest.fn() }),
+  useNavigation: () => ({ navigate: mockNavigate }),
 }));
 jest.mock('../hooks/useDrafts', () => ({ useDrafts: jest.fn() }));
 jest.mock('../hooks/useOutbox', () => ({ useOutbox: jest.fn() }));
@@ -20,6 +21,7 @@ function draft(overrides: Record<string, unknown> = {}) {
   return {
     id: 'd1',
     form_id: 27,
+    project_id: 9,
     form_name: 'Plant uses',
     captured_at: '2026-07-13T10:00:00Z',
     created_at: '2026-07-13T09:00:00Z',
@@ -69,6 +71,20 @@ describe('DraftsScreen', () => {
 
     const { getByText } = await render(<DraftsScreen />);
     expect(getByText('drafts.empty')).toBeTruthy();
+  });
+
+  it('reopens a draft as an interview when a row is tapped', async () => {
+    mockDrafts({ drafts: [draft()] });
+
+    const { getByTestId } = await render(<DraftsScreen />);
+    await fireEvent.press(getByTestId('draft-d1'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('Interview', {
+      formId: 27,
+      projectId: 9,
+      formName: 'Plant uses',
+      instanceId: 'd1',
+    });
   });
 
   it('sends and then refreshes the list', async () => {

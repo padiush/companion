@@ -24,7 +24,7 @@ export function InterviewScreen() {
   const theme = useTheme();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Interview'>>();
   const { form, instanceId, loading, answers, repeats, setAnswer, addRepeat, removeRepeat } =
-    useInterview(params.formId, params.projectId);
+    useInterview(params.formId, params.projectId, params.instanceId);
 
   if (loading || !form) {
     return (

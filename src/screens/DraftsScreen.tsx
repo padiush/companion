@@ -1,3 +1,5 @@
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -10,12 +12,16 @@ import {
 
 import { useDrafts } from '../hooks/useDrafts';
 import { useOutbox } from '../hooks/useOutbox';
+import type { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
+
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 /** The Entrevistas tab: recorded interviews with their sync status, and a Send action. */
 export function DraftsScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
+  const navigation = useNavigation<Nav>();
   const { drafts, loading, refresh } = useDrafts();
   const { count, sending, error, send } = useOutbox();
 
@@ -63,9 +69,18 @@ export function DraftsScreen() {
           <Text style={[styles.empty, { color: theme.muted }]}>{t('drafts.empty')}</Text>
         ) : (
           drafts.map((draft) => (
-            <View
+            <TouchableOpacity
               key={draft.id}
               testID={`draft-${draft.id}`}
+              accessibilityRole="button"
+              onPress={() =>
+                navigation.navigate('Interview', {
+                  formId: draft.form_id,
+                  projectId: draft.project_id,
+                  formName: draft.form_name ?? '',
+                  instanceId: draft.id,
+                })
+              }
               style={[styles.row, { backgroundColor: theme.card, borderColor: theme.border }]}
             >
               <View style={styles.rowMain}>
@@ -81,7 +96,7 @@ export function DraftsScreen() {
               <Text style={[styles.status, { color: statusColor(draft.sync_status) }]}>
                 {t(`drafts.status.${draft.sync_status}`, { defaultValue: draft.sync_status })}
               </Text>
-            </View>
+            </TouchableOpacity>
           ))
         )}
       </ScrollView>

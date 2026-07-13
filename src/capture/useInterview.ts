@@ -3,8 +3,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { deleteAnswersForSet } from '../db/answersRepository';
 import { getDatabase } from '../db/database';
 import { getForm } from '../db/formsRepository';
-import type { CachedForm } from '../db/types';
-import { createDraft, saveAnswer } from './captureService';
+import type { AnswerRow, CachedForm } from '../db/types';
+import { createDraft, getDraftAnswers, saveAnswer } from './captureService';
+import { hydrateDraft } from './hydrateDraft';
 import { captureLocation } from './location';
 import { answerKey, type AnswerValue } from './values';
 
@@ -27,11 +28,16 @@ export interface InterviewState {
 }
 
 /**
- * Drives one interview: loads the cached form, starts a draft (with a GPS fix),
- * and persists each answer as it changes. Repeatable sections start with one set
- * and grow on demand.
+ * Drives one interview: loads the cached form and either reopens an existing
+ * draft (rehydrating its saved answers) or starts a new one with a GPS fix, then
+ * persists each answer as it changes. Repeatable sections start with one set and
+ * grow on demand.
  */
-export function useInterview(formId: number, projectId: number): InterviewState {
+export function useInterview(
+  formId: number,
+  projectId: number,
+  existingInstanceId?: string
+): InterviewState {
   const [form, setForm] = useState<CachedForm | null>(null);
   const [instanceId, setInstanceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,29 +50,34 @@ export function useInterview(formId: number, projectId: number): InterviewState 
     (async () => {
       const db = await getDatabase();
       const loadedForm = await getForm(db, formId);
-      const location = await captureLocation();
-      const id = await createDraft(db, { formId, projectId, location });
+
+      let id: string;
+      let rows: AnswerRow[];
+      if (existingInstanceId) {
+        id = existingInstanceId;
+        rows = await getDraftAnswers(db, existingInstanceId);
+      } else {
+        const location = await captureLocation();
+        id = await createDraft(db, { formId, projectId, location });
+        rows = [];
+      }
 
       if (!active) {
         return;
       }
 
+      const hydrated = hydrateDraft(loadedForm, rows);
       setForm(loadedForm);
       setInstanceId(id);
-      setRepeats(
-        Object.fromEntries(
-          (loadedForm?.sections ?? [])
-            .filter((section) => section.repeatable)
-            .map((section) => [section.id, 1])
-        )
-      );
+      setAnswers(hydrated.answers);
+      setRepeats(hydrated.repeats);
       setLoading(false);
     })();
 
     return () => {
       active = false;
     };
-  }, [formId, projectId]);
+  }, [formId, projectId, existingInstanceId]);
 
   const setAnswer = useCallback(
     (sectionId: number, itemId: number, repeatableIndex: number | null, value: AnswerValue) => {
