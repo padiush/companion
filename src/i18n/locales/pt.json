@@ -30,6 +30,9 @@
     "empty": "Este projeto não tem formulários ativos."
   },
   "interview": {
-    "preparing": "Preparando a entrevista…"
+    "preparing": "Preparando a entrevista…",
+    "set": "Registro {{number}}",
+    "addSet": "Adicionar registro",
+    "savedLocally": "Rascunho salvo neste dispositivo"
   }
 }

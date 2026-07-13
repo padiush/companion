@@ -41,3 +41,16 @@ export function isAnswered(value: AnswerValue): boolean {
   }
   return value.trim() !== '';
 }
+
+/**
+ * A stable key for an answer slot within an interview — an item, in a given
+ * repeatable set (null for non-repeatable sections).
+ */
+export function answerKey(itemId: number, repeatableIndex: number | null): string {
+  return `${itemId}:${repeatableIndex ?? 'x'}`;
+}
+
+/** The empty controlled-input value for an item type: a list for multi, else ''. */
+export function emptyValueFor(type: ItemType): AnswerValue {
+  return type === 'multi' ? [] : '';
+}

@@ -1,4 +1,10 @@
-import { decodeAnswerValue, encodeAnswerValue, isAnswered } from './values';
+import {
+  answerKey,
+  decodeAnswerValue,
+  emptyValueFor,
+  encodeAnswerValue,
+  isAnswered,
+} from './values';
 
 describe('encodeAnswerValue', () => {
   it('passes strings through and JSON-encodes multi-select arrays', () => {
@@ -32,5 +38,22 @@ describe('isAnswered', () => {
   it('treats non-empty values as answered', () => {
     expect(isAnswered('guaba')).toBe(true);
     expect(isAnswered(['food'])).toBe(true);
+  });
+});
+
+describe('answerKey', () => {
+  it('distinguishes repeatable sets and non-repeatable items', () => {
+    expect(answerKey(10, null)).toBe('10:x');
+    expect(answerKey(10, 0)).toBe('10:0');
+    expect(answerKey(10, 1)).toBe('10:1');
+    expect(answerKey(10, 0)).not.toBe(answerKey(10, null));
+  });
+});
+
+describe('emptyValueFor', () => {
+  it('is an empty list for multi and an empty string otherwise', () => {
+    expect(emptyValueFor('multi')).toEqual([]);
+    expect(emptyValueFor('text')).toBe('');
+    expect(emptyValueFor('select')).toBe('');
   });
 });

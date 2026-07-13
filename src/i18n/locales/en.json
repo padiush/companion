@@ -30,6 +30,9 @@
     "empty": "This project has no active forms."
   },
   "interview": {
-    "preparing": "Preparing interview…"
+    "preparing": "Preparing interview…",
+    "set": "Entry {{number}}",
+    "addSet": "Add entry",
+    "savedLocally": "Draft saved on this device"
   }
 }
