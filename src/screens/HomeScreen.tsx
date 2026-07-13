@@ -50,35 +50,19 @@ export function HomeScreen() {
         <Text style={[styles.subtitle, { color: theme.muted }]}>{t('home.subtitle')}</Text>
       </View>
 
-      {outbox.count > 0 ? (
-        <View style={[styles.outbox, { backgroundColor: theme.card, borderColor: theme.border }]}>
-          <Text style={[styles.outboxText, { color: theme.text }]}>
-            {t('home.outbox', { count: outbox.count })}
-          </Text>
-          <TouchableOpacity
-            testID="send-drafts"
-            onPress={outbox.send}
-            disabled={outbox.sending}
-            accessibilityRole="button"
-          >
-            {outbox.sending ? (
-              <ActivityIndicator color={theme.primary} />
-            ) : (
-              <Text style={[styles.sendText, { color: theme.primary }]}>{t('home.send')}</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      ) : null}
-
-      {outbox.error ? (
-        <Text style={[styles.error, { color: theme.danger }]}>{t('home.sendError')}</Text>
-      ) : null}
-
-      {outbox.lastResult && outbox.lastResult.rejected > 0 ? (
-        <Text style={[styles.error, { color: theme.danger }]}>
-          {t('home.someRejected', { count: outbox.lastResult.rejected })}
-        </Text>
-      ) : null}
+      <TouchableOpacity
+        testID="open-drafts"
+        onPress={() => navigation.navigate('Drafts')}
+        accessibilityRole="button"
+        style={[styles.drafts, { backgroundColor: theme.card, borderColor: theme.border }]}
+      >
+        <Text style={[styles.draftsText, { color: theme.text }]}>{t('home.drafts')}</Text>
+        {outbox.count > 0 ? (
+          <View style={[styles.badge, { backgroundColor: theme.primary }]}>
+            <Text style={[styles.badgeText, { color: theme.onPrimary }]}>{outbox.count}</Text>
+          </View>
+        ) : null}
+      </TouchableOpacity>
 
       <View style={styles.projectsHeader}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('home.projects')}</Text>
@@ -163,24 +147,30 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginTop: 8,
   },
-  outbox: {
+  drafts: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 16,
   },
-  outboxText: {
+  draftsText: {
     fontSize: 15,
-    fontWeight: '500',
-    flexShrink: 1,
-    paddingRight: 12,
+    fontWeight: '600',
   },
-  sendText: {
-    fontSize: 15,
+  badge: {
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    paddingHorizontal: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    fontSize: 13,
     fontWeight: '700',
   },
   projectsHeader: {

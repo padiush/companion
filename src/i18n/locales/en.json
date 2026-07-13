@@ -23,11 +23,7 @@
     "sync": "Sync",
     "empty": "No projects yet. Sync to load them.",
     "syncError": "Couldn't sync. Check your connection.",
-    "outbox_one": "{{count}} interview to send",
-    "outbox_other": "{{count}} interviews to send",
-    "send": "Send",
-    "sendError": "Couldn't send. Check your connection.",
-    "someRejected": "{{count}} interviews were rejected."
+    "drafts": "My interviews"
   },
   "project": {
     "forms": "Forms",
@@ -47,5 +43,17 @@
     "photo": "Photo",
     "audio": "Audio",
     "mediaPermission": "Camera or microphone permission is needed."
+  },
+  "drafts": {
+    "title": "Interviews",
+    "send": "Send",
+    "sendError": "Couldn't send. Check your connection.",
+    "empty": "No interviews yet.",
+    "summary": "{{answers}} answers · {{media}} media",
+    "status": {
+      "draft": "Draft",
+      "synced": "Sent",
+      "rejected": "Rejected"
+    }
   }
 }
