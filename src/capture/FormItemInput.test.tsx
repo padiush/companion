@@ -58,4 +58,16 @@ describe('FormItemInput', () => {
     await fireEvent.press(getByTestId('option-10-food'));
     expect(onChange).toHaveBeenLastCalledWith([]);
   });
+
+  it('opens a date picker and reports the chosen date', async () => {
+    const onChange = jest.fn();
+    const { getByTestId } = await render(
+      <FormItemInput item={item({ type: 'date' })} value="" onChange={onChange} />
+    );
+
+    await fireEvent.press(getByTestId('date-10'));
+    await fireEvent.press(getByTestId('date-picker-10'));
+
+    expect(onChange).toHaveBeenCalledWith('2026-07-13');
+  });
 });

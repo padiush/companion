@@ -2,6 +2,7 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 
 import type { Item } from '../api/types';
 import { useTheme } from '../theme';
+import { DateField } from './DateField';
 import type { AnswerValue } from './values';
 
 interface Props {
@@ -67,6 +68,20 @@ export function FormItemInput({ item, value, onChange }: Props) {
     );
   }
 
+  if (item.type === 'date') {
+    return (
+      <View style={styles.field}>
+        {label}
+        <DateField
+          itemId={item.id}
+          value={typeof value === 'string' ? value : ''}
+          placeholder="YYYY-MM-DD"
+          onChange={onChange}
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.field}>
       {label}
@@ -79,7 +94,6 @@ export function FormItemInput({ item, value, onChange }: Props) {
         value={typeof value === 'string' ? value : ''}
         onChangeText={onChange}
         keyboardType={item.type === 'number' ? 'numeric' : 'default'}
-        placeholder={item.type === 'date' ? 'YYYY-MM-DD' : undefined}
         placeholderTextColor={theme.muted}
         autoCapitalize="none"
       />
