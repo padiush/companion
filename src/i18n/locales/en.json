@@ -18,6 +18,10 @@
   "home": {
     "greeting": "Hi, {{name}}",
     "subtitle": "Ready to record interviews in the field.",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "projects": "Projects",
+    "sync": "Sync",
+    "empty": "No projects yet. Sync to load them.",
+    "syncError": "Couldn't sync. Check your connection."
   }
 }

@@ -18,6 +18,10 @@
   "home": {
     "greeting": "Hola, {{name}}",
     "subtitle": "Listo para registrar entrevistas en campo.",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "projects": "Proyectos",
+    "sync": "Sincronizar",
+    "empty": "Aún no hay proyectos. Sincroniza para cargarlos.",
+    "syncError": "No se pudo sincronizar. Revisa tu conexión."
   }
 }
