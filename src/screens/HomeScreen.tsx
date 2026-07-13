@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -107,7 +108,14 @@ export function HomeScreen() {
         <Text style={[styles.success, { color: theme.primary }]}>{t('home.synced')}</Text>
       ) : null}
 
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+      <ScrollView
+        testID="projects-scroll"
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl refreshing={syncing} onRefresh={onSync} tintColor={theme.primary} />
+        }
+      >
         {loading ? (
           <ActivityIndicator color={theme.primary} />
         ) : projects.length === 0 ? (
