@@ -2,6 +2,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { requestRecordingPermissionsAsync, setAudioModeAsync } from 'expo-audio';
 
 import { listMediaForInstance } from '../db/mediaRepository';
+import { impact } from '../haptics';
 import { AudioRecorder } from './AudioRecorder';
 import { attachMedia } from './mediaService';
 
@@ -31,6 +32,7 @@ jest.mock('expo-audio', () => ({
 jest.mock('../db/database', () => ({ getDatabase: jest.fn().mockResolvedValue({}) }));
 jest.mock('../db/mediaRepository', () => ({ listMediaForInstance: jest.fn() }));
 jest.mock('./mediaService', () => ({ attachMedia: jest.fn().mockResolvedValue('audio-1') }));
+jest.mock('../haptics', () => ({ impact: jest.fn() }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, opts?: { number?: number }) =>
@@ -64,6 +66,7 @@ describe('AudioRecorder', () => {
     });
     expect(mockRecorder.prepareToRecordAsync).toHaveBeenCalled();
     expect(mockRecorder.record).toHaveBeenCalledTimes(1);
+    expect(impact).toHaveBeenCalled();
     // A running recording exposes pause + stop, not the initial record button.
     expect(getByTestId('pause-recording')).toBeTruthy();
   });
