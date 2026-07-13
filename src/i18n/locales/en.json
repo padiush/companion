@@ -1,0 +1,9 @@
+{
+  "app": {
+    "name": "Padiush Companion",
+    "tagline": "Field capture for ethnobotanical research"
+  },
+  "landing": {
+    "apiLabel": "API"
+  }
+}

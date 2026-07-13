@@ -1,6 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, useColorScheme, View } from 'react-native';
 
+import './src/i18n';
 import { API_BASE_URL } from './src/config';
 
 /**
@@ -9,17 +11,16 @@ import { API_BASE_URL } from './src/config';
  * and which backend it is pointed at.
  */
 export default function App() {
+  const { t } = useTranslation();
   const scheme = useColorScheme();
   const theme = scheme === 'dark' ? dark : light;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
-      <Text style={[styles.title, { color: theme.text }]}>Padiush Companion</Text>
-      <Text style={[styles.subtitle, { color: theme.muted }]}>
-        Field capture for ethnobotanical research
-      </Text>
+      <Text style={[styles.title, { color: theme.text }]}>{t('app.name')}</Text>
+      <Text style={[styles.subtitle, { color: theme.muted }]}>{t('app.tagline')}</Text>
       <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-        <Text style={[styles.label, { color: theme.muted }]}>API</Text>
+        <Text style={[styles.label, { color: theme.muted }]}>{t('landing.apiLabel')}</Text>
         <Text style={[styles.value, { color: theme.text }]}>{API_BASE_URL}</Text>
       </View>
       <StatusBar style="auto" />

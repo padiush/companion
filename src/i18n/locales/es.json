@@ -1,0 +1,9 @@
+{
+  "app": {
+    "name": "Padiush Companion",
+    "tagline": "Registro de campo para investigación etnobotánica"
+  },
+  "landing": {
+    "apiLabel": "API"
+  }
+}
