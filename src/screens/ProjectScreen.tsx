@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { Chevron } from '../components/Chevron';
 import { useForms } from '../hooks/useForms';
 import type { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
@@ -50,13 +51,16 @@ export function ProjectScreen() {
               }
               accessibilityRole="button"
             >
-              <Text style={[styles.formName, { color: theme.text }]}>{form.name}</Text>
-              {form.description ? (
-                <Text style={[styles.formDesc, { color: theme.muted }]}>{form.description}</Text>
-              ) : null}
-              <Text style={[styles.start, { color: theme.primary }]}>
-                {t('project.newInterview')}
-              </Text>
+              <View style={styles.formRowText}>
+                <Text style={[styles.formName, { color: theme.text }]}>{form.name}</Text>
+                {form.description ? (
+                  <Text style={[styles.formDesc, { color: theme.muted }]}>{form.description}</Text>
+                ) : null}
+                <Text style={[styles.start, { color: theme.primary }]}>
+                  {t('project.newInterview')}
+                </Text>
+              </View>
+              <Chevron color={theme.muted} />
             </TouchableOpacity>
           ))
         )}
@@ -86,9 +90,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   formRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
     borderWidth: 1,
     borderRadius: 12,
     padding: 16,
+  },
+  formRowText: {
+    flexShrink: 1,
     gap: 6,
   },
   formName: {

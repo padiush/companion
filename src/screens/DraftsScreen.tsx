@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { formatDateTime } from '../capture/dateValue';
+import { Chevron } from '../components/Chevron';
 import { useDrafts } from '../hooks/useDrafts';
 import { useOutbox } from '../hooks/useOutbox';
 import type { RootStackParamList } from '../navigation/types';
@@ -102,6 +103,7 @@ export function DraftsScreen() {
               <Text style={[styles.status, { color: statusColor(draft.sync_status) }]}>
                 {t(`drafts.status.${draft.sync_status}`, { defaultValue: draft.sync_status })}
               </Text>
+              <Chevron color={theme.muted} />
             </TouchableOpacity>
           ))
         )}
@@ -148,14 +150,13 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     borderWidth: 1,
     borderRadius: 12,
     padding: 16,
     gap: 12,
   },
   rowMain: {
-    flexShrink: 1,
+    flex: 1,
     gap: 4,
   },
   formName: {
