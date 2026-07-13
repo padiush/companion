@@ -1,7 +1,6 @@
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
 import { useAuth } from '../auth/AuthContext';
-import { useOutbox } from '../hooks/useOutbox';
 import { useProjects } from '../hooks/useProjects';
 import { HomeScreen } from './HomeScreen';
 
@@ -12,7 +11,6 @@ jest.mock('react-i18next', () => ({
 }));
 jest.mock('../auth/AuthContext', () => ({ useAuth: jest.fn() }));
 jest.mock('../hooks/useProjects', () => ({ useProjects: jest.fn() }));
-jest.mock('../hooks/useOutbox', () => ({ useOutbox: jest.fn() }));
 
 const mockNavigate = jest.fn();
 jest.mock('@react-navigation/native', () => ({
@@ -21,7 +19,6 @@ jest.mock('@react-navigation/native', () => ({
 
 const mockUseAuth = useAuth as jest.Mock;
 const mockUseProjects = useProjects as jest.Mock;
-const mockUseOutbox = useOutbox as jest.Mock;
 
 function mockAuth(signOut = jest.fn()) {
   mockUseAuth.mockReturnValue({
@@ -43,22 +40,10 @@ function mockProjects(overrides: Record<string, unknown> = {}) {
   });
 }
 
-function mockOutbox(overrides: Record<string, unknown> = {}) {
-  mockUseOutbox.mockReturnValue({
-    count: 0,
-    sending: false,
-    error: false,
-    lastResult: null,
-    send: jest.fn(),
-    ...overrides,
-  });
-}
-
 beforeEach(() => {
   jest.clearAllMocks();
   mockAuth();
   mockProjects();
-  mockOutbox();
 });
 
 describe('HomeScreen', () => {
@@ -120,22 +105,5 @@ describe('HomeScreen', () => {
 
     const { getByText } = await render(<HomeScreen />);
     expect(getByText('home.syncError')).toBeTruthy();
-  });
-
-  it('shows the pending draft count on the drafts button', async () => {
-    mockOutbox({ count: 3 });
-
-    const { getByTestId, getByText } = await render(<HomeScreen />);
-    expect(getByTestId('open-drafts')).toBeTruthy();
-    expect(getByText('3')).toBeTruthy();
-  });
-
-  it('opens the drafts screen when the drafts button is tapped', async () => {
-    mockOutbox({ count: 0 });
-
-    const { getByTestId } = await render(<HomeScreen />);
-    await fireEvent.press(getByTestId('open-drafts'));
-
-    expect(mockNavigate).toHaveBeenCalledWith('Drafts');
   });
 });

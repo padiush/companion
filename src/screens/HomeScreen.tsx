@@ -12,23 +12,21 @@ import {
 } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
-import { useOutbox } from '../hooks/useOutbox';
 import { useProjects } from '../hooks/useProjects';
 import type { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
 
-type Nav = NativeStackNavigationProp<RootStackParamList, 'Home'>;
+type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 /**
- * Home for a signed-in recorder: the outbox of unsent interviews and the cached
- * project list. Interviews open from a project; drafts are sent from here.
+ * The Proyectos tab: the cached project list, from which interviews are started.
+ * Recorded interviews live in the Entrevistas tab.
  */
 export function HomeScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const { user, signOut } = useAuth();
   const { projects, loading, syncing, error, sync } = useProjects();
-  const outbox = useOutbox();
   const navigation = useNavigation<Nav>();
   const [signingOut, setSigningOut] = useState(false);
 
@@ -44,34 +42,29 @@ export function HomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <View style={styles.header}>
-        <Text style={[styles.greeting, { color: theme.text }]}>
-          {t('home.greeting', { name: user?.name ?? '' })}
-        </Text>
-        <Text style={[styles.subtitle, { color: theme.muted }]}>{t('home.subtitle')}</Text>
+        <View style={styles.headerText}>
+          <Text style={[styles.greeting, { color: theme.text }]}>
+            {t('home.greeting', { name: user?.name ?? '' })}
+          </Text>
+          <Text style={[styles.subtitle, { color: theme.muted }]}>{t('home.subtitle')}</Text>
+        </View>
+        <TouchableOpacity
+          testID="sign-out"
+          onPress={onSignOut}
+          disabled={signingOut}
+          accessibilityRole="button"
+        >
+          {signingOut ? (
+            <ActivityIndicator color={theme.muted} />
+          ) : (
+            <Text style={[styles.signOutText, { color: theme.muted }]}>{t('home.signOut')}</Text>
+          )}
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity
-        testID="open-drafts"
-        onPress={() => navigation.navigate('Drafts')}
-        accessibilityRole="button"
-        style={[styles.drafts, { backgroundColor: theme.card, borderColor: theme.border }]}
-      >
-        <Text style={[styles.draftsText, { color: theme.text }]}>{t('home.drafts')}</Text>
-        {outbox.count > 0 ? (
-          <View style={[styles.badge, { backgroundColor: theme.primary }]}>
-            <Text style={[styles.badgeText, { color: theme.onPrimary }]}>{outbox.count}</Text>
-          </View>
-        ) : null}
-      </TouchableOpacity>
 
       <View style={styles.projectsHeader}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('home.projects')}</Text>
-        <TouchableOpacity
-          testID="sync"
-          onPress={sync}
-          disabled={syncing}
-          accessibilityRole="button"
-        >
+        <TouchableOpacity testID="sync" onPress={sync} disabled={syncing} accessibilityRole="button">
           {syncing ? (
             <ActivityIndicator color={theme.primary} />
           ) : (
@@ -94,10 +87,7 @@ export function HomeScreen() {
             <TouchableOpacity
               key={project.id}
               testID={`project-${project.id}`}
-              style={[
-                styles.projectRow,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
+              style={[styles.projectRow, { backgroundColor: theme.card, borderColor: theme.border }]}
               onPress={() =>
                 navigation.navigate('Project', {
                   projectId: project.id,
@@ -111,20 +101,6 @@ export function HomeScreen() {
           ))
         )}
       </ScrollView>
-
-      <TouchableOpacity
-        testID="sign-out"
-        style={[styles.signOut, { borderColor: theme.border }]}
-        onPress={onSignOut}
-        disabled={signingOut}
-        accessibilityRole="button"
-      >
-        {signingOut ? (
-          <ActivityIndicator color={theme.text} />
-        ) : (
-          <Text style={[styles.signOutText, { color: theme.text }]}>{t('home.signOut')}</Text>
-        )}
-      </TouchableOpacity>
     </View>
   );
 }
@@ -134,10 +110,17 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     paddingTop: 72,
-    paddingBottom: 40,
+    paddingBottom: 12,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 16,
     marginBottom: 28,
+  },
+  headerText: {
+    flexShrink: 1,
   },
   greeting: {
     fontSize: 24,
@@ -147,31 +130,10 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginTop: 8,
   },
-  drafts: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-  },
-  draftsText: {
+  signOutText: {
     fontSize: 15,
     fontWeight: '600',
-  },
-  badge: {
-    minWidth: 24,
-    height: 24,
-    borderRadius: 12,
-    paddingHorizontal: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeText: {
-    fontSize: 13,
-    fontWeight: '700',
+    paddingVertical: 4,
   },
   projectsHeader: {
     flexDirection: 'row',
@@ -212,17 +174,5 @@ const styles = StyleSheet.create({
   projectName: {
     fontSize: 16,
     fontWeight: '500',
-  },
-  signOut: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 50,
-  },
-  signOutText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

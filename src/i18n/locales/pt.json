@@ -15,6 +15,10 @@
       "generic": "Não foi possível entrar. Tente novamente."
     }
   },
+  "tabs": {
+    "projects": "Projetos",
+    "interviews": "Entrevistas"
+  },
   "home": {
     "greeting": "Olá, {{name}}",
     "subtitle": "Pronto para registrar entrevistas em campo.",
