@@ -38,6 +38,13 @@
     "preparing": "Preparing interview…",
     "set": "Entry {{number}}",
     "addSet": "Add entry",
-    "savedLocally": "Draft saved on this device"
+    "savedLocally": "Draft saved on this device",
+    "media": "Photos and audio",
+    "addPhoto": "Add photo",
+    "recordAudio": "Record audio",
+    "stopRecording": "Stop",
+    "photo": "Photo",
+    "audio": "Audio",
+    "mediaPermission": "Camera or microphone permission is needed."
   }
 }

@@ -11,6 +11,7 @@ import {
 
 import type { Item } from '../api/types';
 import { FormItemInput } from '../capture/FormItemInput';
+import { MediaSection } from '../capture/MediaSection';
 import { useInterview } from '../capture/useInterview';
 import { answerKey, emptyValueFor } from '../capture/values';
 import type { RootStackParamList } from '../navigation/types';
@@ -21,7 +22,7 @@ export function InterviewScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Interview'>>();
-  const { form, loading, answers, repeats, setAnswer, addRepeat } = useInterview(
+  const { form, instanceId, loading, answers, repeats, setAnswer, addRepeat } = useInterview(
     params.formId,
     params.projectId
   );
@@ -80,6 +81,8 @@ export function InterviewScreen() {
           )}
         </View>
       ))}
+
+      {instanceId ? <MediaSection instanceId={instanceId} /> : null}
 
       <Text style={[styles.saved, { color: theme.muted }]}>{t('interview.savedLocally')}</Text>
     </ScrollView>

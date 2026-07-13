@@ -13,6 +13,7 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: { formId: 27, projectId: 9, formName: 'Plant uses' } }),
 }));
 jest.mock('../capture/useInterview', () => ({ useInterview: jest.fn() }));
+jest.mock('../capture/MediaSection', () => ({ MediaSection: () => null }));
 
 const mockUseInterview = useInterview as jest.Mock;
 

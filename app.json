@@ -36,6 +36,13 @@
           "locationWhenInUsePermission": "Padiush tags each interview with where in the field it was recorded."
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Padiush uses the camera to attach photos to an interview.",
+          "photosPermission": "Padiush attaches photos from your library to an interview."
+        }
+      ],
       "expo-asset",
       "expo-localization"
     ]
