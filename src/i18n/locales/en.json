@@ -38,6 +38,7 @@
     "preparing": "Preparing interview…",
     "set": "Entry {{number}}",
     "addSet": "Add entry",
+    "removeSet": "Remove entry",
     "savedLocally": "Draft saved on this device",
     "media": "Photos and audio",
     "addPhoto": "Add photo",

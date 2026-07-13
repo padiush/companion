@@ -52,6 +52,7 @@ function mockInterview(overrides: Record<string, unknown> = {}) {
     repeats: {},
     setAnswer: jest.fn(),
     addRepeat: jest.fn(),
+    removeRepeat: jest.fn(),
     ...overrides,
   });
 }
@@ -82,10 +83,22 @@ describe('InterviewScreen', () => {
     const addRepeat = jest.fn();
     mockInterview({ form: form(true), repeats: { 1: 1 }, addRepeat });
 
-    const { getByTestId, getByText } = await render(<InterviewScreen />);
+    const { getByTestId, getByText, queryByTestId } = await render(<InterviewScreen />);
     expect(getByText('interview.set:1')).toBeTruthy();
+    // Only one set, so there's nothing to remove yet.
+    expect(queryByTestId('remove-set-1')).toBeNull();
 
     await fireEvent.press(getByTestId('add-set-1'));
     expect(addRepeat).toHaveBeenCalledWith(1);
+  });
+
+  it('removes a set when there is more than one', async () => {
+    const removeRepeat = jest.fn();
+    mockInterview({ form: form(true), repeats: { 1: 2 }, removeRepeat });
+
+    const { getByTestId } = await render(<InterviewScreen />);
+    await fireEvent.press(getByTestId('remove-set-1'));
+
+    expect(removeRepeat).toHaveBeenCalledWith(1);
   });
 });

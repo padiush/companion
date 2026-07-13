@@ -71,3 +71,16 @@ export async function getAnswersForInstance(
 ): Promise<AnswerRow[]> {
   return db.getAllAsync<AnswerRow>('SELECT * FROM answers WHERE instance_id = ?', [instanceId]);
 }
+
+/** Delete all answers for one repeatable set (e.g. when a set is removed). */
+export async function deleteAnswersForSet(
+  db: SQLiteDatabase,
+  instanceId: string,
+  sectionId: number,
+  repeatableIndex: number
+): Promise<void> {
+  await db.runAsync(
+    'DELETE FROM answers WHERE instance_id = ? AND section_id = ? AND repeatable_index = ?',
+    [instanceId, sectionId, repeatableIndex]
+  );
+}

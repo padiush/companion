@@ -22,10 +22,8 @@ export function InterviewScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Interview'>>();
-  const { form, instanceId, loading, answers, repeats, setAnswer, addRepeat } = useInterview(
-    params.formId,
-    params.projectId
-  );
+  const { form, instanceId, loading, answers, repeats, setAnswer, addRepeat, removeRepeat } =
+    useInterview(params.formId, params.projectId);
 
   if (loading || !form) {
     return (
@@ -65,16 +63,28 @@ export function InterviewScreen() {
                   {section.items.map((item) => renderItem(item, section.id, setIndex))}
                 </View>
               ))}
-              <TouchableOpacity
-                testID={`add-set-${section.id}`}
-                onPress={() => addRepeat(section.id)}
-                accessibilityRole="button"
-                style={styles.addSet}
-              >
-                <Text style={[styles.addSetText, { color: theme.primary }]}>
-                  + {t('interview.addSet')}
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.setActions}>
+                <TouchableOpacity
+                  testID={`add-set-${section.id}`}
+                  onPress={() => addRepeat(section.id)}
+                  accessibilityRole="button"
+                >
+                  <Text style={[styles.addSetText, { color: theme.primary }]}>
+                    + {t('interview.addSet')}
+                  </Text>
+                </TouchableOpacity>
+                {(repeats[section.id] ?? 1) > 1 ? (
+                  <TouchableOpacity
+                    testID={`remove-set-${section.id}`}
+                    onPress={() => removeRepeat(section.id)}
+                    accessibilityRole="button"
+                  >
+                    <Text style={[styles.addSetText, { color: theme.danger }]}>
+                      − {t('interview.removeSet')}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
             </>
           ) : (
             section.items.map((item) => renderItem(item, section.id, null))
@@ -127,7 +137,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     marginBottom: 12,
   },
-  addSet: {
+  setActions: {
+    flexDirection: 'row',
+    gap: 24,
     paddingVertical: 8,
   },
   addSetText: {

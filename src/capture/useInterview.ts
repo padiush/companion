@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { deleteAnswersForSet } from '../db/answersRepository';
 import { getDatabase } from '../db/database';
 import { getForm } from '../db/formsRepository';
 import type { CachedForm } from '../db/types';
@@ -22,6 +23,7 @@ export interface InterviewState {
     value: AnswerValue
   ) => void;
   addRepeat: (sectionId: number) => void;
+  removeRepeat: (sectionId: number) => void;
 }
 
 /**
@@ -83,5 +85,38 @@ export function useInterview(formId: number, projectId: number): InterviewState 
     setRepeats((prev) => ({ ...prev, [sectionId]: (prev[sectionId] ?? 1) + 1 }));
   }, []);
 
-  return { form, instanceId, loading, answers, repeats, setAnswer, addRepeat };
+  const removeRepeat = useCallback(
+    (sectionId: number) => {
+      setRepeats((prev) => {
+        const current = prev[sectionId] ?? 1;
+        if (current <= 1) {
+          return prev;
+        }
+
+        const removedIndex = current - 1;
+        const section = form?.sections.find((candidate) => candidate.id === sectionId);
+
+        // Drop the removed set's answers from the draft and from local state.
+        if (instanceId) {
+          void getDatabase().then((db) =>
+            deleteAnswersForSet(db, instanceId, sectionId, removedIndex)
+          );
+        }
+        if (section) {
+          setAnswers((prevAnswers) => {
+            const next = { ...prevAnswers };
+            for (const item of section.items) {
+              delete next[answerKey(item.id, removedIndex)];
+            }
+            return next;
+          });
+        }
+
+        return { ...prev, [sectionId]: current - 1 };
+      });
+    },
+    [instanceId, form]
+  );
+
+  return { form, instanceId, loading, answers, repeats, setAnswer, addRepeat, removeRepeat };
 }
