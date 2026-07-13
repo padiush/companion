@@ -19,4 +19,10 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v57.0.0/ before 
   the password. The local capture store must be encrypted at rest — it holds
   informant responses until synced.
 - **Conventions:** TypeScript strict; commits are conventional (`type: subject`,
-  no scope), matching the platform repo.
+  no scope), matching the platform repo. Features and fixes ship with tests
+  (`npm test` — jest-expo + React Native Testing Library) and pass `npm run lint`
+  and `npm run typecheck`. Every user-facing string is localized in `src/i18n`
+  (es/en/pt, Spanish first) — never hard-code display text.
+- **Verification:** Jest + `npm run typecheck` + `npx expo-doctor`. The platform's
+  in-browser breakpoint check does **not** apply here — this is a native app, not
+  a web UI. Smoke-test on a device/simulator when one is available.
