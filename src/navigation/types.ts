@@ -10,5 +10,6 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   Project: { projectId: number; projectName: string };
-  Interview: { formId: number; projectId: number; formName: string };
+  /** `instanceId` is set when reopening an existing draft; omitted starts a new one. */
+  Interview: { formId: number; projectId: number; formName: string; instanceId?: string };
 };

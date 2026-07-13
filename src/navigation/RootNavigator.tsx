@@ -18,7 +18,7 @@ export function RootNavigator() {
 
   return (
     <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack.Navigator>
+      <Stack.Navigator screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
         <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
         <Stack.Screen
           name="Project"

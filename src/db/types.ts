@@ -69,6 +69,7 @@ export interface AnswerRow {
 export interface DraftListItem {
   id: string;
   form_id: number;
+  project_id: number;
   form_name: string | null;
   captured_at: string | null;
   created_at: string;

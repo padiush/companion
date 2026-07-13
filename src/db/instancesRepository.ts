@@ -96,7 +96,7 @@ export async function setSyncStatus(db: SQLiteDatabase, id: string, status: stri
 export async function listInstancesWithMeta(db: SQLiteDatabase): Promise<DraftListItem[]> {
   return db.getAllAsync<DraftListItem>(
     `SELECT
-       i.id, i.form_id, i.captured_at, i.created_at, i.sync_status,
+       i.id, i.form_id, i.project_id, i.captured_at, i.created_at, i.sync_status,
        f.name AS form_name,
        (SELECT COUNT(*) FROM answers a WHERE a.instance_id = i.id) AS answer_count,
        (SELECT COUNT(*) FROM media m WHERE m.instance_id = i.id) AS media_count
