@@ -77,7 +77,7 @@ export function FormItemInput({ item, value, onChange }: Props) {
         <DateField
           itemId={item.id}
           value={typeof value === 'string' ? value : ''}
-          placeholder="YYYY-MM-DD"
+          placeholder={t('interview.datePlaceholder')}
           onChange={onChange}
         />
       </View>

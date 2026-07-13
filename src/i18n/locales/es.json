@@ -45,6 +45,7 @@
   "interview": {
     "preparing": "Preparando la entrevista…",
     "answerPlaceholder": "Escribe una respuesta",
+    "datePlaceholder": "Selecciona una fecha",
     "set": "Registro {{number}}",
     "addSet": "Agregar registro",
     "removeSet": "Quitar registro",

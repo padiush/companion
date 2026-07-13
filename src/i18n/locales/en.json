@@ -45,6 +45,7 @@
   "interview": {
     "preparing": "Preparing interview…",
     "answerPlaceholder": "Type an answer",
+    "datePlaceholder": "Select a date",
     "set": "Entry {{number}}",
     "addSet": "Add entry",
     "removeSet": "Remove entry",
