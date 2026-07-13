@@ -3,6 +3,10 @@ import { fireEvent, render } from '@testing-library/react-native';
 import type { Item, ItemType } from '../api/types';
 import { FormItemInput } from './FormItemInput';
 
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 function item(overrides: Partial<Item> & { type: ItemType }): Item {
   return {
     id: 10,

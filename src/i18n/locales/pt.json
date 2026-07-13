@@ -43,6 +43,7 @@
   },
   "interview": {
     "preparing": "Preparando a entrevista…",
+    "answerPlaceholder": "Digite uma resposta",
     "set": "Registro {{number}}",
     "addSet": "Adicionar registro",
     "removeSet": "Remover registro",

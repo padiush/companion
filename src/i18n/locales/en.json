@@ -43,6 +43,7 @@
   },
   "interview": {
     "preparing": "Preparing interview…",
+    "answerPlaceholder": "Type an answer",
     "set": "Entry {{number}}",
     "addSet": "Add entry",
     "removeSet": "Remove entry",
