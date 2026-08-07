@@ -7,6 +7,7 @@ import { getDatabase } from '../db/database';
 import { listMediaForInstance } from '../db/mediaRepository';
 import type { MediaRow } from '../db/types';
 import { useTheme } from '../theme';
+import { SectionLabel } from '../ui/SectionLabel';
 import { attachMedia } from './mediaService';
 
 /** Attach photos to an interview. Audio has its own section (AudioRecorder). */
@@ -69,7 +70,7 @@ export function MediaSection({ instanceId }: { instanceId: string }) {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: theme.text }]}>{t('interview.photos')}</Text>
+      <SectionLabel>{t('interview.photos')}</SectionLabel>
 
       {photos.map((item) => (
         <Text

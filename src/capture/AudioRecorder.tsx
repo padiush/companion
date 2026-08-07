@@ -14,6 +14,7 @@ import { listMediaForInstance } from '../db/mediaRepository';
 import type { MediaRow } from '../db/types';
 import { impact } from '../haptics';
 import { useTheme } from '../theme';
+import { SectionLabel } from '../ui/SectionLabel';
 import { formatClock, meteringToLevel } from './audioLevels';
 import { attachMedia } from './mediaService';
 
@@ -164,7 +165,7 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: theme.text }]}>{t('interview.audioTitle')}</Text>
+      <SectionLabel>{t('interview.audioTitle')}</SectionLabel>
       <Text style={[styles.hint, { color: theme.muted }]}>{t('interview.recordHint')}</Text>
 
       <View
