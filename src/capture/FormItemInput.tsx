@@ -3,7 +3,9 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 
 import type { Item } from '../api/types';
 import { selectionTick } from '../haptics';
-import { useTheme } from '../theme';
+import { border, radius, space, touch, type, useTheme } from '../theme';
+import { Button } from '../ui/Button';
+import { Field } from '../ui/Field';
 import { DateField } from './DateField';
 import type { ValidationIssue } from './validate';
 import type { AnswerValue } from './values';
@@ -25,46 +27,41 @@ export function FormItemInput({ item, value, onChange, error, issue, onDiscard }
   const theme = useTheme();
   const { t } = useTranslation();
 
-  const label = (
-    <Text style={[styles.label, { color: theme.text }]}>
-      {item.label}
-      {item.required ? <Text style={{ color: theme.danger }}> *</Text> : null}
-    </Text>
-  );
-
   /**
-   * The server's reason, shown against the field it belongs to. Reason keys are
-   * translated with a fallback, so a key this build does not know still says
-   * something rather than rendering raw.
+   * The server's reason takes precedence over a local constraint: it is the
+   * more specific failure, and it is the one that needs an action. Reason keys
+   * are translated with a fallback, so a build that does not know a key still
+   * says something rather than rendering the key.
    */
-  const errorNotice = error ? (
-    <View testID={`answer-error-${item.id}`} style={styles.error}>
-      <Text style={[styles.errorText, { color: theme.danger }]}>
-        {t(`sync.answerErrors.${error}`, { defaultValue: t('sync.answerErrors.unknown') })}
-      </Text>
-      {onDiscard ? (
-        <TouchableOpacity
-          testID={`discard-answer-${item.id}`}
-          onPress={onDiscard}
-          accessibilityRole="button"
-        >
-          <Text style={[styles.errorAction, { color: theme.danger }]}>
-            {t('sync.discardAnswer')}
-          </Text>
-        </TouchableOpacity>
-      ) : null}
-    </View>
-  ) : null;
+  const message = error
+    ? t(`sync.answerErrors.${error}`, { defaultValue: t('sync.answerErrors.unknown') })
+    : issue
+      ? t(`interview.issues.${issue.reason}`, { limit: issue.limit })
+      : undefined;
 
-  /** What the form itself requires, shown once completion has been attempted. */
-  const issueNotice = issue ? (
-    <Text
-      testID={`answer-issue-${item.id}`}
-      style={[styles.errorText, styles.issue, { color: theme.danger }]}
+  const errorTestID = error ? `answer-error-${item.id}` : `answer-issue-${item.id}`;
+
+  const action =
+    error && onDiscard ? (
+      <Button
+        testID={`discard-answer-${item.id}`}
+        variant="destructive"
+        label={t('sync.discardAnswer')}
+        onPress={onDiscard}
+      />
+    ) : undefined;
+
+  const field = (children: React.ReactNode) => (
+    <Field
+      label={item.label}
+      required={item.required}
+      error={message}
+      errorTestID={errorTestID}
+      action={action}
     >
-      {t(`interview.issues.${issue.reason}`, { limit: issue.limit })}
-    </Text>
-  ) : null;
+      {children}
+    </Field>
+  );
 
   if (item.type === 'select' || item.type === 'multi') {
     const options = item.options ?? [];
@@ -83,119 +80,89 @@ export function FormItemInput({ item, value, onChange, error, issue, onDiscard }
       }
     };
 
-    return (
-      <View style={styles.field}>
-        {label}
-        <View style={styles.options}>
-          {options.map((option) => {
-            const selected = isSelected(option);
-            return (
-              <TouchableOpacity
-                key={option}
-                testID={`option-${item.id}-${option}`}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                onPress={() => toggle(option)}
-                style={[
-                  styles.chip,
-                  {
-                    borderColor: selected ? theme.primary : theme.border,
-                    backgroundColor: selected ? theme.primary : 'transparent',
-                  },
-                ]}
+    return field(
+      <View style={styles.options}>
+        {options.map((option) => {
+          const selected = isSelected(option);
+          return (
+            <TouchableOpacity
+              key={option}
+              testID={`option-${item.id}-${option}`}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              onPress={() => toggle(option)}
+              style={[
+                styles.chip,
+                {
+                  // An unselected chip is a surface with a readable edge, not a
+                  // hairline on the page. Choosing these is the main thing this
+                  // screen is for, and it is done outdoors.
+                  borderColor: selected ? theme.primary : theme.chipBorder,
+                  backgroundColor: selected ? theme.primary : theme.chip,
+                },
+              ]}
+            >
+              <Text
+                style={[styles.chipLabel, { color: selected ? theme.onPrimary : theme.text }]}
               >
-                <Text style={{ color: selected ? theme.onPrimary : theme.text }}>{option}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        {errorNotice}
-        {issueNotice}
+                {option}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     );
   }
 
   if (item.type === 'date') {
-    return (
-      <View style={styles.field}>
-        {label}
-        <DateField
-          itemId={item.id}
-          value={typeof value === 'string' ? value : ''}
-          placeholder={t('interview.datePlaceholder')}
-          onChange={onChange}
-        />
-        {errorNotice}
-        {issueNotice}
-      </View>
+    return field(
+      <DateField
+        itemId={item.id}
+        value={typeof value === 'string' ? value : ''}
+        placeholder={t('interview.datePlaceholder')}
+        onChange={onChange}
+      />
     );
   }
 
   const isNumber = item.type === 'number';
 
-  return (
-    <View style={styles.field}>
-      {label}
-      <TextInput
-        testID={`input-${item.id}`}
-        style={[
-          styles.input,
-          { color: theme.text, borderColor: theme.border, backgroundColor: theme.inputBg },
-        ]}
-        value={typeof value === 'string' ? value : ''}
-        onChangeText={onChange}
-        keyboardType={isNumber ? 'numeric' : 'default'}
-        autoCapitalize={isNumber ? 'none' : 'sentences'}
-        placeholder={isNumber ? undefined : t('interview.answerPlaceholder')}
-        placeholderTextColor={theme.muted}
-      />
-      {errorNotice}
-      {issueNotice}
-    </View>
+  return field(
+    <TextInput
+      testID={`input-${item.id}`}
+      style={[
+        styles.input,
+        { color: theme.text, borderColor: theme.border, backgroundColor: theme.inputBg },
+      ]}
+      value={typeof value === 'string' ? value : ''}
+      onChangeText={onChange}
+      keyboardType={isNumber ? 'numeric' : 'default'}
+      autoCapitalize={isNumber ? 'none' : 'sentences'}
+      placeholder={isNumber ? undefined : t('interview.answerPlaceholder')}
+      placeholderTextColor={theme.muted}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  field: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
-  },
   input: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
-    fontSize: 16,
+    borderWidth: border.width,
+    borderRadius: radius.control,
+    paddingHorizontal: space.md,
+    paddingVertical: space.md,
+    ...type.body,
   },
   options: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: space.sm,
   },
   chip: {
-    borderWidth: 1,
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    minHeight: 44,
+    borderWidth: border.width,
+    borderRadius: radius.pill,
+    paddingHorizontal: space.lg,
+    minHeight: touch.min,
     justifyContent: 'center',
   },
-  error: {
-    marginTop: 8,
-    gap: 4,
-  },
-  errorText: {
-    fontSize: 13,
-  },
-  errorAction: {
-    fontSize: 14,
-    fontWeight: '700',
-    paddingVertical: 4,
-  },
-  issue: {
-    marginTop: 6,
-  },
+  chipLabel: type.body,
 });
