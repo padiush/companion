@@ -15,6 +15,18 @@ import { getMeta, setMeta } from '../db/syncMetaRepository';
 
 const bundleCursorKey = (projectId: number) => `bundle_cursor:${projectId}`;
 
+/**
+ * The bundle cursor the device currently holds for a project — the structure
+ * version its cached forms came from. Stamped onto each interview at capture so
+ * the server can tell which structure it was recorded against.
+ */
+export function readBundleCursor(
+  db: SQLiteDatabase,
+  projectId: number
+): Promise<string | null> {
+  return getMeta(db, bundleCursorKey(projectId));
+}
+
 /** Pull the user's projects from /me and cache them; returns what was pulled. */
 export async function pullProjects(db: SQLiteDatabase): Promise<ProjectSummary[]> {
   const { user, projects } = await api.me();
