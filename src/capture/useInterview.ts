@@ -5,6 +5,7 @@ import { getDatabase } from '../db/database';
 import { getForm } from '../db/formsRepository';
 import { getInstance } from '../db/instancesRepository';
 import type { AnswerRow, CachedForm } from '../db/types';
+import { readBundleCursor } from '../sync/pull';
 import { discardRejectedAnswer, retryInstance } from '../sync/resolve';
 import { createDraft, getDraftAnswers, saveAnswer } from './captureService';
 import { hydrateDraft, type OrphanedAnswer } from './hydrateDraft';
@@ -89,7 +90,11 @@ export function useInterview(
         error = instance?.sync_error ?? null;
       } else {
         const location = await captureLocation();
-        id = await createDraft(db, { formId, projectId, location });
+        // Stamp the structure version this interview is being recorded
+        // against. It was always part of the payload and never actually read
+        // from the store, so every interview reached the server claiming none.
+        const formVersionCursor = await readBundleCursor(db, projectId);
+        id = await createDraft(db, { formId, projectId, location, formVersionCursor });
         rows = [];
       }
 
