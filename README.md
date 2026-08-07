@@ -41,15 +41,23 @@ cp .env.example .env
 ## Project structure
 
 ```
-App.tsx            Landing screen (placeholder until capture screens land)
+App.tsx            Session gate: sign-in, or the signed-in tab navigator
 src/
   config.ts        API base URL (EXPO_PUBLIC_API_BASE_URL)
   ids.ts           Client-generated UUIDs for offline records
-  api/
-    types.ts       Types mirroring the /api/v1 contract
-    tokens.ts      Secure token storage
-    client.ts      Typed API client (auth, pull, sync, media)
+  api/             Typed /api/v1 client, secure token storage, contract types
+  auth/            Session, cached identity for offline launch, store ownership
+  db/              Encrypted SQLite store: schema migrations and repositories
+  capture/         The interview itself: inputs, media, validation, draft state
+  sync/            Pull, push, media upload, and resolving what the server refused
+  screens/         Projects, one project, an interview, recorded interviews
+  navigation/      Root stack and the signed-in bottom tabs
+  i18n/            es / en / pt, Spanish first
 ```
+
+Everything user-facing is localized in all three languages; the local store is
+versioned by `PRAGMA user_version` (`src/db/schema.ts`), so schema changes reach
+devices that already hold data.
 
 ## How sync works (summary)
 
@@ -69,3 +77,33 @@ sync is push-dominant:
 Conflicts on the same answer resolve by last-writer-wins on the device edit-time.
 The local store is encrypted at rest with SQLCipher (it holds informant responses
 until synced); the key is minted on-device and lives in Keychain / Keystore.
+
+A push is not all-or-nothing. The server can accept an interview while refusing
+individual answers — an item deleted on the web is the usual cause — so such an
+interview is marked incomplete rather than sent, the reason is kept against the
+answer, and the interview screen offers to correct it, discard that one answer,
+or try again. Nothing the server refuses is dropped silently.
+
+## Working offline
+
+- **Launch** uses the cached identity when the server cannot be reached, so a
+  force-quit off-grid does not lock a recorder out of their unsent work. It is
+  good for 30 days, refreshed whenever the server confirms the account.
+- **One account at a time.** The store records who it belongs to; a different
+  account signing in replaces it, after saying exactly what unsent work that
+  destroys. Signing out keeps the data, so the same person can come back.
+- **Retired forms** stop being offered as soon as a pull says they are no longer
+  active, but a form an existing interview still needs is kept so that interview
+  can still be rendered and sent.
+
+## Testing
+
+```bash
+npm test           # jest — repository SQL runs against a real engine (node:sqlite)
+npm run typecheck
+npm run lint
+```
+
+The DB layer cannot load expo-sqlite under jest, so `test-utils/sqliteDatabase.ts`
+puts Node's built-in SQLite behind the same interface. SQLCipher is not part of
+it, so the encryption path is covered by its own mocked tests and on-device runs.
