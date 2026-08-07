@@ -2,6 +2,7 @@ import { File, FileMode } from 'expo-file-system';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { insertMedia, insertMediaChunk } from '../db/mediaRepository';
+import { recordDiagnostic } from '../diagnostics';
 import { uuid } from '../ids';
 
 /** Blob rows are capped so a long recording never has to sit in memory whole. */
@@ -67,7 +68,11 @@ export async function attachMedia(db: SQLiteDatabase, params: AttachMediaParams)
   try {
     source.delete();
   } catch {
-    console.warn('[media] could not delete the plaintext capture file', params.localUri);
+    // The encrypted copy is safely stored, but an unencrypted original is
+    // still on the device — the one thing the privacy policy promises does
+    // not happen. The path is deliberately not reported; the code is enough
+    // to know it needs looking at.
+    await recordDiagnostic('plaintext_capture_retained');
   }
 
   return clientId;

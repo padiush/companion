@@ -1,4 +1,7 @@
+import { recordDiagnostic } from '../diagnostics';
 import { sweepCaptureCache } from './sweepCaptureCache';
+
+jest.mock('../diagnostics', () => ({ recordDiagnostic: jest.fn().mockResolvedValue(undefined) }));
 
 let mockExists = true;
 let mockThrowOn: string | null = null;
@@ -46,13 +49,13 @@ describe('sweepCaptureCache', () => {
   });
 
   it('continues past a directory that cannot be deleted', () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
     mockThrowOn = 'Audio';
 
     sweepCaptureCache();
 
     expect(mockDeleted).toEqual(['ExpoAudio', 'ImagePicker']);
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
+    // Plaintext leftovers may remain; the directory name is deliberately not
+    // part of the report.
+    expect(recordDiagnostic).toHaveBeenCalledWith('capture_cache_sweep_failed');
   });
 });

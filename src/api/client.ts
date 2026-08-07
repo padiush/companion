@@ -2,6 +2,8 @@ import { API_BASE_URL } from '../config';
 import { getToken } from './tokens';
 import type {
   Bundle,
+  DiagnosticsRequest,
+  DiagnosticsResponse,
   InstanceDetail,
   MediaCompleteRequest,
   MediaCompleteResponse,
@@ -111,4 +113,7 @@ export const api = {
       method: 'POST',
       body: payload,
     }),
+
+  reportDiagnostics: (payload: DiagnosticsRequest) =>
+    request<DiagnosticsResponse>('/diagnostics', { method: 'POST', body: payload }),
 };

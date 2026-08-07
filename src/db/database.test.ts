@@ -14,6 +14,12 @@ jest.mock('./encryptionKey', () => ({
   getOrCreateDatabaseKey: jest.fn(async () => 'ab'.repeat(32)),
 }));
 
+jest.mock('../diagnostics', () => ({
+  recordDiagnostic: jest.fn(async () => {}),
+  attachDiagnosticsStore: jest.fn(),
+  detachDiagnosticsStore: jest.fn(),
+}));
+
 const KEY = 'ab'.repeat(32);
 
 type FakeDatabase = {
@@ -63,12 +69,18 @@ function setup() {
     deleteDatabaseAsync: jest.Mock;
   }>('expo-sqlite');
   const schema = jest.requireMock<{ migrate: jest.Mock }>('./schema');
+  const diagnostics = jest.requireMock<{
+    recordDiagnostic: jest.Mock;
+    attachDiagnosticsStore: jest.Mock;
+  }>('../diagnostics');
   const database = jest.requireActual<typeof import('./database')>('./database');
   return {
     getDatabase: database.getDatabase,
     openDatabaseAsync: sqlite.openDatabaseAsync,
     deleteDatabaseAsync: sqlite.deleteDatabaseAsync,
     migrate: schema.migrate,
+    recordDiagnostic: diagnostics.recordDiagnostic,
+    attachDiagnosticsStore: diagnostics.attachDiagnosticsStore,
   };
 }
 
@@ -146,8 +158,14 @@ describe('getDatabase', () => {
   });
 
   it('resets a store that is unreadable both with and without the key', async () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    const { getDatabase, openDatabaseAsync, deleteDatabaseAsync, migrate } = setup();
+    const {
+      getDatabase,
+      openDatabaseAsync,
+      deleteDatabaseAsync,
+      migrate,
+      recordDiagnostic,
+      attachDiagnosticsStore,
+    } = setup();
     const keyedMiss = fakeDatabase({ readable: false });
     const plaintextMiss = fakeDatabase({ readable: false });
     const fresh = fakeDatabase();
@@ -159,11 +177,14 @@ describe('getDatabase', () => {
     await expect(getDatabase()).resolves.toBe(fresh as unknown as SQLiteDatabase);
 
     expect(plaintextMiss.execAsync).not.toHaveBeenCalledWith(
-      expect.stringContaining('sqlcipher_export'),
+      expect.stringContaining('sqlcipher_export')
     );
     expect(deleteDatabaseAsync).toHaveBeenCalledWith('padiush.db');
     expect(migrate).toHaveBeenCalledWith(fresh);
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
+    // Unsynced interviews were just destroyed. Nothing can recover them, but
+    // it must not pass unnoticed — and the report is queued against the fresh
+    // store, which only exists after the migration above.
+    expect(recordDiagnostic).toHaveBeenCalledWith('store_reset_unrecoverable');
+    expect(attachDiagnosticsStore).toHaveBeenCalledWith(fresh);
   });
 });

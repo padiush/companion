@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { insertMedia, insertMediaChunk } from '../db/mediaRepository';
+import { recordDiagnostic } from '../diagnostics';
 import { attachMedia } from './mediaService';
 
 let mockFileSize: number | null = 0;
@@ -28,6 +29,7 @@ jest.mock('../db/mediaRepository', () => ({
   insertMediaChunk: jest.fn(),
 }));
 jest.mock('../ids', () => ({ uuid: jest.fn(() => 'media-uuid') }));
+jest.mock('../diagnostics', () => ({ recordDiagnostic: jest.fn().mockResolvedValue(undefined) }));
 
 const CHUNK_BYTES = 4 * 1024 * 1024;
 
@@ -102,7 +104,6 @@ describe('attachMedia', () => {
   });
 
   it('still resolves when the source file cannot be deleted', async () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
     mockFileSize = 1;
     mockReads = [Uint8Array.from([1])];
     mockDelete.mockImplementation(() => {
@@ -111,7 +112,8 @@ describe('attachMedia', () => {
 
     await expect(attachMedia(db, params)).resolves.toBe('media-uuid');
 
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
+    // The encrypted copy is stored, but an unencrypted original is still on
+    // the device — reportable, because the privacy policy says otherwise.
+    expect(recordDiagnostic).toHaveBeenCalledWith('plaintext_capture_retained');
   });
 });

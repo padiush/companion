@@ -1,6 +1,7 @@
 import { sweepCaptureCache } from '../capture/sweepCaptureCache';
 import { getDatabase, resetDatabase } from '../db/database';
 import { claimOwner, countPendingWork, readOwner, type PendingWork } from '../db/ownership';
+import { recordDiagnostic } from '../diagnostics';
 
 /**
  * Binds the local store to one account.
@@ -86,6 +87,9 @@ export async function settleRestoredStore(userId: number): Promise<void> {
     return;
   }
 
-  console.warn('[auth] local store belongs to another account; resetting it');
+  // Reachable only if an earlier switch was interrupted, and it destroys
+  // whatever the previous account had not sent, so it is worth knowing that a
+  // path we believe unreachable is being reached.
+  await recordDiagnostic('store_reset_foreign_account');
   await replaceStore(userId);
 }

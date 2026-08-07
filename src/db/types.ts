@@ -86,6 +86,20 @@ export interface DraftListItem {
   preview: string | null;
 }
 
+/**
+ * A row of the `diagnostics` table — one integrity event awaiting report.
+ * `code` is a `DiagnosticCode`; it is typed as a string here because that is
+ * what SQLite hands back, and the server rejects anything outside the set.
+ */
+export interface DiagnosticRow {
+  client_id: string;
+  code: string;
+  occurred_at: string;
+  app_version: string | null;
+  platform: string | null;
+  os_version: string | null;
+}
+
 /** A row of the `media` table — an audio/photo capture and its upload state. */
 export interface MediaRow {
   client_id: string;
