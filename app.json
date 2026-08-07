@@ -41,7 +41,8 @@
         "expo-audio",
         {
           "microphonePermission": "Padiush records interview audio so it can be transcribed later.",
-          "enableBackgroundPlayback": false
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": true
         }
       ],
       [

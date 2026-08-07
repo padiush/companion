@@ -19,7 +19,9 @@ the authoritative contract is that repo's `docs/api/openapi.yaml`.
 - `expo-sqlite` (SQLCipher) — the offline local store for captured records,
   encrypted at rest with a device-generated key held in the secure store
 - `expo-location` — GPS for interview location
-- `expo-audio` — interview audio recording
+- `expo-audio` — interview audio recording, continuing while the app is
+  backgrounded (a recording foreground service on Android, the `audio`
+  background mode on iOS)
 - `expo-file-system` — reading captures for ingest into the encrypted store
 - `expo-crypto` — client-generated UUIDs (the sync idempotency keys)
 
@@ -95,6 +97,28 @@ or try again. Nothing the server refuses is dropped silently.
 - **Retired forms** stop being offered as soon as a pull says they are no longer
   active, but a form an existing interview still needs is kept so that interview
   can still be rendered and sent.
+- **Recording survives the phone going away** — locked, pocketed, or left on
+  another app — because an interview outlasts the screen timeout. It can still
+  be ended by something outside the app: the notification's stop button, an
+  incoming call taking audio focus, or Android reclaiming the service. Coming
+  back to a frozen clock that still claims to be recording is the one outcome
+  worth engineering against, so on return the app believes the recorder over
+  its own state, keeps whatever reached disk, and says the take was cut short.
+
+## Releases
+
+Builds go through EAS ([eas.json](eas.json)). `development` serves JS from your
+Metro server and so honours your local `.env`; `preview` and `production` bake
+in the production API URL, so a release never ships whatever a developer left
+in `.env`.
+
+```bash
+npx eas-cli build --platform android --profile production
+npx eas-cli submit --platform android --profile closed-testing
+```
+
+`android.versionCode` in [app.json](app.json) is the record of what shipped —
+the production profile increments it, so commit the bump.
 
 ## Testing
 
