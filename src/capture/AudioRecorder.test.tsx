@@ -24,11 +24,20 @@ const mockRecorder = {
   uri: 'file:///rec.m4a' as string | null,
 };
 
+// Captures the status listener the component hands to useAudioRecorder, so a
+// test can deliver the finish event native would send — including the one from
+// the notification's stop button, which is what this listener exists for.
+let statusListener: ((status: { isFinished: boolean }) => void) | undefined;
+const finishRecording = () => statusListener?.({ isFinished: true });
+
 jest.mock('expo-audio', () => ({
   RecordingPresets: { HIGH_QUALITY: {} },
   requestRecordingPermissionsAsync: jest.fn(),
   setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
-  useAudioRecorder: () => mockRecorder,
+  useAudioRecorder: (_options: unknown, listener?: (status: { isFinished: boolean }) => void) => {
+    statusListener = listener;
+    return mockRecorder;
+  },
 }));
 jest.mock('../db/database', () => ({ getDatabase: jest.fn().mockResolvedValue({}) }));
 jest.mock('../db/mediaRepository', () => ({ listMediaForInstance: jest.fn() }));
@@ -60,6 +69,7 @@ beforeEach(() => {
   mockStatus.durationMillis = 5000;
   mockList.mockResolvedValue([]);
 
+  statusListener = undefined;
   appStateHandlers = [];
   jest.spyOn(AppState, 'addEventListener').mockImplementation(((
     _event: string,
@@ -217,6 +227,48 @@ describe('AudioRecorder', () => {
       await waitFor(() => expect(screen.getByTestId('recording-clock')).toHaveTextContent('0:05'));
       return screen;
     };
+
+    it('salvages the take when native reports it finished', async () => {
+      // The regression that mattered: stopping from the notification left the
+      // screen claiming to record, because reconciliation waited for an
+      // AppState edge a locked phone never produces. The finish event does.
+      const { getByTestId, findByText } = await startRecording();
+
+      mockStatus.isRecording = false;
+      await act(async () => finishRecording());
+
+      await waitFor(() =>
+        expect(attachMedia).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({ localUri: 'file:///rec.m4a', durationS: 5 })
+        )
+      );
+      expect(await findByText('interview.recordingInterrupted')).toBeTruthy();
+      expect(getByTestId('record-audio')).toBeTruthy();
+    });
+
+    it('does not salvage twice when a deliberate stop emits the same event', async () => {
+      // stop() ends the recorder, which emits finished. Without a guard the
+      // salvage path would run too and attach the same audio a second time.
+      const { getByTestId } = await startRecording();
+
+      await fireEvent.press(getByTestId('stop-recording'));
+      await act(async () => finishRecording());
+
+      await waitFor(() => expect(getByTestId('record-audio')).toBeTruthy());
+      expect(attachMedia).toHaveBeenCalledTimes(1);
+    });
+
+    it('ignores a finish event once the take is already idle', async () => {
+      const { getByTestId } = await startRecording();
+      await fireEvent.press(getByTestId('stop-recording'));
+      await waitFor(() => expect(getByTestId('record-audio')).toBeTruthy());
+
+      (attachMedia as jest.Mock).mockClear();
+      await act(async () => finishRecording());
+
+      expect(attachMedia).not.toHaveBeenCalled();
+    });
 
     it('keeps what was captured and says the recording was cut short', async () => {
       const { getByTestId, findByText } = await startRecording();
