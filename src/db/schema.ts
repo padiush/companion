@@ -10,7 +10,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
  *
  * Timestamps are ISO-8601 strings; booleans are 0/1.
  */
-const SCHEMA = `
+const V1 = `
 CREATE TABLE IF NOT EXISTS projects (
   id           INTEGER PRIMARY KEY,
   name         TEXT NOT NULL,
@@ -90,7 +90,46 @@ CREATE INDEX IF NOT EXISTS idx_media_instance ON media(instance_id);
 CREATE INDEX IF NOT EXISTS idx_instances_sync_status ON instances(sync_status);
 `;
 
-/** Create the schema if it doesn't exist. Safe to run on every launch. */
+/**
+ * Schema versions, applied in order and stamped into `PRAGMA user_version`.
+ *
+ * Version 1 is the schema as it shipped before this runner existed, so it is
+ * written entirely with `IF NOT EXISTS`: stores created by the old
+ * unconditional `migrate()` report `user_version = 0` even though they already
+ * hold these tables, and replaying v1 over them has to be a no-op. Later
+ * versions run exactly once and may use plain `ALTER TABLE`.
+ *
+ * Each version is applied inside a transaction together with its version
+ * stamp, so an interrupted upgrade rolls back rather than leaving the store
+ * half-migrated at a version that claims otherwise.
+ */
+const MIGRATIONS: readonly { version: number; sql: string }[] = [{ version: 1, sql: V1 }];
+
+/** The version a fully-migrated store reports. */
+export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;
+
+async function currentVersion(db: SQLiteDatabase): Promise<number> {
+  const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version;');
+  return row?.user_version ?? 0;
+}
+
+/**
+ * Bring the store up to `SCHEMA_VERSION`. Safe to run on every launch: already
+ * applied versions are skipped.
+ */
 export async function migrate(db: SQLiteDatabase): Promise<void> {
-  await db.execAsync(SCHEMA);
+  const from = await currentVersion(db);
+
+  for (const migration of MIGRATIONS) {
+    if (migration.version <= from) {
+      continue;
+    }
+
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(migration.sql);
+      // PRAGMA user_version takes a literal, not a bound parameter — the value
+      // is our own integer constant, never user input.
+      await db.execAsync(`PRAGMA user_version = ${migration.version};`);
+    });
+  }
 }
