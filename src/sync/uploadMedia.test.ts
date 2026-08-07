@@ -5,6 +5,7 @@ import {
   deleteMediaBytes,
   listPendingMedia,
   readMediaBytes,
+  recordUploadFailure,
   setMediaUploaded,
 } from '../db/mediaRepository';
 import type { MediaRow } from '../db/types';
@@ -19,6 +20,7 @@ jest.mock('../db/mediaRepository', () => ({
   readMediaBytes: jest.fn(),
   deleteMediaBytes: jest.fn(),
   setMediaUploaded: jest.fn(),
+  recordUploadFailure: jest.fn(),
 }));
 
 const mockIntent = api.mediaIntent as jest.Mock;
@@ -113,5 +115,54 @@ describe('uploadMedia', () => {
 
     expect(uploadBytes).not.toHaveBeenCalled();
     expect(summary).toEqual({ uploaded: 0, failed: 1 });
+  });
+});
+
+describe('uploads that fail', () => {
+  /**
+   * The gap this closes: every failure was swallowed by the engine's catch, so
+   * an upload failing on every attempt looked exactly like one that had never
+   * been tried. Informant audio could sit on a device indefinitely with nothing
+   * anywhere to say why.
+   */
+  it('records why an upload failed, so a stuck one is visible', async () => {
+    mockList.mockResolvedValue([media()]);
+    mockRead.mockResolvedValue(new Uint8Array([1, 2, 3]));
+    mockIntent.mockRejectedValue(new Error('Upload failed with status 503'));
+
+    const summary = await uploadMedia(db, jest.fn());
+
+    expect(recordUploadFailure).toHaveBeenCalledWith(db, 'm1', 'Upload failed with status 503');
+    expect(summary).toEqual({ uploaded: 0, failed: 1 });
+  });
+
+  it('records a reason for media whose bytes have gone', async () => {
+    mockList.mockResolvedValue([media()]);
+    mockRead.mockResolvedValue(null);
+
+    await uploadMedia(db, jest.fn());
+
+    expect(recordUploadFailure).toHaveBeenCalledWith(db, 'm1', 'media.errors.bytesMissing');
+  });
+
+  it('describes a thrown non-error rather than storing nothing', async () => {
+    mockList.mockResolvedValue([media()]);
+    mockRead.mockResolvedValue(new Uint8Array([1]));
+    mockIntent.mockRejectedValue('boom');
+
+    await uploadMedia(db, jest.fn());
+
+    expect(recordUploadFailure).toHaveBeenCalledWith(db, 'm1', 'boom');
+  });
+
+  it('records nothing against an upload that succeeded', async () => {
+    mockList.mockResolvedValue([media()]);
+    mockRead.mockResolvedValue(new Uint8Array([1]));
+    mockIntent.mockResolvedValue({ upload_url: 'https://x', storage_key: 'k', headers: {} });
+    mockComplete.mockResolvedValue({});
+
+    await uploadMedia(db, jest.fn());
+
+    expect(recordUploadFailure).not.toHaveBeenCalled();
   });
 });

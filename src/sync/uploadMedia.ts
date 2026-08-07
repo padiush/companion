@@ -7,6 +7,7 @@ import {
   deleteMediaBytes,
   listPendingMedia,
   readMediaBytes,
+  recordUploadFailure,
   setMediaUploaded,
 } from '../db/mediaRepository';
 
@@ -51,6 +52,9 @@ export async function uploadMedia(
     try {
       const data = await readMediaBytes(db, media.client_id);
       if (!data) {
+        // The row exists but its bytes do not — nothing to retry, and the
+        // reason is worth keeping rather than counting anonymously.
+        await recordUploadFailure(db, media.client_id, 'media.errors.bytesMissing');
         summary.failed += 1;
         continue;
       }
@@ -73,10 +77,22 @@ export async function uploadMedia(
       await setMediaUploaded(db, media.client_id, intent.storage_key);
       await deleteMediaBytes(db, media.client_id);
       summary.uploaded += 1;
-    } catch {
+    } catch (error) {
+      // Still pending, so the next send retries it — but the attempt and the
+      // reason are recorded, so an upload failing every time is visible rather
+      // than looking like one that has simply not been tried yet.
+      await recordUploadFailure(db, media.client_id, describe(error));
       summary.failed += 1;
     }
   }
 
   return summary;
+}
+
+function describe(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return String(error);
 }

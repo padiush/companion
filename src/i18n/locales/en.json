@@ -106,7 +106,9 @@
     "sendMedia_one": "Upload 1 file",
     "sendMedia_other": "Upload {{count}} files",
     "sendUnresolved_one": "1 interview has answers the server did not accept. Open it to resolve them.",
-    "sendUnresolved_other": "{{count}} interviews have answers the server did not accept. Open them to resolve them."
+    "sendUnresolved_other": "{{count}} interviews have answers the server did not accept. Open them to resolve them.",
+    "mediaFailed_one": "1 file could not be uploaded. It will be retried the next time you send.",
+    "mediaFailed_other": "{{count}} files could not be uploaded. They will be retried the next time you send."
   },
   "sync": {
     "rejectedTitle": "The server did not accept this interview",

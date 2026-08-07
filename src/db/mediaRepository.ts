@@ -120,7 +120,39 @@ export async function setMediaUploaded(
   storageKey: string
 ): Promise<void> {
   await db.runAsync(
-    "UPDATE media SET upload_status = 'uploaded', storage_key = ? WHERE client_id = ?",
+    `UPDATE media
+        SET upload_status = 'uploaded', storage_key = ?, upload_error = NULL
+      WHERE client_id = ?`,
     [storageKey, clientId]
   );
+}
+
+/**
+ * Note that an upload attempt failed, and why.
+ *
+ * Failures were previously swallowed whole, leaving no way to tell an upload
+ * that fails every time from one that has never been tried. The item stays
+ * pending — it should keep being retried — but the attempt count and the last
+ * reason make a stuck one visible instead of silent.
+ */
+export async function recordUploadFailure(
+  db: SQLiteDatabase,
+  clientId: string,
+  error: string
+): Promise<void> {
+  await db.runAsync(
+    `UPDATE media
+        SET upload_attempts = upload_attempts + 1, upload_error = ?
+      WHERE client_id = ?`,
+    [error, clientId]
+  );
+}
+
+/** Media that has been tried and is still failing, for reporting. */
+export async function countFailedMedia(db: SQLiteDatabase): Promise<number> {
+  const row = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) AS count FROM media WHERE upload_status != 'uploaded' AND upload_error IS NOT NULL"
+  );
+
+  return row?.count ?? 0;
 }

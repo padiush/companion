@@ -114,9 +114,21 @@ ALTER TABLE instances ADD COLUMN sync_error TEXT;
 ALTER TABLE answers ADD COLUMN sync_error TEXT;
 `;
 
+export /**
+ * Why a media upload has not landed. Every failure used to be swallowed by the
+ * engine's catch, so an upload that failed every time was indistinguishable
+ * from one that had simply not been tried — informant audio could sit on a
+ * device indefinitely with nothing to show for it.
+ */
+const V3 = `
+ALTER TABLE media ADD COLUMN upload_attempts INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE media ADD COLUMN upload_error TEXT;
+`;
+
 export const MIGRATIONS: readonly { version: number; sql: string }[] = [
   { version: 1, sql: V1 },
   { version: 2, sql: V2 },
+  { version: 3, sql: V3 },
 ];
 
 /** The version a fully-migrated store reports. */
