@@ -41,3 +41,11 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# editors
+.idea/
+.vscode/
+
+# Play Store submission — the service account key can publish releases
+play-service-account.json
+*-service-account.json
