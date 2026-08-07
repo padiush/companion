@@ -18,6 +18,7 @@ import { Chevron } from '../components/Chevron';
 import { useDrafts } from '../hooks/useDrafts';
 import { useOutbox } from '../hooks/useOutbox';
 import type { RootStackParamList } from '../navigation/types';
+import type { PushSummary } from '../sync/push';
 import { useTheme } from '../theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -30,7 +31,7 @@ export function DraftsScreen() {
   const insets = useSafeAreaInsets();
   const { drafts, loading, refresh } = useDrafts();
   const { count, pendingMedia, hasWork, sending, error, send } = useOutbox();
-  const [sentCount, setSentCount] = useState<number | null>(null);
+  const [sent, setSent] = useState<PushSummary | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {
@@ -44,18 +45,19 @@ export function DraftsScreen() {
 
   const statusColor = (status: string) => {
     if (status === 'synced') return theme.primary;
-    if (status === 'rejected') return theme.danger;
+    if (status === 'rejected' || status === 'partial') return theme.danger;
     return theme.muted;
   };
 
   const onSend = async () => {
-    setSentCount(null);
+    setSent(null);
     const result = await send();
     await refresh();
-    if (result && result.synced > 0) {
-      setSentCount(result.synced);
-    }
+    setSent(result);
   };
+
+  /** Anything the server would not take is reported, never silently swallowed. */
+  const unresolved = (sent?.partial ?? 0) + (sent?.rejected ?? 0);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg, paddingTop: insets.top + 12 }]}>
@@ -83,11 +85,20 @@ export function DraftsScreen() {
 
       {error ? (
         <Text style={[styles.error, { color: theme.danger }]}>{t('drafts.sendError')}</Text>
-      ) : sentCount !== null ? (
-        <Text style={[styles.sent, { color: theme.primary }]}>
-          {t('drafts.sent', { count: sentCount })}
-        </Text>
-      ) : null}
+      ) : (
+        <>
+          {sent && sent.synced > 0 ? (
+            <Text style={[styles.sent, { color: theme.primary }]}>
+              {t('drafts.sent', { count: sent.synced })}
+            </Text>
+          ) : null}
+          {unresolved > 0 ? (
+            <Text testID="send-unresolved" style={[styles.error, { color: theme.danger }]}>
+              {t('drafts.sendUnresolved', { count: unresolved })}
+            </Text>
+          ) : null}
+        </>
+      )}
 
       <ScrollView
         testID="drafts-scroll"

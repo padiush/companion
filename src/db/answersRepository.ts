@@ -72,6 +72,38 @@ export async function getAnswersForInstance(
   return db.getAllAsync<AnswerRow>('SELECT * FROM answers WHERE instance_id = ?', [instanceId]);
 }
 
+/** Mark an answer the server refused, so it can be shown and resolved. */
+export async function setAnswerSyncError(
+  db: SQLiteDatabase,
+  clientId: string,
+  error: string
+): Promise<void> {
+  await db.runAsync('UPDATE answers SET sync_error = ? WHERE client_id = ?', [error, clientId]);
+}
+
+/**
+ * Drop the recorded refusals for an interview, before a fresh push result is
+ * applied — otherwise an answer fixed on one attempt would keep the error from
+ * the last one.
+ */
+export async function clearAnswerSyncErrors(
+  db: SQLiteDatabase,
+  instanceId: string
+): Promise<void> {
+  await db.runAsync('UPDATE answers SET sync_error = NULL WHERE instance_id = ?', [instanceId]);
+}
+
+/** The answers the server refused on the last push, with the reason given. */
+export async function getRejectedAnswers(
+  db: SQLiteDatabase,
+  instanceId: string
+): Promise<AnswerRow[]> {
+  return db.getAllAsync<AnswerRow>(
+    'SELECT * FROM answers WHERE instance_id = ? AND sync_error IS NOT NULL',
+    [instanceId]
+  );
+}
+
 /** Delete all answers for one repeatable set (e.g. when a set is removed). */
 export async function deleteAnswersForSet(
   db: SQLiteDatabase,

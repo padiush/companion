@@ -103,10 +103,28 @@ export interface SyncRequest {
 
 export type SyncStatus = 'created' | 'updated' | 'unchanged' | 'rejected';
 
+/** One answer the server refused, named by the client id the device minted. */
+export interface AnswerSyncError {
+  client_id: string | null;
+  /** A message key, e.g. `api.sync.item_not_in_form`. */
+  error: string;
+}
+
+/**
+ * Why a result was not fully accepted. `answers` carries per-answer refusals,
+ * and can arrive alongside a `created` or `updated` status — the interview
+ * landed, some of its answers did not. Any other key is a field error
+ * explaining a wholly rejected instance (e.g. `interview_form_id`).
+ */
+export interface SyncResultErrors {
+  answers?: AnswerSyncError[];
+  [field: string]: AnswerSyncError[] | string[] | undefined;
+}
+
 export interface SyncResult {
   id: string;
   status: SyncStatus;
-  errors?: Record<string, unknown>;
+  errors?: SyncResultErrors;
 }
 
 export interface SyncResponse {

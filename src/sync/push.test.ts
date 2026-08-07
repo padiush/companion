@@ -2,7 +2,11 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { api } from '../api/client';
 import type { ItemType } from '../api/types';
-import { getAnswersForInstance } from '../db/answersRepository';
+import {
+  clearAnswerSyncErrors,
+  getAnswersForInstance,
+  setAnswerSyncError,
+} from '../db/answersRepository';
 import { getForm } from '../db/formsRepository';
 import { listDraftInstances, setSyncStatus } from '../db/instancesRepository';
 import type { AnswerRow, InstanceRow } from '../db/types';
@@ -13,7 +17,11 @@ jest.mock('../db/instancesRepository', () => ({
   listDraftInstances: jest.fn(),
   setSyncStatus: jest.fn(),
 }));
-jest.mock('../db/answersRepository', () => ({ getAnswersForInstance: jest.fn() }));
+jest.mock('../db/answersRepository', () => ({
+  getAnswersForInstance: jest.fn(),
+  setAnswerSyncError: jest.fn(),
+  clearAnswerSyncErrors: jest.fn(),
+}));
 jest.mock('../db/formsRepository', () => ({ getForm: jest.fn() }));
 
 const mockSync = api.syncInstances as jest.Mock;
@@ -127,8 +135,8 @@ describe('pushDrafts', () => {
       expect.objectContaining({ instances: expect.any(Array) })
     );
     expect(setSyncStatus).toHaveBeenCalledWith(db, 'i1', 'synced');
-    expect(setSyncStatus).toHaveBeenCalledWith(db, 'i2', 'rejected');
-    expect(summary).toEqual({ synced: 1, rejected: 1 });
+    expect(setSyncStatus).toHaveBeenCalledWith(db, 'i2', 'rejected', null);
+    expect(summary).toEqual({ synced: 1, partial: 0, rejected: 1 });
   });
 
   it('sends a separate batch per project', async () => {
@@ -145,7 +153,7 @@ describe('pushDrafts', () => {
     expect(mockSync).toHaveBeenCalledTimes(2);
     expect(mockSync).toHaveBeenCalledWith(9, expect.anything());
     expect(mockSync).toHaveBeenCalledWith(5, expect.anything());
-    expect(summary).toEqual({ synced: 2, rejected: 0 });
+    expect(summary).toEqual({ synced: 2, partial: 0, rejected: 0 });
   });
 
   it('leaves drafts untouched when the push fails', async () => {
@@ -154,5 +162,107 @@ describe('pushDrafts', () => {
 
     await expect(pushDrafts(db)).rejects.toThrow('offline');
     expect(setSyncStatus).not.toHaveBeenCalled();
+  });
+
+  describe('answers the server refused', () => {
+    /**
+     * The gap this closes: the server can create or update an interview while
+     * refusing individual answers — an item deleted on the web, say. Reading
+     * only the top-level status marked all of it synced, so the refused answer
+     * was never retried and never shown. It just disappeared.
+     */
+    it('does not call an interview synced when answers were refused', async () => {
+      mockList.mockResolvedValue([instance({ id: 'i1', project_id: 9 })]);
+      mockSync.mockResolvedValue({
+        results: [
+          {
+            id: 'i1',
+            status: 'created',
+            errors: { answers: [{ client_id: 'a-9', error: 'api.sync.item_not_in_form' }] },
+          },
+        ],
+      });
+
+      const summary = await pushDrafts(db);
+
+      expect(setSyncStatus).toHaveBeenCalledWith(db, 'i1', 'partial');
+      expect(summary).toEqual({ synced: 0, partial: 1, rejected: 0 });
+    });
+
+    it('records the reason against the answer it belongs to', async () => {
+      mockList.mockResolvedValue([instance({ id: 'i1', project_id: 9 })]);
+      mockSync.mockResolvedValue({
+        results: [
+          {
+            id: 'i1',
+            status: 'updated',
+            errors: {
+              answers: [
+                { client_id: 'a-1', error: 'api.sync.item_not_in_form' },
+                { client_id: 'a-2', error: 'api.sync.section_mismatch' },
+              ],
+            },
+          },
+        ],
+      });
+
+      await pushDrafts(db);
+
+      expect(setAnswerSyncError).toHaveBeenCalledWith(db, 'a-1', 'api.sync.item_not_in_form');
+      expect(setAnswerSyncError).toHaveBeenCalledWith(db, 'a-2', 'api.sync.section_mismatch');
+    });
+
+    it('clears the previous attempt’s errors before applying the new result', async () => {
+      mockList.mockResolvedValue([instance({ id: 'i1', project_id: 9 })]);
+      mockSync.mockResolvedValue({ results: [{ id: 'i1', status: 'updated' }] });
+
+      await pushDrafts(db);
+
+      // Otherwise an answer fixed on this attempt keeps the last one's error.
+      expect(clearAnswerSyncErrors).toHaveBeenCalledWith(db, 'i1');
+      expect(setAnswerSyncError).not.toHaveBeenCalled();
+      expect(setSyncStatus).toHaveBeenCalledWith(db, 'i1', 'synced');
+    });
+
+    it('skips a refusal the server could not attribute to an answer', async () => {
+      mockList.mockResolvedValue([instance({ id: 'i1', project_id: 9 })]);
+      mockSync.mockResolvedValue({
+        results: [
+          {
+            id: 'i1',
+            status: 'created',
+            errors: { answers: [{ client_id: null, error: 'api.sync.item_not_in_form' }] },
+          },
+        ],
+      });
+
+      const summary = await pushDrafts(db);
+
+      expect(setAnswerSyncError).not.toHaveBeenCalled();
+      // Still not a clean sync — the interview is short an answer either way.
+      expect(summary).toEqual({ synced: 0, partial: 1, rejected: 0 });
+    });
+
+    it('keeps the reason a whole interview was rejected', async () => {
+      mockList.mockResolvedValue([instance({ id: 'i1', project_id: 9 })]);
+      mockSync.mockResolvedValue({
+        results: [
+          {
+            id: 'i1',
+            status: 'rejected',
+            errors: { interview_form_id: ['api.sync.form_not_in_project'] },
+          },
+        ],
+      });
+
+      await pushDrafts(db);
+
+      expect(setSyncStatus).toHaveBeenCalledWith(
+        db,
+        'i1',
+        'rejected',
+        'api.sync.form_not_in_project'
+      );
+    });
   });
 });

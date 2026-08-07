@@ -103,7 +103,21 @@ CREATE INDEX IF NOT EXISTS idx_instances_sync_status ON instances(sync_status);
  * stamp, so an interrupted upgrade rolls back rather than leaving the store
  * half-migrated at a version that claims otherwise.
  */
-const MIGRATIONS: readonly { version: number; sql: string }[] = [{ version: 1, sql: V1 }];
+/**
+ * Why a push did not fully land, kept so it can be shown and acted on rather
+ * than discarded. `instances.sync_error` explains a wholly rejected interview;
+ * `answers.sync_error` marks the individual answers the server refused while
+ * accepting the rest.
+ */
+const V2 = `
+ALTER TABLE instances ADD COLUMN sync_error TEXT;
+ALTER TABLE answers ADD COLUMN sync_error TEXT;
+`;
+
+export const MIGRATIONS: readonly { version: number; sql: string }[] = [
+  { version: 1, sql: V1 },
+  { version: 2, sql: V2 },
+];
 
 /** The version a fully-migrated store reports. */
 export const SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1].version;

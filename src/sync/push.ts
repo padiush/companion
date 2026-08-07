@@ -1,15 +1,21 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { api } from '../api/client';
-import type { InstancePush, ItemType, SyncResult } from '../api/types';
+import type { InstancePush, ItemType, SyncResult, SyncResultErrors } from '../api/types';
 import { decodeAnswerValue } from '../capture/values';
-import { getAnswersForInstance } from '../db/answersRepository';
+import {
+  clearAnswerSyncErrors,
+  getAnswersForInstance,
+  setAnswerSyncError,
+} from '../db/answersRepository';
 import { getForm } from '../db/formsRepository';
 import { listDraftInstances, setSyncStatus } from '../db/instancesRepository';
 import type { AnswerRow, InstanceRow } from '../db/types';
 
 export interface PushSummary {
   synced: number;
+  /** Landed on the server, but with answers the server refused. */
+  partial: number;
   rejected: number;
 }
 
@@ -49,9 +55,64 @@ export function toInstancePush(
   };
 }
 
-/** created / updated / unchanged all mean it landed; only 'rejected' hasn't. */
-function statusFor(result: SyncResult): string {
-  return result.status === 'rejected' ? 'rejected' : 'synced';
+export type PushOutcome = 'synced' | 'partial' | 'rejected';
+
+/**
+ * The reason a whole instance was refused, taken from the field errors the
+ * server attaches (e.g. `interview_form_id: [api.sync.form_not_in_project]`).
+ * Only the first is kept: one clear reason is what the interview screen shows.
+ */
+function instanceError(errors: SyncResultErrors | undefined): string | null {
+  for (const [field, value] of Object.entries(errors ?? {})) {
+    if (field === 'answers' || !Array.isArray(value)) {
+      continue;
+    }
+
+    const first = value[0];
+    if (typeof first === 'string') {
+      return first;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Apply one result to the local store.
+ *
+ * The trap this replaces: the top-level status was read alone, so a `created`
+ * or `updated` carrying per-answer refusals was recorded as fully synced. The
+ * refused answers were then neither retried nor shown — they simply vanished,
+ * with the interview looking complete.
+ *
+ * An interview that landed with refusals is 'partial': it is on the server, so
+ * re-pushing it unchanged would fail identically, and the outbox rightly leaves
+ * it alone. It needs the answer corrected or dropped first.
+ */
+async function applyResult(db: SQLiteDatabase, result: SyncResult): Promise<PushOutcome> {
+  // Whatever failed last time is re-decided by this response.
+  await clearAnswerSyncErrors(db, result.id);
+
+  if (result.status === 'rejected') {
+    await setSyncStatus(db, result.id, 'rejected', instanceError(result.errors));
+    return 'rejected';
+  }
+
+  const refused = result.errors?.answers ?? [];
+
+  if (refused.length === 0) {
+    await setSyncStatus(db, result.id, 'synced');
+    return 'synced';
+  }
+
+  await setSyncStatus(db, result.id, 'partial');
+  for (const answer of refused) {
+    if (answer.client_id) {
+      await setAnswerSyncError(db, answer.client_id, answer.error);
+    }
+  }
+
+  return 'partial';
 }
 
 /**
@@ -69,7 +130,7 @@ export async function pushDrafts(db: SQLiteDatabase): Promise<PushSummary> {
     byProject.set(draft.project_id, batch);
   }
 
-  const summary: PushSummary = { synced: 0, rejected: 0 };
+  const summary: PushSummary = { synced: 0, partial: 0, rejected: 0 };
 
   for (const [projectId, instances] of byProject) {
     const payload: InstancePush[] = [];
@@ -89,13 +150,7 @@ export async function pushDrafts(db: SQLiteDatabase): Promise<PushSummary> {
     const response = await api.syncInstances(projectId, { instances: payload });
 
     for (const result of response.results) {
-      const status = statusFor(result);
-      await setSyncStatus(db, result.id, status);
-      if (status === 'synced') {
-        summary.synced += 1;
-      } else {
-        summary.rejected += 1;
-      }
+      summary[await applyResult(db, result)] += 1;
     }
   }
 
