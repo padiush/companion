@@ -1,6 +1,12 @@
 import { createTestDatabase, type TestDatabase } from '../../test-utils/sqliteDatabase';
 import { insertInstance, setSyncStatus } from './instancesRepository';
-import { countPendingMedia, listPendingMedia, setMediaUploaded } from './mediaRepository';
+import {
+  countFailedMedia,
+  countPendingMedia,
+  listPendingMedia,
+  recordUploadFailure,
+  setMediaUploaded,
+} from './mediaRepository';
 
 let db: TestDatabase;
 
@@ -102,5 +108,54 @@ describe('setMediaUploaded', () => {
       ['m-1'],
     );
     expect(row).toEqual({ upload_status: 'uploaded', storage_key: 'projects/1/media/abc' });
+  });
+});
+
+describe('recordUploadFailure', () => {
+  beforeEach(async () => {
+    await seedInstance('sent', 'synced');
+    await seedMedia('m-1', 'sent');
+  });
+
+  it('keeps the reason and counts the attempt', async () => {
+    await recordUploadFailure(db, 'm-1', 'Upload failed with status 503');
+
+    const row = await db.getFirstAsync<{ upload_attempts: number; upload_error: string }>(
+      'SELECT upload_attempts, upload_error FROM media WHERE client_id = ?',
+      ['m-1'],
+    );
+    expect(row).toEqual({ upload_attempts: 1, upload_error: 'Upload failed with status 503' });
+  });
+
+  it('accumulates attempts across retries', async () => {
+    await recordUploadFailure(db, 'm-1', 'first');
+    await recordUploadFailure(db, 'm-1', 'second');
+
+    const row = await db.getFirstAsync<{ upload_attempts: number; upload_error: string }>(
+      'SELECT upload_attempts, upload_error FROM media WHERE client_id = ?',
+      ['m-1'],
+    );
+    // The latest reason wins; the count says how long it has been failing.
+    expect(row).toEqual({ upload_attempts: 2, upload_error: 'second' });
+  });
+
+  /** A failure that has since been retried successfully is no longer a failure. */
+  it('drops the reason once the upload succeeds', async () => {
+    await recordUploadFailure(db, 'm-1', 'transient');
+
+    await setMediaUploaded(db, 'm-1', 'storage/key');
+
+    await expect(countFailedMedia(db)).resolves.toBe(0);
+  });
+
+  it('still counts it as pending work while it keeps failing', async () => {
+    await recordUploadFailure(db, 'm-1', 'still failing');
+
+    await expect(countPendingMedia(db)).resolves.toBe(1);
+    await expect(countFailedMedia(db)).resolves.toBe(1);
+  });
+
+  it('counts nothing as failed before anything has been tried', async () => {
+    await expect(countFailedMedia(db)).resolves.toBe(0);
   });
 });

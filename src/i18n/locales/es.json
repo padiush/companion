@@ -106,7 +106,9 @@
     "sendMedia_one": "Subir 1 archivo",
     "sendMedia_other": "Subir {{count}} archivos",
     "sendUnresolved_one": "1 entrevista tiene respuestas que el servidor no aceptó. Ábrela para resolverlas.",
-    "sendUnresolved_other": "{{count}} entrevistas tienen respuestas que el servidor no aceptó. Ábrelas para resolverlas."
+    "sendUnresolved_other": "{{count}} entrevistas tienen respuestas que el servidor no aceptó. Ábrelas para resolverlas.",
+    "mediaFailed_one": "No se pudo subir 1 archivo. Se volverá a intentar la próxima vez que envíes.",
+    "mediaFailed_other": "No se pudieron subir {{count}} archivos. Se volverán a intentar la próxima vez que envíes."
   },
   "sync": {
     "rejectedTitle": "El servidor no aceptó esta entrevista",

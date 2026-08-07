@@ -30,7 +30,8 @@ export function DraftsScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { drafts, loading, refresh } = useDrafts();
-  const { count, pendingMedia, hasWork, sending, error, send } = useOutbox();
+  const { count, pendingMedia, hasWork, sending, error, lastMediaResult, send } =
+    useOutbox();
   const [sent, setSent] = useState<PushSummary | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -95,6 +96,11 @@ export function DraftsScreen() {
           {unresolved > 0 ? (
             <Text testID="send-unresolved" style={[styles.error, { color: theme.danger }]}>
               {t('drafts.sendUnresolved', { count: unresolved })}
+            </Text>
+          ) : null}
+          {lastMediaResult && lastMediaResult.failed > 0 ? (
+            <Text testID="media-failed" style={[styles.error, { color: theme.danger }]}>
+              {t('drafts.mediaFailed', { count: lastMediaResult.failed })}
             </Text>
           ) : null}
         </>
