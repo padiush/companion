@@ -1,13 +1,13 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { findAnswer, insertAnswer, updateAnswerValue } from '../db/answersRepository';
-import { insertInstance, touchInstance } from '../db/instancesRepository';
+import { insertInstance, recordLocalEdit } from '../db/instancesRepository';
 import type { AnswerRow } from '../db/types';
 import { createDraft, saveAnswer } from './captureService';
 
 jest.mock('../db/instancesRepository', () => ({
   insertInstance: jest.fn(),
-  touchInstance: jest.fn(),
+  recordLocalEdit: jest.fn(),
 }));
 jest.mock('../db/answersRepository', () => ({
   findAnswer: jest.fn(),
@@ -59,7 +59,7 @@ describe('saveAnswer', () => {
       expect.objectContaining({ clientId: 'uuid-1', itemId: 10, value: 'guaba' })
     );
     expect(updateAnswerValue).not.toHaveBeenCalled();
-    expect(touchInstance).toHaveBeenCalledWith(db, 'inst-1', expect.any(String));
+    expect(recordLocalEdit).toHaveBeenCalledWith(db, 'inst-1', expect.any(String));
   });
 
   it('updates the existing answer instead of inserting a duplicate', async () => {

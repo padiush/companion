@@ -3,12 +3,17 @@ import { useCallback, useState } from 'react';
 
 import { getDatabase } from '../db/database';
 import { countDrafts } from '../db/instancesRepository';
+import { countPendingMedia } from '../db/mediaRepository';
 import { pushDrafts, type PushSummary } from '../sync/push';
 import { uploadMedia } from '../sync/uploadMedia';
 
 export interface OutboxState {
-  /** Draft interviews waiting to be sent. */
+  /** Interviews waiting to be sent. */
   count: number;
+  /** Photos and audio waiting to be uploaded. */
+  pendingMedia: number;
+  /** Whether there is anything at all to send. */
+  hasWork: boolean;
   sending: boolean;
   error: boolean;
   lastResult: PushSummary | null;
@@ -17,11 +22,16 @@ export interface OutboxState {
 }
 
 /**
- * The outbox of unsent interviews. Refreshes its count whenever the screen
- * regains focus (e.g. after capturing an interview) and drains it on demand.
+ * The outbox of unsent work. Refreshes whenever the screen regains focus (e.g.
+ * after capturing an interview) and drains it on demand.
+ *
+ * Media is tracked alongside interviews because it can outlive them: an
+ * interview syncs, its photos do not, and an outbox counting only interviews
+ * then reports nothing to send while the media sits on the device forever.
  */
 export function useOutbox(): OutboxState {
   const [count, setCount] = useState(0);
+  const [pendingMedia, setPendingMedia] = useState(0);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(false);
   const [lastResult, setLastResult] = useState<PushSummary | null>(null);
@@ -29,6 +39,7 @@ export function useOutbox(): OutboxState {
   const refresh = useCallback(async () => {
     const db = await getDatabase();
     setCount(await countDrafts(db));
+    setPendingMedia(await countPendingMedia(db));
   }, []);
 
   useFocusEffect(
@@ -47,6 +58,7 @@ export function useOutbox(): OutboxState {
       await uploadMedia(db);
       setLastResult(result);
       setCount(await countDrafts(db));
+      setPendingMedia(await countPendingMedia(db));
       return result;
     } catch {
       setError(true);
@@ -56,5 +68,13 @@ export function useOutbox(): OutboxState {
     }
   }, []);
 
-  return { count, sending, error, lastResult, send };
+  return {
+    count,
+    pendingMedia,
+    hasWork: count > 0 || pendingMedia > 0,
+    sending,
+    error,
+    lastResult,
+    send,
+  };
 }
