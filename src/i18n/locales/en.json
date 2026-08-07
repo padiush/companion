@@ -71,6 +71,8 @@
     "recordingPaused": "Paused",
     "recordingLabel": "Recording {{number}}",
     "recordStartFailed": "Recording couldn't start. Try again.",
+    "recordingInterrupted": "The recording stopped on its own. What was captured up to then has been saved.",
+    "recordingLost": "The recording stopped and couldn't be recovered.",
     "photos": "Photos",
     "addPhoto": "Add photo",
     "photo": "Photo",

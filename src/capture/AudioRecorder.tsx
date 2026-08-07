@@ -4,9 +4,18 @@ import {
   setAudioModeAsync,
   useAudioRecorder,
 } from 'expo-audio';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  AppState,
+  PermissionsAndroid,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { getDatabase } from '../db/database';
@@ -23,6 +32,30 @@ const WAVEFORM_BARS = 40;
 const POLL_MS = 100;
 
 type Phase = 'idle' | 'recording' | 'paused';
+
+/** Android 13, the first release where posting a notification needs consent. */
+const TIRAMISU = 33;
+
+/**
+ * Ask to show the recording notification the foreground service posts. It is
+ * the informant's visible sign that the microphone is live, and the recorder's
+ * only stop button once the phone is in a pocket — but Android 13 and later
+ * hide it unless notifications are granted.
+ *
+ * The take records either way, so this asks and moves on. Android shows the
+ * dialog once; refusing costs the notification, not the interview.
+ */
+async function askToShowRecordingNotification() {
+  if (Platform.OS !== 'android' || Platform.Version < TIRAMISU) {
+    return;
+  }
+
+  try {
+    await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+  } catch {
+    // Never fatal — recording does not depend on it.
+  }
+}
 
 /**
  * Records interview audio into the encrypted store. Sits at the top of the
@@ -42,11 +75,33 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // The last length the poll saw. Held in a ref as well as in state so the
+  // interruption path can read it without re-subscribing to AppState ten times
+  // a second, and because a recorder the system has already stopped reports a
+  // duration of zero — this is the only record of how long the take ran.
+  const lastDurationRef = useRef(0);
+
   const refresh = useCallback(async () => {
     const db = await getDatabase();
     const rows = await listMediaForInstance(db, instanceId);
     setRecordings(rows.filter((row) => row.kind === 'audio'));
   }, [instanceId]);
+
+  /** Move a finished take into the encrypted store and re-list it. */
+  const ingest = useCallback(
+    async (uri: string, durationS: number) => {
+      const db = await getDatabase();
+      await attachMedia(db, {
+        instanceId,
+        kind: 'audio',
+        localUri: uri,
+        contentType: 'audio/mp4',
+        durationS,
+      });
+      await refresh();
+    },
+    [instanceId, refresh]
+  );
 
   useEffect(() => {
     let active = true;
@@ -69,6 +124,7 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
     }
     const id = setInterval(() => {
       const state = recorder.getStatus();
+      lastDurationRef.current = state.durationMillis;
       setDurationMillis(state.durationMillis);
       setLevels((prev) => {
         const next = [...prev, meteringToLevel(state.metering)];
@@ -78,6 +134,70 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
     return () => clearInterval(id);
   }, [phase, recorder]);
 
+  /**
+   * Close out a take the system ended for us, keeping whatever reached disk.
+   * The file is already final — stopping again is belt and braces, and throws
+   * harmlessly if the recorder is gone.
+   */
+  const salvage = useCallback(async () => {
+    const durationS = Math.max(1, Math.round(lastDurationRef.current / 1000));
+    setPhase('idle');
+    setBusy(true);
+    try {
+      try {
+        await recorder.stop();
+      } catch {
+        // Already stopped by the system; the take is whatever it managed.
+      }
+
+      const uri = recorder.uri;
+      setLevels([]);
+      setDurationMillis(0);
+      lastDurationRef.current = 0;
+
+      if (!uri) {
+        setError(t('interview.recordingLost'));
+        return;
+      }
+
+      await ingest(uri, durationS);
+      setError(t('interview.recordingInterrupted'));
+    } catch {
+      setError(t('interview.recordingLost'));
+    } finally {
+      setBusy(false);
+    }
+  }, [ingest, recorder, t]);
+
+  /**
+   * Recording now survives the app being backgrounded — a phone goes in a
+   * pocket mid-interview and that has to keep working — but it can still be
+   * ended without us: the recording notification carries a stop button, an
+   * incoming call takes exclusive audio focus, and Android may reclaim the
+   * service under memory pressure.
+   *
+   * The failure that matters is the silent one. The clock freezes, the screen
+   * still says "recording", and the researcher keeps talking to a recorder
+   * that stopped ten minutes ago. So on the way back to the foreground,
+   * believe the recorder over our own state, and keep what it did capture.
+   *
+   * Only a running take is reconciled. A pause reads as "not recording" too,
+   * but it is deliberate and short, and the phone is in someone's hand.
+   */
+  useEffect(() => {
+    if (phase !== 'recording') {
+      return;
+    }
+
+    const subscription = AppState.addEventListener('change', (next) => {
+      if (next === 'active' && !recorder.getStatus().isRecording) {
+        void salvage();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [phase, recorder, salvage]);
+
   const start = async () => {
     setError(null);
     const permission = await requestRecordingPermissionsAsync();
@@ -86,15 +206,25 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
       return;
     }
 
+    await askToShowRecordingNotification();
+
     try {
-      // Required on iOS before the session will actually capture; without it
-      // `record()` throws or stays silent.
-      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
+      // `allowsRecording` is required on iOS before the session will actually
+      // capture; without it `record()` throws or stays silent.
+      // `allowsBackgroundRecording` is what keeps the take alive once the
+      // screen goes off, and pairs with the recording foreground service the
+      // expo-audio config plugin installs.
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: true,
+        allowsBackgroundRecording: true,
+      });
       await recorder.prepareToRecordAsync();
       recorder.record();
       impact();
       setLevels([]);
       setDurationMillis(0);
+      lastDurationRef.current = 0;
       setPhase('recording');
     } catch {
       setPhase('idle');
@@ -132,19 +262,12 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
       setPhase('idle');
       setLevels([]);
       setDurationMillis(0);
+      lastDurationRef.current = 0;
       if (!uri) {
         return;
       }
 
-      const db = await getDatabase();
-      await attachMedia(db, {
-        instanceId,
-        kind: 'audio',
-        localUri: uri,
-        contentType: 'audio/mp4',
-        durationS,
-      });
-      await refresh();
+      await ingest(uri, durationS);
     } catch {
       setPhase('idle');
       setError(t('interview.mediaSaveFailed'));

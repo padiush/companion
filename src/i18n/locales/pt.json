@@ -71,6 +71,8 @@
     "recordingPaused": "Em pausa",
     "recordingLabel": "Gravação {{number}}",
     "recordStartFailed": "Não foi possível iniciar a gravação. Tente novamente.",
+    "recordingInterrupted": "A gravação parou sozinha. O que foi gravado até então foi salvo.",
+    "recordingLost": "A gravação parou e não foi possível recuperá-la.",
     "photos": "Fotos",
     "addPhoto": "Adicionar foto",
     "photo": "Foto",
