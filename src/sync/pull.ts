@@ -2,6 +2,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { api } from '../api/client';
 import type { ProjectSummary } from '../api/types';
+import { saveSession } from '../auth/session';
 import { upsertForms } from '../db/formsRepository';
 import { upsertProjects } from '../db/projectsRepository';
 import { getMeta, setMeta } from '../db/syncMetaRepository';
@@ -16,7 +17,12 @@ const bundleCursorKey = (projectId: number) => `bundle_cursor:${projectId}`;
 
 /** Pull the user's projects from /me and cache them; returns what was pulled. */
 export async function pullProjects(db: SQLiteDatabase): Promise<ProjectSummary[]> {
-  const { projects } = await api.me();
+  const { user, projects } = await api.me();
+
+  // A successful /me is the server confirming this identity, so it also
+  // refreshes the offline window — otherwise someone who syncs daily but never
+  // cold-launches online would still be locked out once the window lapsed.
+  await saveSession(user);
   await upsertProjects(db, projects);
   return projects;
 }

@@ -1,11 +1,18 @@
 import { api, ApiError } from '../api/client';
 import { clearToken, getToken, setToken } from '../api/tokens';
 import type { User } from '../api/types';
+import { clearSession, isWithinOfflineWindow, readSession, saveSession } from './session';
 
 /**
  * The authentication logic, kept free of React so it can be unit-tested
  * directly. The AuthContext is a thin state wrapper over these.
  */
+
+export interface RestoredSession {
+  user: User;
+  /** True when the identity came from the cache because the server was unreachable. */
+  offline: boolean;
+}
 
 /** Exchange credentials for a device token and persist it. */
 export async function signIn(email: string, password: string, deviceName: string): Promise<User> {
@@ -15,16 +22,23 @@ export async function signIn(email: string, password: string, deviceName: string
     device_name: deviceName,
   });
   await setToken(token);
+  await saveSession(user);
   return user;
 }
 
 /**
- * Restore a session from a stored token on launch. Returns the user if the
- * token still authenticates; a token that no longer works (401) is dropped and
- * null is returned. Network/other errors bubble up so the caller can decide
- * (the token is kept — the user may just be offline).
+ * Restore a session from a stored token on launch.
+ *
+ * The server is asked first, and a token it rejects (401) is dropped. When it
+ * cannot be reached at all the cached identity is used instead, so a field
+ * worker who force-quits with no signal still gets into their cached forms and
+ * unsent drafts — previously any non-401 failure, including simply being
+ * offline, dropped them at the sign-in screen with work stranded on the device.
+ *
+ * A cached identity is only good for OFFLINE_SESSION_MAX_AGE_DAYS; past that
+ * the app asks for a real sign-in. Nothing local is deleted either way.
  */
-export async function restoreSession(): Promise<User | null> {
+export async function restoreSession(): Promise<RestoredSession | null> {
   const token = await getToken();
   if (!token) {
     return null;
@@ -32,13 +46,24 @@ export async function restoreSession(): Promise<User | null> {
 
   try {
     const { user } = await api.me();
-    return user;
+    await saveSession(user);
+    return { user, offline: false };
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
       await clearToken();
+      await clearSession();
       return null;
     }
-    throw error;
+
+    // Unreachable — including a server error, which should not strand a field
+    // worker any more than a lost signal does.
+    const cached = await readSession();
+
+    if (!cached || !isWithinOfflineWindow(cached)) {
+      return null;
+    }
+
+    return { user: cached.user, offline: true };
   }
 }
 
@@ -50,4 +75,5 @@ export async function signOut(): Promise<void> {
     // Revoking may fail offline; the local token is cleared regardless.
   }
   await clearToken();
+  await clearSession();
 }
