@@ -75,7 +75,19 @@
     "addPhoto": "Agregar foto",
     "photo": "Foto",
     "mediaPermission": "Se necesita permiso para la cámara o el micrófono.",
-    "mediaSaveFailed": "No se pudo guardar el archivo. Inténtalo de nuevo."
+    "mediaSaveFailed": "No se pudo guardar el archivo. Inténtalo de nuevo.",
+    "incompleteTitle": "Faltan datos por revisar",
+    "incomplete_one": "1 respuesta necesita atención. Puedes revisarla ahora o volver más tarde; todo queda guardado.",
+    "incomplete_other": "{{count}} respuestas necesitan atención. Puedes revisarlas ahora o volver más tarde; todo queda guardado.",
+    "reviewAnswers": "Revisar",
+    "leaveAnyway": "Salir de todos modos",
+    "issues": {
+      "required": "Esta pregunta es obligatoria.",
+      "notANumber": "Escribe un número.",
+      "min": "Debe ser {{limit}} o más.",
+      "max": "Debe ser {{limit}} o menos.",
+      "step": "Debe ir de {{limit}} en {{limit}}."
+    }
   },
   "drafts": {
     "title": "Entrevistas",
@@ -110,7 +122,11 @@
       "api.sync.item_not_in_form": "La pregunta ya no existe en el formulario, así que el servidor no tiene dónde guardar esta respuesta.",
       "api.sync.section_mismatch": "La pregunta cambió de sección en el formulario.",
       "api.sync.client_id_conflict": "Esta respuesta ya está registrada en otra entrevista.",
-      "unknown": "El servidor no aceptó esta respuesta."
+      "unknown": "El servidor no aceptó esta respuesta.",
+      "api.sync.not_a_number": "El servidor esperaba un número en esta pregunta.",
+      "api.sync.below_min": "El valor es menor que el mínimo permitido.",
+      "api.sync.above_max": "El valor es mayor que el máximo permitido.",
+      "api.sync.off_step": "El valor no coincide con los intervalos permitidos."
     },
     "instanceErrors": {
       "api.sync.form_not_in_project": "El formulario ya no pertenece a este proyecto.",
