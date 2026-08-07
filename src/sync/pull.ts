@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import type { ProjectSummary } from '../api/types';
 import { saveSession } from '../auth/session';
 import { pruneForms, upsertForms } from '../db/formsRepository';
-import { upsertProjects } from '../db/projectsRepository';
+import { pruneProjects, upsertProjects } from '../db/projectsRepository';
 import { getMeta, setMeta } from '../db/syncMetaRepository';
 
 /**
@@ -36,6 +36,13 @@ export async function pullProjects(db: SQLiteDatabase): Promise<ProjectSummary[]
   // cold-launches online would still be locked out once the window lapsed.
   await saveSession(user);
   await upsertProjects(db, projects);
+  // /me is the full set the user can record on, not a delta, so anything
+  // cached and absent from it is gone — access revoked, or left behind by a
+  // previous account on this device.
+  await pruneProjects(
+    db,
+    projects.map((project) => project.id)
+  );
   return projects;
 }
 
