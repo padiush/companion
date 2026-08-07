@@ -1,12 +1,13 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { getDatabase } from '../db/database';
 import { listMediaForInstance } from '../db/mediaRepository';
 import type { MediaRow } from '../db/types';
-import { useTheme } from '../theme';
+import { space, type, useTheme } from '../theme';
+import { Button } from '../ui/Button';
 import { SectionLabel } from '../ui/SectionLabel';
 import { attachMedia } from './mediaService';
 
@@ -84,54 +85,32 @@ export function MediaSection({ instanceId }: { instanceId: string }) {
 
       {error ? <Text style={[styles.error, { color: theme.danger }]}>{error}</Text> : null}
 
-      <TouchableOpacity
+      <Button
         testID="add-photo"
+        variant="ghost"
+        label={t('interview.addPhoto')}
         onPress={addPhoto}
-        disabled={busy}
-        accessibilityRole="button"
-        style={[styles.action, { borderColor: theme.border }]}
-      >
-        {busy ? (
-          <ActivityIndicator color={theme.primary} />
-        ) : (
-          <Text style={[styles.actionText, { color: theme.primary }]}>
-            {t('interview.addPhoto')}
-          </Text>
-        )}
-      </TouchableOpacity>
+        busy={busy}
+        style={styles.action}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 12,
+    marginTop: space.sm,
+    marginBottom: space.xl,
   },
   item: {
-    fontSize: 15,
-    paddingVertical: 4,
+    ...type.body,
+    paddingVertical: space.xs,
   },
   error: {
-    fontSize: 14,
-    marginTop: 8,
+    ...type.label,
+    marginTop: space.sm,
   },
   action: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-    marginTop: 12,
-  },
-  actionText: {
-    fontSize: 15,
-    fontWeight: '600',
+    marginTop: space.md,
   },
 });

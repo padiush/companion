@@ -13,7 +13,8 @@ import {
 import { Chevron } from '../components/Chevron';
 import { useForms } from '../hooks/useForms';
 import type { RootStackParamList } from '../navigation/types';
-import { useTheme } from '../theme';
+import { border, radius, space, type, useTheme } from '../theme';
+import { SectionLabel } from '../ui/SectionLabel';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Project'>;
 
@@ -29,7 +30,7 @@ export function ProjectScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
-      <Text style={[styles.sectionTitle, { color: theme.muted }]}>{t('project.forms')}</Text>
+      <SectionLabel>{t('project.forms')}</SectionLabel>
 
       <ScrollView contentContainerStyle={styles.list}>
         {loading ? (
@@ -72,46 +73,37 @@ export function ProjectScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: 12,
+    padding: space.xl,
   },
   list: {
-    gap: 12,
-    paddingBottom: 24,
+    gap: space.md,
+    paddingBottom: space.xl,
   },
   empty: {
-    fontSize: 15,
-    marginTop: 8,
+    ...type.body,
+    marginTop: space.sm,
   },
   formRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
+    gap: space.md,
+    borderWidth: border.width,
+    borderRadius: radius.control,
+    padding: space.lg,
   },
   formRowText: {
     flexShrink: 1,
-    gap: 6,
+    gap: space.xs,
   },
   formName: {
-    fontSize: 17,
+    ...type.body,
     fontWeight: '600',
   },
-  formDesc: {
-    fontSize: 14,
-  },
+  formDesc: type.label,
   start: {
-    fontSize: 14,
+    ...type.label,
     fontWeight: '600',
-    marginTop: 4,
+    marginTop: space.xs,
   },
 });
