@@ -88,9 +88,12 @@
     "status": {
       "draft": "Rascunho",
       "synced": "Enviada",
-      "rejected": "Rejeitada"
+      "rejected": "Rejeitada",
+      "partial": "Incompleta"
     },
     "sendMedia_one": "Enviar 1 arquivo",
-    "sendMedia_other": "Enviar {{count}} arquivos"
+    "sendMedia_other": "Enviar {{count}} arquivos",
+    "sendUnresolved_one": "1 entrevista tem respostas que o servidor não aceitou. Abra-a para resolvê-las.",
+    "sendUnresolved_other": "{{count}} entrevistas têm respostas que o servidor não aceitou. Abra-as para resolvê-las."
   }
 }

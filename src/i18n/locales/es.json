@@ -88,9 +88,12 @@
     "status": {
       "draft": "Borrador",
       "synced": "Enviada",
-      "rejected": "Rechazada"
+      "rejected": "Rechazada",
+      "partial": "Incompleta"
     },
     "sendMedia_one": "Subir 1 archivo",
-    "sendMedia_other": "Subir {{count}} archivos"
+    "sendMedia_other": "Subir {{count}} archivos",
+    "sendUnresolved_one": "1 entrevista tiene respuestas que el servidor no aceptó. Ábrela para resolverlas.",
+    "sendUnresolved_other": "{{count}} entrevistas tienen respuestas que el servidor no aceptó. Ábrelas para resolverlas."
   }
 }

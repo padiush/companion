@@ -102,8 +102,22 @@ export async function countDrafts(db: SQLiteDatabase): Promise<number> {
   return row?.count ?? 0;
 }
 
-export async function setSyncStatus(db: SQLiteDatabase, id: string, status: string): Promise<void> {
-  await db.runAsync('UPDATE instances SET sync_status = ? WHERE id = ?', [status, id]);
+/**
+ * Record what the server made of this interview. The error is written in the
+ * same statement as the status so the two cannot disagree — clearing it on a
+ * clean push is what stops a resolved failure from being shown forever.
+ */
+export async function setSyncStatus(
+  db: SQLiteDatabase,
+  id: string,
+  status: string,
+  error: string | null = null
+): Promise<void> {
+  await db.runAsync('UPDATE instances SET sync_status = ?, sync_error = ? WHERE id = ?', [
+    status,
+    error,
+    id,
+  ]);
 }
 
 /** Every recorded interview, newest first, with its form name and answer/media counts. */
