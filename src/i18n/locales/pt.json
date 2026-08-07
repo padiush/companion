@@ -96,7 +96,6 @@
     "sent_one": "1 entrevista enviada",
     "sent_other": "{{count}} entrevistas enviadas",
     "empty": "Ainda não há entrevistas.",
-    "summary": "{{answers}} respostas · {{media}} arquivos",
     "status": {
       "draft": "Rascunho",
       "synced": "Enviada",
@@ -108,7 +107,17 @@
     "sendUnresolved_one": "1 entrevista tem respostas que o servidor não aceitou. Abra-a para resolvê-las.",
     "sendUnresolved_other": "{{count}} entrevistas têm respostas que o servidor não aceitou. Abra-as para resolvê-las.",
     "mediaFailed_one": "1 arquivo não pôde ser enviado. Será tentado novamente no próximo envio.",
-    "mediaFailed_other": "{{count}} arquivos não puderam ser enviados. Serão tentados novamente no próximo envio."
+    "mediaFailed_other": "{{count}} arquivos não puderam ser enviados. Serão tentados novamente no próximo envio.",
+    "contents": {
+      "audio_one": "1 gravação",
+      "audio_other": "{{count}} gravações",
+      "photos_one": "1 foto",
+      "photos_other": "{{count}} fotos",
+      "answers_one": "1 resposta",
+      "answers_other": "{{count}} respostas",
+      "formPending": "formulário pendente",
+      "empty": "nada gravado ainda"
+    }
   },
   "sync": {
     "rejectedTitle": "O servidor não aceitou esta entrevista",

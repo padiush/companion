@@ -66,6 +66,33 @@ export async function recordLocalEdit(
   ]);
 }
 
+/**
+ * Attach a GPS fix to an interview that was already started.
+ *
+ * Capture does not wait for location: recording begins the moment the
+ * informant does, and a fix that takes ten seconds in a valley must not hold
+ * the screen. The fix lands here whenever it arrives — the sync status is left
+ * alone, because acquiring a coordinate is not the recorder editing anything.
+ */
+export async function updateInstanceLocation(
+  db: SQLiteDatabase,
+  id: string,
+  location: DraftLocation
+): Promise<void> {
+  await db.runAsync(
+    `UPDATE instances
+        SET location_lat = ?, location_lng = ?, location_accuracy_m = ?, location_captured_at = ?
+      WHERE id = ?`,
+    [
+      location.lat,
+      location.lng,
+      location.accuracyM ?? null,
+      location.capturedAt ?? null,
+      id,
+    ]
+  );
+}
+
 export async function getInstance(db: SQLiteDatabase, id: string): Promise<InstanceRow | null> {
   return db.getFirstAsync<InstanceRow>('SELECT * FROM instances WHERE id = ?', [id]);
 }
@@ -120,7 +147,12 @@ export async function setSyncStatus(
   ]);
 }
 
-/** Every recorded interview, newest first, with its form name and answer/media counts. */
+/**
+ * Every recorded interview, newest first, with what it holds. Audio is counted
+ * separately from media as a whole because it is usually why the visit
+ * happened: a recording made live with the informant, and a form filled in
+ * afterwards. A list that reports only answers describes that as emptiness.
+ */
 export async function listInstancesWithMeta(db: SQLiteDatabase): Promise<DraftListItem[]> {
   return db.getAllAsync<DraftListItem>(
     `SELECT
@@ -128,6 +160,8 @@ export async function listInstancesWithMeta(db: SQLiteDatabase): Promise<DraftLi
        f.name AS form_name,
        (SELECT COUNT(*) FROM answers a WHERE a.instance_id = i.id) AS answer_count,
        (SELECT COUNT(*) FROM media m WHERE m.instance_id = i.id) AS media_count,
+       (SELECT COUNT(*) FROM media m WHERE m.instance_id = i.id AND m.kind = 'audio')
+         AS audio_count,
        (SELECT a.value FROM answers a
           WHERE a.instance_id = i.id
             AND a.value IS NOT NULL AND a.value != '' AND a.value NOT LIKE '[%'

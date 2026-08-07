@@ -80,6 +80,8 @@ export interface DraftListItem {
   sync_status: string;
   answer_count: number;
   media_count: number;
+  /** Recordings attached. Audio is usually the reason the visit happened. */
+  audio_count: number;
   /** The first plain-text answer, shown to tell same-form drafts apart. */
   preview: string | null;
 }

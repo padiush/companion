@@ -45,6 +45,9 @@ const textItem: Item = {
   order: 1,
 };
 
+/** A second required field, so "started but incomplete" is expressible. */
+const noteItem: Item = { ...textItem, id: 11, label: 'Notas', name: 'notes' };
+
 function form(repeatable: boolean) {
   return {
     id: 27,
@@ -53,9 +56,12 @@ function form(repeatable: boolean) {
     description: null,
     isActive: true,
     updatedAt: null,
-    sections: [{ id: 1, name: 'Uses', order: 1, repeatable, items: [textItem] }],
+    sections: [{ id: 1, name: 'Uses', order: 1, repeatable, items: [textItem, noteItem] }],
   };
 }
+
+/** One field answered, the other left blank — someone was filling this in. */
+const partlyFilled = { '10:x': 'guaba' };
 
 function mockInterview(overrides: Record<string, unknown> = {}) {
   mockUseInterview.mockReturnValue({
@@ -141,8 +147,8 @@ describe('InterviewScreen', () => {
   });
 
   it('reflects the save state and returns on Done', async () => {
-    // The fixture's only field is required, so answer it before leaving.
-    mockInterview({ saving: false, answers: { '10:x': 'guaba' } });
+    // Both fixture fields are required, so answer them before leaving.
+    mockInterview({ saving: false, answers: { '10:x': 'guaba', '11:x': 'nota' } });
     const saved = await render(<InterviewScreen />);
     expect(saved.getByText('interview.savedLocally')).toBeTruthy();
 
@@ -265,17 +271,17 @@ describe('constraints the form declares', () => {
   });
 
   it('marks what is missing when Done is pressed', async () => {
-    mockInterview({ answers: {} });
+    mockInterview({ answers: partlyFilled });
 
     const { getByTestId, getByText } = await render(<InterviewScreen />);
     await fireEvent.press(getByTestId('interview-done'));
 
-    expect(getByTestId('answer-issue-10')).toBeTruthy();
+    expect(getByTestId('answer-issue-11')).toBeTruthy();
     expect(getByText('interview.issues.required')).toBeTruthy();
   });
 
   it('does not leave while there is something to review', async () => {
-    mockInterview({ answers: {} });
+    mockInterview({ answers: partlyFilled });
 
     const { getByTestId } = await render(<InterviewScreen />);
     await fireEvent.press(getByTestId('interview-done'));
@@ -284,12 +290,36 @@ describe('constraints the form declares', () => {
   });
 
   /**
+   * Recording audio live and filling the form in later is the normal workflow,
+   * so an untouched form is the expected state on the way out. Warning here
+   * would interrupt almost every real interview.
+   */
+  it('says nothing on the way out of a form nobody has begun', async () => {
+    mockInterview({ answers: {} });
+
+    const { getByTestId } = await render(<InterviewScreen />);
+    await fireEvent.press(getByTestId('interview-done'));
+
+    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(mockGoBack).toHaveBeenCalled();
+  });
+
+  it('still warns once someone has started answering', async () => {
+    mockInterview({ answers: partlyFilled });
+
+    const { getByTestId } = await render(<InterviewScreen />);
+    await fireEvent.press(getByTestId('interview-done'));
+
+    expect(Alert.alert).toHaveBeenCalled();
+  });
+
+  /**
    * An interview left half-filled is ordinary fieldwork — the informant had to
    * go, an answer needs checking. Trapping the recorder would not fill it in,
    * and everything is saved either way.
    */
   it('lets the recorder leave anyway once told', async () => {
-    mockInterview({ answers: {} });
+    mockInterview({ answers: partlyFilled });
 
     const { getByTestId } = await render(<InterviewScreen />);
     await fireEvent.press(getByTestId('interview-done'));

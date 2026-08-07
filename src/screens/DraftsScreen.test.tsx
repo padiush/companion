@@ -5,7 +5,7 @@ import { useOutbox } from '../hooks/useOutbox';
 import { DraftsScreen } from './DraftsScreen';
 
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'es' } }),
 }));
 const mockNavigate = jest.fn();
 jest.mock('@react-navigation/native', () => ({
@@ -31,6 +31,7 @@ function draft(overrides: Record<string, unknown> = {}) {
     sync_status: 'draft',
     answer_count: 3,
     media_count: 1,
+    audio_count: 1,
     preview: 'Ruda',
     ...overrides,
   };
@@ -65,13 +66,18 @@ beforeEach(() => {
 describe('DraftsScreen', () => {
   it('lists interviews with their status', async () => {
     mockDrafts({
-      drafts: [draft(), draft({ id: 'd2', form_name: 'Other form', sync_status: 'rejected' })],
+      drafts: [
+        draft(),
+        draft({ id: 'd2', preview: 'Sábila', sync_status: 'rejected' }),
+      ],
     });
 
     const { getByTestId, getByText } = await render(<DraftsScreen />);
 
     expect(getByTestId('draft-d1')).toBeTruthy();
-    expect(getByText('Plant uses')).toBeTruthy();
+    // The row leads with what tells two interviews apart, not the form name
+    // they share.
+    expect(getByText('Ruda')).toBeTruthy();
     expect(getByText('drafts.status.draft')).toBeTruthy();
     expect(getByText('drafts.status.rejected')).toBeTruthy();
   });

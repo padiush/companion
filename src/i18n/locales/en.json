@@ -96,7 +96,6 @@
     "sent_one": "1 interview sent",
     "sent_other": "{{count}} interviews sent",
     "empty": "No interviews yet.",
-    "summary": "{{answers}} answers · {{media}} media",
     "status": {
       "draft": "Draft",
       "synced": "Sent",
@@ -108,7 +107,17 @@
     "sendUnresolved_one": "1 interview has answers the server did not accept. Open it to resolve them.",
     "sendUnresolved_other": "{{count}} interviews have answers the server did not accept. Open them to resolve them.",
     "mediaFailed_one": "1 file could not be uploaded. It will be retried the next time you send.",
-    "mediaFailed_other": "{{count}} files could not be uploaded. They will be retried the next time you send."
+    "mediaFailed_other": "{{count}} files could not be uploaded. They will be retried the next time you send.",
+    "contents": {
+      "audio_one": "1 recording",
+      "audio_other": "{{count}} recordings",
+      "photos_one": "1 photo",
+      "photos_other": "{{count}} photos",
+      "answers_one": "1 answer",
+      "answers_other": "{{count}} answers",
+      "formPending": "form still to fill in",
+      "empty": "nothing recorded yet"
+    }
   },
   "sync": {
     "rejectedTitle": "The server did not accept this interview",

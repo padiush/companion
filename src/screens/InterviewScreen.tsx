@@ -17,9 +17,9 @@ import { FormItemInput } from '../capture/FormItemInput';
 import { MediaSection } from '../capture/MediaSection';
 import { useInterview } from '../capture/useInterview';
 import { validateInstance } from '../capture/validate';
-import { answerKey, emptyValueFor } from '../capture/values';
+import { answerKey, emptyValueFor, isAnswered } from '../capture/values';
 import type { RootStackParamList } from '../navigation/types';
-import { useTheme } from '../theme';
+import { space, type, useTheme } from '../theme';
 
 /** Fill a form: renders its sections and items, saving each answer as it changes. */
 export function InterviewScreen() {
@@ -113,15 +113,26 @@ export function InterviewScreen() {
   const issueCount = Object.keys(issues).length;
 
   /**
+   * Whether anyone has begun answering. Recording audio live and filling the
+   * form in afterwards is the normal way this app is used, so an untouched
+   * form at the end of a visit is the expected state, not an omission.
+   */
+  const started = Object.values(answers).some(isAnswered);
+
+  /**
    * Done never blocks. An interview left half-filled is ordinary fieldwork —
    * the informant had to go, the answer needs checking — and trapping the
    * recorder on the screen would not fill it in. What was missed is named, and
    * leaving anyway is their call; everything is already saved either way.
+   *
+   * Nothing is said about a form nobody has begun: that is the audio-first
+   * path working as intended, and warning there would interrupt almost every
+   * real interview on the way out.
    */
   const onDone = () => {
     setChecked(true);
 
-    if (issueCount === 0) {
+    if (issueCount === 0 || !started) {
       navigation.goBack();
       return;
     }
@@ -288,9 +299,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionName: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 14,
+    // The researcher's own section names stay the dominant heading on the
+    // screen; anything the app adds around them takes the quieter kicker, so
+    // questionnaire and app furniture are never mistaken for one another.
+    ...type.heading,
+    marginBottom: space.lg,
   },
   set: {
     borderWidth: 1,
@@ -299,11 +312,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   setLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: 12,
+    ...type.kicker,
+    marginBottom: space.md,
   },
   setActions: {
     flexDirection: 'row',
