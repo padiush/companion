@@ -28,6 +28,36 @@ export async function upsertProjects(
   });
 }
 
+/**
+ * Drop cached projects the user can no longer record on.
+ *
+ * Pulls only ever added, so a project someone lost access to — or that belonged
+ * to a previous account on a shared device — stayed listed and tappable
+ * indefinitely. `/me` returns the full set the user can record on rather than a
+ * delta, so absence from it is unambiguous and needs nothing from the server.
+ *
+ * A project a local interview still belongs to is kept: that interview has to
+ * remain visible and sendable, and it carries the project id it will be pushed
+ * to. Losing access is not a reason to strand work already captured.
+ */
+export async function pruneProjects(
+  db: SQLiteDatabase,
+  accessibleProjectIds: number[]
+): Promise<void> {
+  // Inlined because SQLite has no array binding, so narrowed to integers first:
+  // these ids come off the wire and nothing else may reach the statement.
+  const keep = accessibleProjectIds.filter(Number.isInteger).join(',');
+  // An empty list is meaningful — no projects at all — so it must not become an
+  // empty IN (), which matches nothing and would keep every stale row.
+  const accessible = keep === '' ? '1 = 1' : `id NOT IN (${keep})`;
+
+  await db.runAsync(
+    `DELETE FROM projects
+      WHERE ${accessible}
+        AND id NOT IN (SELECT project_id FROM instances)`
+  );
+}
+
 export async function getProjects(db: SQLiteDatabase): Promise<CachedProject[]> {
   const rows = await db.getAllAsync<ProjectRecord>(
     'SELECT id, name, capabilities, updated_at FROM projects ORDER BY name'

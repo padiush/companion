@@ -4,12 +4,15 @@ import { api } from '../api/client';
 import type { Bundle, Capabilities, Form, ProjectSummary } from '../api/types';
 import { saveSession } from '../auth/session';
 import { pruneForms, upsertForms } from '../db/formsRepository';
-import { upsertProjects } from '../db/projectsRepository';
+import { pruneProjects, upsertProjects } from '../db/projectsRepository';
 import { getMeta, setMeta } from '../db/syncMetaRepository';
 import { pull, pullForms, pullProjects } from './pull';
 
 jest.mock('../api/client', () => ({ api: { me: jest.fn(), bundle: jest.fn() } }));
-jest.mock('../db/projectsRepository', () => ({ upsertProjects: jest.fn() }));
+jest.mock('../db/projectsRepository', () => ({
+  upsertProjects: jest.fn(),
+  pruneProjects: jest.fn(),
+}));
 jest.mock('../db/formsRepository', () => ({ upsertForms: jest.fn(), pruneForms: jest.fn() }));
 jest.mock('../db/syncMetaRepository', () => ({ getMeta: jest.fn(), setMeta: jest.fn() }));
 jest.mock('../auth/session', () => ({ saveSession: jest.fn() }));
@@ -64,6 +67,26 @@ describe('pullProjects', () => {
 
     expect(upsertProjects).toHaveBeenCalledWith(db, [project(1), project(2)]);
     expect(result).toHaveLength(2);
+  });
+
+  /**
+   * Found by running the app: projects from a previous account stayed listed
+   * and tappable after signing in and syncing, because pulls only ever added.
+   */
+  it('drops projects the user can no longer record on', async () => {
+    mockApi.me.mockResolvedValue(me([project(1), project(2)]));
+
+    await pullProjects(db);
+
+    expect(pruneProjects).toHaveBeenCalledWith(db, [1, 2]);
+  });
+
+  it('drops everything when the user can record on nothing', async () => {
+    mockApi.me.mockResolvedValue(me([]));
+
+    await pullProjects(db);
+
+    expect(pruneProjects).toHaveBeenCalledWith(db, []);
   });
 
   /**
