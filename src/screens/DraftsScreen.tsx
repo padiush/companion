@@ -29,7 +29,7 @@ export function DraftsScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { drafts, loading, refresh } = useDrafts();
-  const { count, sending, error, send } = useOutbox();
+  const { count, pendingMedia, hasWork, sending, error, send } = useOutbox();
   const [sentCount, setSentCount] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -61,7 +61,7 @@ export function DraftsScreen() {
     <View style={[styles.container, { backgroundColor: theme.bg, paddingTop: insets.top + 12 }]}>
       <Text style={[styles.title, { color: theme.text }]}>{t('drafts.title')}</Text>
 
-      {count > 0 ? (
+      {hasWork ? (
         <TouchableOpacity
           testID="send"
           onPress={onSend}
@@ -73,7 +73,9 @@ export function DraftsScreen() {
             <ActivityIndicator color={theme.onPrimary} />
           ) : (
             <Text style={[styles.sendText, { color: theme.onPrimary }]}>
-              {t('drafts.send')} · {count}
+              {count > 0
+                ? `${t('drafts.send')} · ${count}`
+                : t('drafts.sendMedia', { count: pendingMedia })}
             </Text>
           )}
         </TouchableOpacity>

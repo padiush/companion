@@ -41,12 +41,18 @@ function mockDrafts(overrides: Record<string, unknown> = {}) {
 }
 
 function mockOutbox(overrides: Record<string, unknown> = {}) {
-  mockUseOutbox.mockReturnValue({
+  const state = {
     count: 0,
+    pendingMedia: 0,
     sending: false,
     error: false,
     send: jest.fn(),
     ...overrides,
+  };
+
+  mockUseOutbox.mockReturnValue({
+    ...state,
+    hasWork: state.count > 0 || state.pendingMedia > 0,
   });
 }
 
@@ -77,6 +83,36 @@ describe('DraftsScreen', () => {
 
     expect(getByText('Ruda')).toBeTruthy();
     expect(getByText('Sábila')).toBeTruthy();
+  });
+
+  it('offers no send action when everything has reached the server', async () => {
+    mockOutbox({ count: 0, pendingMedia: 0 });
+
+    const { queryByTestId } = await render(<DraftsScreen />);
+
+    expect(queryByTestId('send')).toBeNull();
+  });
+
+  /**
+   * The gap this closes: media upload only ran behind the Send action, which
+   * appeared only when there were draft interviews. Photos or audio attached
+   * after an interview synced could therefore never be uploaded at all.
+   */
+  it('offers to upload media even when no interview is waiting', async () => {
+    mockOutbox({ count: 0, pendingMedia: 3 });
+
+    const { getByTestId, getByText } = await render(<DraftsScreen />);
+
+    expect(getByTestId('send')).toBeTruthy();
+    expect(getByText('drafts.sendMedia')).toBeTruthy();
+  });
+
+  it('counts interviews on the send action when there are any', async () => {
+    mockOutbox({ count: 2, pendingMedia: 3 });
+
+    const { getByText } = await render(<DraftsScreen />);
+
+    expect(getByText('drafts.send · 2')).toBeTruthy();
   });
 
   it('shows the empty state when there are no interviews', async () => {

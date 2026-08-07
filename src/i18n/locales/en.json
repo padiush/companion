@@ -89,6 +89,8 @@
       "draft": "Draft",
       "synced": "Sent",
       "rejected": "Rejected"
-    }
+    },
+    "sendMedia_one": "Upload 1 file",
+    "sendMedia_other": "Upload {{count}} files"
   }
 }

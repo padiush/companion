@@ -7,8 +7,8 @@ import {
   insertInstance,
   listDraftInstances,
   listInstancesWithMeta,
+  recordLocalEdit,
   setSyncStatus,
-  touchInstance,
 } from './instancesRepository';
 
 let db: TestDatabase;
@@ -111,16 +111,30 @@ describe('the outbox queries', () => {
   });
 });
 
-describe('touchInstance', () => {
-  it('bumps updated_at without disturbing the sync status', async () => {
+describe('recordLocalEdit', () => {
+  it('bumps updated_at', async () => {
     await seedInstance('i-1');
-    await setSyncStatus(db, 'i-1', 'synced');
 
-    await touchInstance(db, 'i-1', '2026-08-06T15:00:00.000Z');
+    await recordLocalEdit(db, 'i-1', '2026-08-06T15:00:00.000Z');
 
-    const row = await getInstance(db, 'i-1');
-    expect(row?.updated_at).toBe('2026-08-06T15:00:00.000Z');
-    expect(row?.sync_status).toBe('synced');
+    await expect(getInstance(db, 'i-1')).resolves.toMatchObject({
+      updated_at: '2026-08-06T15:00:00.000Z',
+    });
+  });
+
+  /**
+   * The gap this closes: an edit to an already-synced interview used to leave
+   * the status at 'synced', and the outbox only selects drafts — so the change
+   * was saved, shown as saved, and never sent.
+   */
+  it.each(['synced', 'rejected'])('returns a %s interview to the outbox', async (status) => {
+    await seedInstance('i-1');
+    await setSyncStatus(db, 'i-1', status);
+
+    await recordLocalEdit(db, 'i-1', '2026-08-06T15:00:00.000Z');
+
+    await expect(getInstance(db, 'i-1')).resolves.toMatchObject({ sync_status: 'draft' });
+    await expect(listDraftInstances(db)).resolves.toHaveLength(1);
   });
 });
 

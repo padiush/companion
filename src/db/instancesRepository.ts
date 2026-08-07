@@ -44,12 +44,26 @@ export async function insertInstance(db: SQLiteDatabase, instance: InstanceInser
   );
 }
 
-export async function touchInstance(
+/**
+ * Record that the device changed this interview, which also puts it back in the
+ * outbox.
+ *
+ * Editing previously only bumped `updated_at`, so a reopened interview that had
+ * already synced kept `sync_status = 'synced'` — and the outbox selects drafts,
+ * so the edit was saved locally, reported as saved, and never sent. A local
+ * edit always means the server's copy is behind, whatever the interview's last
+ * sync outcome was; re-pushing is safe because the server upserts on the
+ * client-generated ids.
+ */
+export async function recordLocalEdit(
   db: SQLiteDatabase,
   id: string,
   updatedAt: string
 ): Promise<void> {
-  await db.runAsync('UPDATE instances SET updated_at = ? WHERE id = ?', [updatedAt, id]);
+  await db.runAsync("UPDATE instances SET updated_at = ?, sync_status = 'draft' WHERE id = ?", [
+    updatedAt,
+    id,
+  ]);
 }
 
 export async function getInstance(db: SQLiteDatabase, id: string): Promise<InstanceRow | null> {

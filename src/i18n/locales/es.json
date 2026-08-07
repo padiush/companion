@@ -89,6 +89,8 @@
       "draft": "Borrador",
       "synced": "Enviada",
       "rejected": "Rechazada"
-    }
+    },
+    "sendMedia_one": "Subir 1 archivo",
+    "sendMedia_other": "Subir {{count}} archivos"
   }
 }

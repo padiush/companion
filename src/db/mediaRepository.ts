@@ -98,6 +98,22 @@ export async function listPendingMedia(db: SQLiteDatabase): Promise<MediaRow[]> 
   );
 }
 
+/**
+ * Media the server does not have yet, whether or not its interview has synced.
+ *
+ * Deliberately broader than `listPendingMedia`: this drives the outbox, and a
+ * photo attached to a draft becomes uploadable the moment that draft is pushed,
+ * in the same send. Counting only the immediately-uploadable ones would hide
+ * the Send action in exactly the case where it is needed.
+ */
+export async function countPendingMedia(db: SQLiteDatabase): Promise<number> {
+  const row = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) AS count FROM media WHERE upload_status != 'uploaded'"
+  );
+
+  return row?.count ?? 0;
+}
+
 export async function setMediaUploaded(
   db: SQLiteDatabase,
   clientId: string,

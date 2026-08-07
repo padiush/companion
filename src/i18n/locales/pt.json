@@ -89,6 +89,8 @@
       "draft": "Rascunho",
       "synced": "Enviada",
       "rejected": "Rejeitada"
-    }
+    },
+    "sendMedia_one": "Enviar 1 arquivo",
+    "sendMedia_other": "Enviar {{count}} arquivos"
   }
 }

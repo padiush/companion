@@ -6,7 +6,7 @@ import {
   insertAnswer,
   updateAnswerValue,
 } from '../db/answersRepository';
-import { insertInstance, touchInstance, type DraftLocation } from '../db/instancesRepository';
+import { insertInstance, recordLocalEdit, type DraftLocation } from '../db/instancesRepository';
 import type { AnswerRow } from '../db/types';
 import { uuid } from '../ids';
 import { encodeAnswerValue, type AnswerValue } from './values';
@@ -48,7 +48,8 @@ export interface SaveAnswerParams {
 /**
  * Save an answer for a slot. The first save for a (instance, item, repeatable
  * set) mints a client_id and inserts; later saves update the same row and bump
- * its edit-time (the last-writer-wins key on sync).
+ * its edit-time (the last-writer-wins key on sync). Either way the interview
+ * returns to the outbox, so edits made after a sync are actually sent.
  */
 export async function saveAnswer(db: SQLiteDatabase, params: SaveAnswerParams): Promise<void> {
   const now = new Date().toISOString();
@@ -70,7 +71,7 @@ export async function saveAnswer(db: SQLiteDatabase, params: SaveAnswerParams): 
     });
   }
 
-  await touchInstance(db, params.instanceId, now);
+  await recordLocalEdit(db, params.instanceId, now);
 }
 
 export function getDraftAnswers(db: SQLiteDatabase, instanceId: string): Promise<AnswerRow[]> {
