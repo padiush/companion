@@ -19,7 +19,8 @@ import { Chevron } from '../components/Chevron';
 import { useOutbox } from '../hooks/useOutbox';
 import { useProjects } from '../hooks/useProjects';
 import type { RootStackParamList } from '../navigation/types';
-import { useTheme } from '../theme';
+import { border, radius, space, type, useTheme } from '../theme';
+import { SectionLabel } from '../ui/SectionLabel';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -98,7 +99,7 @@ export function HomeScreen() {
       ) : null}
 
       <View style={styles.projectsHeader}>
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('home.projects')}</Text>
+        <SectionLabel>{t('home.projects')}</SectionLabel>
         <TouchableOpacity
           testID="sync"
           onPress={onSync}
@@ -158,90 +159,79 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingBottom: 12,
+    paddingHorizontal: space.xl,
+    paddingBottom: space.md,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    gap: 16,
-    marginBottom: 28,
+    gap: space.lg,
+    marginBottom: space.xxl,
   },
   headerText: {
     flexShrink: 1,
   },
-  greeting: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
+  greeting: type.title,
   subtitle: {
-    fontSize: 15,
-    marginTop: 8,
+    ...type.body,
+    marginTop: space.sm,
   },
   signOutText: {
-    fontSize: 15,
+    ...type.label,
     fontWeight: '600',
-    paddingVertical: 4,
+    paddingVertical: space.xs,
   },
   offline: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: 16,
+    borderWidth: border.width,
+    borderRadius: radius.control,
+    paddingHorizontal: space.md,
+    paddingVertical: space.md,
+    marginBottom: space.lg,
   },
-  offlineText: {
-    fontSize: 14,
-  },
+  offlineText: type.label,
   projectsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    marginBottom: space.md,
   },
   syncText: {
-    fontSize: 15,
+    ...type.label,
     fontWeight: '600',
   },
   error: {
-    fontSize: 14,
-    marginBottom: 12,
+    ...type.label,
+    marginBottom: space.md,
   },
   success: {
-    fontSize: 14,
+    ...type.label,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: space.md,
   },
   list: {
     flex: 1,
   },
   listContent: {
-    gap: 10,
-    paddingBottom: 16,
+    gap: space.md,
+    paddingBottom: space.lg,
   },
   empty: {
-    fontSize: 15,
-    marginTop: 8,
+    ...type.body,
+    marginTop: space.sm,
   },
   projectRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 16,
+    gap: space.md,
+    borderWidth: border.width,
+    borderRadius: radius.control,
+    padding: space.lg,
   },
   projectName: {
+    ...type.body,
     flexShrink: 1,
-    fontSize: 16,
     fontWeight: '500',
   },
 });

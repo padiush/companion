@@ -13,7 +13,7 @@ import { getDatabase } from '../db/database';
 import { listMediaForInstance } from '../db/mediaRepository';
 import type { MediaRow } from '../db/types';
 import { impact } from '../haptics';
-import { useTheme } from '../theme';
+import { border, radius, space, touch, type, useTheme } from '../theme';
 import { SectionLabel } from '../ui/SectionLabel';
 import { formatClock, meteringToLevel } from './audioLevels';
 import { attachMedia } from './mediaService';
@@ -305,22 +305,17 @@ function MicIcon({ color, size = 18 }: { color: string; size?: number }) {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: space.xl,
   },
   hint: {
-    fontSize: 13,
-    marginBottom: 12,
+    ...type.caption,
+    marginBottom: space.md,
   },
   stage: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    gap: 14,
+    borderWidth: border.width,
+    borderRadius: radius.control,
+    padding: space.lg,
+    gap: space.lg,
   },
   stageHeader: {
     flexDirection: 'row',
@@ -330,20 +325,21 @@ const styles = StyleSheet.create({
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: space.sm,
   },
   dot: {
+    // A circle, so the radius is half the size rather than the control radius.
     width: 12,
     height: 12,
     borderRadius: 6,
   },
   status: {
-    fontSize: 15,
+    ...type.body,
     fontWeight: '600',
   },
   clock: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...type.heading,
+    // Digits keep their column as the timer runs, so it does not jitter.
     fontVariant: ['tabular-nums'],
   },
   waveform: {
@@ -353,50 +349,51 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   bar: {
+    // A waveform bar a few points wide; the control radius would round it away.
     flex: 1,
     borderRadius: 2,
     minHeight: 3,
   },
   controls: {
     flexDirection: 'row',
-    gap: 12,
+    gap: space.md,
   },
   primaryButton: {
     flex: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
+    borderRadius: radius.control,
+    paddingVertical: space.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: touch.min + 8,
   },
   primaryText: {
-    fontSize: 15,
+    ...type.body,
     fontWeight: '700',
   },
   secondaryButton: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
+    borderWidth: border.width,
+    borderRadius: radius.control,
+    paddingVertical: space.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: touch.min + 8,
   },
   secondaryText: {
-    fontSize: 15,
+    ...type.body,
     fontWeight: '600',
   },
   error: {
-    fontSize: 14,
-    marginTop: 10,
+    ...type.label,
+    marginTop: space.md,
   },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 6,
+    gap: space.sm,
+    paddingVertical: space.xs,
   },
   itemText: {
-    fontSize: 15,
+    ...type.body,
   },
 });

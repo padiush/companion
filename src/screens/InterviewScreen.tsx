@@ -19,7 +19,8 @@ import { useInterview } from '../capture/useInterview';
 import { validateInstance } from '../capture/validate';
 import { answerKey, emptyValueFor, isAnswered } from '../capture/values';
 import type { RootStackParamList } from '../navigation/types';
-import { space, type, useTheme } from '../theme';
+import { border, radius, space, type, useTheme } from '../theme';
+import { Button } from '../ui/Button';
 
 /** Fill a form: renders its sections and items, saving each answer as it changes. */
 export function InterviewScreen() {
@@ -244,14 +245,12 @@ export function InterviewScreen() {
         {saving ? t('interview.saving') : t('interview.savedLocally')}
       </Text>
 
-      <TouchableOpacity
+      <Button
         testID="interview-done"
+        label={t('interview.done')}
         onPress={onDone}
-        accessibilityRole="button"
-        style={[styles.done, { backgroundColor: theme.primary }]}
-      >
-        <Text style={[styles.doneText, { color: theme.onPrimary }]}>{t('interview.done')}</Text>
-      </TouchableOpacity>
+        style={styles.done}
+      />
     </ScrollView>
   );
 }
@@ -261,39 +260,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 20,
-    paddingBottom: 40,
+    padding: space.xl,
+    paddingBottom: space.xxl,
   },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: space.md,
   },
-  preparing: {
-    fontSize: 15,
-  },
+  preparing: type.body,
   banner: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    gap: 8,
+    borderWidth: border.width,
+    borderRadius: radius.control,
+    padding: space.lg,
+    marginBottom: space.xl,
+    gap: space.sm,
   },
   bannerTitle: {
-    fontSize: 15,
+    ...type.body,
     fontWeight: '700',
   },
-  bannerText: {
-    fontSize: 14,
-  },
+  bannerText: type.label,
   bannerAction: {
-    fontSize: 15,
+    ...type.body,
     fontWeight: '700',
-    paddingVertical: 6,
+    paddingVertical: space.xs,
   },
   orphan: {
-    gap: 2,
+    gap: space.xs,
   },
   section: {
     marginBottom: 24,
@@ -306,10 +301,10 @@ const styles = StyleSheet.create({
     marginBottom: space.lg,
   },
   set: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
+    borderWidth: border.width,
+    borderRadius: radius.control,
+    padding: space.lg,
+    marginBottom: space.md,
   },
   setLabel: {
     ...type.kicker,
@@ -317,28 +312,19 @@ const styles = StyleSheet.create({
   },
   setActions: {
     flexDirection: 'row',
-    gap: 24,
-    paddingVertical: 8,
+    gap: space.xl,
+    paddingVertical: space.sm,
   },
   addSetText: {
-    fontSize: 15,
+    ...type.body,
     fontWeight: '600',
   },
   saved: {
-    fontSize: 13,
+    ...type.caption,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: space.sm,
   },
   done: {
-    borderRadius: 10,
-    paddingVertical: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 52,
-    marginTop: 16,
-  },
-  doneText: {
-    fontSize: 16,
-    fontWeight: '700',
+    marginTop: space.lg,
   },
 });

@@ -2,7 +2,7 @@ import DateTimePicker, { type DateTimePickerEvent } from '@react-native-communit
 import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import { useTheme } from '../theme';
+import { radius, useTheme, type } from '../theme';
 import { formatDate, parseDate } from './dateValue';
 
 const CLEAR_HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
@@ -67,16 +67,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: radius.control,
     paddingHorizontal: 14,
     paddingVertical: 13,
   },
   value: {
     flex: 1,
-    fontSize: 16,
+    ...type.body,
   },
   clear: {
-    fontSize: 16,
+    ...type.body,
     paddingLeft: 10,
   },
 });

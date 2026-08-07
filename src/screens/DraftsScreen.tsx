@@ -21,6 +21,7 @@ import type { DraftListItem } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
 import type { PushSummary } from '../sync/push';
 import { border, radius, space, type, useTheme } from '../theme';
+import { Button } from '../ui/Button';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -95,23 +96,17 @@ export function DraftsScreen() {
       <Text style={[styles.title, { color: theme.text }]}>{t('drafts.title')}</Text>
 
       {hasWork ? (
-        <TouchableOpacity
+        <Button
           testID="send"
+          label={
+            count > 0
+              ? `${t('drafts.send')} · ${count}`
+              : t('drafts.sendMedia', { count: pendingMedia })
+          }
           onPress={onSend}
-          disabled={sending}
-          accessibilityRole="button"
-          style={[styles.send, { backgroundColor: theme.primary }]}
-        >
-          {sending ? (
-            <ActivityIndicator color={theme.onPrimary} />
-          ) : (
-            <Text style={[styles.sendText, { color: theme.onPrimary }]}>
-              {count > 0
-                ? `${t('drafts.send')} · ${count}`
-                : t('drafts.sendMedia', { count: pendingMedia })}
-            </Text>
-          )}
-        </TouchableOpacity>
+          busy={sending}
+          style={styles.send}
+        />
       ) : null}
 
       {error ? (
@@ -204,49 +199,39 @@ export function DraftsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: space.xl,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 20,
+    ...type.title,
+    marginBottom: space.xl,
   },
   send: {
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 50,
-    marginBottom: 16,
-  },
-  sendText: {
-    fontSize: 16,
-    fontWeight: '700',
+    marginBottom: space.lg,
   },
   error: {
-    fontSize: 14,
-    marginBottom: 12,
+    ...type.label,
+    marginBottom: space.md,
   },
   sent: {
-    fontSize: 14,
+    ...type.label,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: space.md,
   },
   list: {
-    gap: 10,
-    paddingBottom: 24,
+    gap: space.md,
+    paddingBottom: space.xl,
   },
   empty: {
-    fontSize: 15,
-    marginTop: 8,
+    ...type.body,
+    marginTop: space.sm,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-    gap: 12,
+    borderWidth: border.width,
+    borderRadius: radius.control,
+    padding: space.lg,
+    gap: space.md,
   },
   rowMain: {
     flex: 1,
@@ -272,6 +257,8 @@ const styles = StyleSheet.create({
   },
   statusText: {
     ...type.kicker,
+    // Below the caption step on purpose: this rides inside a pill next to the
+    // interview's name and must not compete with it for attention.
     fontSize: 11,
   },
 });

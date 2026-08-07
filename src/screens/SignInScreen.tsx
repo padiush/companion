@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -17,7 +15,8 @@ import { SignInCancelled } from '../auth/accountStore';
 import { useAuth, type ConfirmReplace } from '../auth/AuthContext';
 import { AppLogo } from '../components/AppLogo';
 import type { PendingWork } from '../db/ownership';
-import { useTheme } from '../theme';
+import { border, radius, space, type, useTheme } from '../theme';
+import { Button } from '../ui/Button';
 
 export function SignInScreen() {
   const { t } = useTranslation();
@@ -130,19 +129,13 @@ export function SignInScreen() {
 
       {error ? <Text style={[styles.error, { color: theme.danger }]}>{error}</Text> : null}
 
-      <TouchableOpacity
+      <Button
         testID="submit"
-        style={[styles.button, { backgroundColor: theme.primary, opacity: submitting ? 0.7 : 1 }]}
+        label={t('auth.submit')}
         onPress={onSubmit}
-        disabled={submitting}
-        accessibilityRole="button"
-      >
-        {submitting ? (
-          <ActivityIndicator color={theme.onPrimary} />
-        ) : (
-          <Text style={[styles.buttonText, { color: theme.onPrimary }]}>{t('auth.submit')}</Text>
-        )}
-      </TouchableOpacity>
+        busy={submitting}
+        style={styles.submit}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -151,50 +144,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 24,
+    padding: space.xl,
   },
   header: {
-    marginBottom: 32,
+    marginBottom: space.xxl,
   },
   logo: {
-    marginBottom: 16,
+    marginBottom: space.lg,
   },
-  brand: {
-    fontSize: 26,
-    fontWeight: '700',
-  },
+  brand: type.title,
   tagline: {
-    fontSize: 15,
-    marginTop: 6,
+    ...type.body,
+    marginTop: space.xs,
   },
   field: {
-    marginBottom: 16,
+    marginBottom: space.lg,
   },
   label: {
-    fontSize: 13,
-    marginBottom: 6,
+    ...type.caption,
+    marginBottom: space.xs,
   },
   input: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
+    borderWidth: border.width,
+    borderRadius: radius.control,
+    paddingHorizontal: space.md,
+    paddingVertical: space.md,
+    ...type.body,
   },
   error: {
-    fontSize: 14,
-    marginBottom: 12,
+    ...type.label,
+    marginBottom: space.md,
   },
-  button: {
-    marginTop: 8,
-    borderRadius: 10,
-    paddingVertical: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 52,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  submit: {
+    marginTop: space.sm,
   },
 });
