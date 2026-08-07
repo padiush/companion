@@ -125,10 +125,32 @@ ALTER TABLE media ADD COLUMN upload_attempts INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE media ADD COLUMN upload_error TEXT;
 `;
 
+/**
+ * Integrity events waiting to be reported. A few failures on this device
+ * destroy unsynced captures or leave an unencrypted recording behind, and they
+ * used to go to a console nobody reads — a researcher could lose a day's
+ * interviews and never learn it happened.
+ *
+ * Codes, never messages. There is no column to put a file path or an answer in,
+ * which is what lets these leave the device at all; the server rejects codes it
+ * does not know. Rows are deleted once the server acknowledges them.
+ */
+const V4 = `
+CREATE TABLE IF NOT EXISTS diagnostics (
+  client_id   TEXT PRIMARY KEY,
+  code        TEXT NOT NULL,
+  occurred_at TEXT NOT NULL,
+  app_version TEXT,
+  platform    TEXT,
+  os_version  TEXT
+);
+`;
+
 export const MIGRATIONS: readonly { version: number; sql: string }[] = [
   { version: 1, sql: V1 },
   { version: 2, sql: V2 },
   { version: 3, sql: V3 },
+  { version: 4, sql: V4 },
 ];
 
 /** The version a fully-migrated store reports. */

@@ -1,5 +1,7 @@
 import { Directory, Paths } from 'expo-file-system';
 
+import { recordDiagnostic } from '../diagnostics';
+
 /**
  * Cache subdirectories the capture APIs spool plaintext media into before
  * `attachMedia` ingests it: expo-audio uses `ExpoAudio/` on iOS and `Audio/`
@@ -20,7 +22,11 @@ export function sweepCaptureCache(): void {
         dir.delete();
       }
     } catch {
-      console.warn('[media] could not sweep the capture cache directory', name);
+      // Plaintext capture leftovers may still be on disk. The directory name
+      // is not reported: the code says enough, and this stays a channel that
+      // carries no paths. Fire-and-forget so the remaining dirs still get
+      // swept, and so a cold start is not held up by a report.
+      void recordDiagnostic('capture_cache_sweep_failed');
     }
   }
 }

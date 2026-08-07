@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { getDatabase } from '../db/database';
 import { countDrafts } from '../db/instancesRepository';
 import { countPendingMedia } from '../db/mediaRepository';
+import { pushDiagnostics } from '../sync/pushDiagnostics';
 import { pushDrafts, type PushSummary } from '../sync/push';
 import { uploadMedia, type MediaUploadSummary } from '../sync/uploadMedia';
 
@@ -60,6 +61,9 @@ export function useOutbox(): OutboxState {
       // Instances are on the server now, so their media can upload. Per-item
       // failures do not throw — they are reported, not swallowed.
       setLastMediaResult(await uploadMedia(db));
+      // Last, and unable to throw: a device reporting that it lost captures
+      // must not lose the sync that carries the rest of them too.
+      await pushDiagnostics(db);
       setLastResult(result);
       setCount(await countDrafts(db));
       setPendingMedia(await countPendingMedia(db));

@@ -201,6 +201,29 @@ export interface MediaCompleteResponse {
   transcription?: 'queued';
 }
 
+/**
+ * One integrity event. There is no message field by design — see
+ * `DiagnosticCode` in `src/diagnostics.ts` and the platform's
+ * `docs/contracts/companion-api.md`.
+ */
+export interface DiagnosticEvent {
+  client_id: string;
+  code: string;
+  occurred_at: string;
+  app_version?: string | null;
+  platform?: string | null;
+  os_version?: string | null;
+}
+
+export interface DiagnosticsRequest {
+  events: DiagnosticEvent[];
+}
+
+export interface DiagnosticsResponse {
+  /** The client_ids now safely stored; only these are cleared locally. */
+  accepted: string[];
+}
+
 /** The API's error envelope: { message, message_type: "error", errors? }. */
 export interface ApiErrorBody {
   message: string;

@@ -1,6 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+import { attachDiagnosticsStore, detachDiagnosticsStore, recordDiagnostic } from '../diagnostics';
 import { forgetDatabaseKey, getOrCreateDatabaseKey } from './encryptionKey';
 import { migrate } from './schema';
 
@@ -38,6 +39,7 @@ export async function resetDatabase(): Promise<void> {
   const opened = databasePromise;
   // Stop handing out the old connection before the file underneath it goes.
   databasePromise = null;
+  detachDiagnosticsStore();
 
   if (opened) {
     await opened.then((db) => db.closeAsync()).catch(() => {});
@@ -60,6 +62,9 @@ async function openEncryptedDatabase(): Promise<SQLiteDatabase> {
 
   await db.execAsync('PRAGMA foreign_keys = ON;');
   await migrate(db);
+  // Only now is there a table to hold them — including anything raised by the
+  // open itself, which is exactly when the store did not exist to write to.
+  attachDiagnosticsStore(db);
   return db;
 }
 
@@ -81,7 +86,7 @@ async function assertSQLCipher(db: SQLiteDatabase): Promise<void> {
   if (!version) {
     throw new Error(
       'SQLCipher is missing from this binary; refusing to open the capture store unencrypted. ' +
-        'Rebuild the dev client (expo run) — Expo Go cannot run this app.',
+        'Rebuild the dev client (expo run) — Expo Go cannot run this app.'
     );
   }
 }
@@ -112,7 +117,10 @@ async function encryptLegacyDatabase(key: string): Promise<void> {
   const plain = await SQLite.openDatabaseAsync(DATABASE_NAME);
   if (!(await isReadable(plain))) {
     await plain.closeAsync();
-    console.warn('[db] store unreadable both with and without the key; resetting');
+    // Unsynced interviews are being destroyed here. Nothing can be done about
+    // that — the bytes are unreadable — but it must not pass unnoticed, so the
+    // event is queued and reported once the fresh store exists.
+    await recordDiagnostic('store_reset_unrecoverable');
     await SQLite.deleteDatabaseAsync(DATABASE_NAME);
     return;
   }
@@ -135,7 +143,7 @@ async function encryptLegacyDatabase(key: string): Promise<void> {
 async function exportDatabase(
   source: SQLiteDatabase,
   targetName: string,
-  key: string,
+  key: string
 ): Promise<void> {
   const targetPath = `${SQLite.defaultDatabaseDirectory}/${targetName}`;
   await source.execAsync(`ATTACH DATABASE '${targetPath}' AS target KEY "x'${key}'";`);

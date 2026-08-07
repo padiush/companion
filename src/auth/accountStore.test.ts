@@ -1,6 +1,7 @@
 import { sweepCaptureCache } from '../capture/sweepCaptureCache';
 import { getDatabase, resetDatabase } from '../db/database';
 import { claimOwner, countPendingWork, readOwner } from '../db/ownership';
+import { recordDiagnostic } from '../diagnostics';
 import { claimStore, inspectStore, replaceStore, settleRestoredStore } from './accountStore';
 
 jest.mock('../db/database', () => ({ getDatabase: jest.fn(), resetDatabase: jest.fn() }));
@@ -10,6 +11,7 @@ jest.mock('../db/ownership', () => ({
   countPendingWork: jest.fn(),
 }));
 jest.mock('../capture/sweepCaptureCache', () => ({ sweepCaptureCache: jest.fn() }));
+jest.mock('../diagnostics', () => ({ recordDiagnostic: jest.fn().mockResolvedValue(undefined) }));
 
 const mockGetDatabase = getDatabase as jest.Mock;
 const mockReadOwner = readOwner as jest.Mock;
@@ -121,14 +123,14 @@ describe('settleRestoredStore', () => {
    * prevented — so the store goes, loudly.
    */
   it('resets a store belonging to someone else', async () => {
-    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
     mockReadOwner.mockResolvedValue(3);
 
     await settleRestoredStore(7);
 
     expect(resetDatabase).toHaveBeenCalled();
     expect(claimOwner).toHaveBeenCalledWith(db, 7);
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
+    // A path believed unreachable was reached, and it destroyed whatever the
+    // previous account had not sent. Reportable rather than merely logged.
+    expect(recordDiagnostic).toHaveBeenCalledWith('store_reset_foreign_account');
   });
 });
