@@ -11,10 +11,14 @@ interface Props {
   item: Item;
   value: AnswerValue;
   onChange: (value: AnswerValue) => void;
+  /** A message key for why the server refused this answer, if it did. */
+  error?: string;
+  /** Offered alongside an error the device cannot fix by retrying. */
+  onDiscard?: () => void;
 }
 
 /** Renders the right input for an item type and reports changes as an AnswerValue. */
-export function FormItemInput({ item, value, onChange }: Props) {
+export function FormItemInput({ item, value, onChange, error, onDiscard }: Props) {
   const theme = useTheme();
   const { t } = useTranslation();
 
@@ -24,6 +28,30 @@ export function FormItemInput({ item, value, onChange }: Props) {
       {item.required ? <Text style={{ color: theme.danger }}> *</Text> : null}
     </Text>
   );
+
+  /**
+   * The server's reason, shown against the field it belongs to. Reason keys are
+   * translated with a fallback, so a key this build does not know still says
+   * something rather than rendering raw.
+   */
+  const errorNotice = error ? (
+    <View testID={`answer-error-${item.id}`} style={styles.error}>
+      <Text style={[styles.errorText, { color: theme.danger }]}>
+        {t(`sync.answerErrors.${error}`, { defaultValue: t('sync.answerErrors.unknown') })}
+      </Text>
+      {onDiscard ? (
+        <TouchableOpacity
+          testID={`discard-answer-${item.id}`}
+          onPress={onDiscard}
+          accessibilityRole="button"
+        >
+          <Text style={[styles.errorAction, { color: theme.danger }]}>
+            {t('sync.discardAnswer')}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
+    </View>
+  ) : null;
 
   if (item.type === 'select' || item.type === 'multi') {
     const options = item.options ?? [];
@@ -68,6 +96,7 @@ export function FormItemInput({ item, value, onChange }: Props) {
             );
           })}
         </View>
+        {errorNotice}
       </View>
     );
   }
@@ -82,6 +111,7 @@ export function FormItemInput({ item, value, onChange }: Props) {
           placeholder={t('interview.datePlaceholder')}
           onChange={onChange}
         />
+        {errorNotice}
       </View>
     );
   }
@@ -104,6 +134,7 @@ export function FormItemInput({ item, value, onChange }: Props) {
         placeholder={isNumber ? undefined : t('interview.answerPlaceholder')}
         placeholderTextColor={theme.muted}
       />
+      {errorNotice}
     </View>
   );
 }
@@ -135,5 +166,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     minHeight: 44,
     justifyContent: 'center',
+  },
+  error: {
+    marginTop: 8,
+    gap: 4,
+  },
+  errorText: {
+    fontSize: 13,
+  },
+  errorAction: {
+    fontSize: 14,
+    fontWeight: '700',
+    paddingVertical: 4,
   },
 });

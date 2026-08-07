@@ -95,5 +95,28 @@
     "sendMedia_other": "Subir {{count}} archivos",
     "sendUnresolved_one": "1 entrevista tiene respuestas que el servidor no aceptó. Ábrela para resolverlas.",
     "sendUnresolved_other": "{{count}} entrevistas tienen respuestas que el servidor no aceptó. Ábrelas para resolverlas."
+  },
+  "sync": {
+    "rejectedTitle": "El servidor no aceptó esta entrevista",
+    "partialTitle": "Algunas respuestas no se enviaron",
+    "partialMessage": "La entrevista se guardó en el servidor, pero rechazó las respuestas marcadas abajo. Corrígelas o descártalas para completar el envío.",
+    "retry": "Intentar enviar de nuevo",
+    "discardAnswer": "Descartar respuesta",
+    "discardAnswerTitle": "¿Descartar esta respuesta?",
+    "discardAnswerMessage": "Se borrará «{{label}}» de este dispositivo y el resto de la entrevista se enviará. No se puede deshacer.",
+    "orphanedAnswer": "Una respuesta cuya pregunta ya no existe en el formulario:",
+    "orphanedLabel": "esta respuesta",
+    "answerErrors": {
+      "api.sync.item_not_in_form": "La pregunta ya no existe en el formulario, así que el servidor no tiene dónde guardar esta respuesta.",
+      "api.sync.section_mismatch": "La pregunta cambió de sección en el formulario.",
+      "api.sync.client_id_conflict": "Esta respuesta ya está registrada en otra entrevista.",
+      "unknown": "El servidor no aceptó esta respuesta."
+    },
+    "instanceErrors": {
+      "api.sync.form_not_in_project": "El formulario ya no pertenece a este proyecto.",
+      "api.sync.form_mismatch": "La entrevista no puede cambiar de formulario.",
+      "api.sync.not_owner": "Esta entrevista la registró otra cuenta.",
+      "unknown": "El servidor no aceptó esta entrevista."
+    }
   }
 }

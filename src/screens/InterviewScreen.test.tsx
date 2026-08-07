@@ -64,9 +64,16 @@ function mockInterview(overrides: Record<string, unknown> = {}) {
     saving: false,
     answers: {},
     repeats: {},
+    syncStatus: 'draft',
+    syncError: null,
+    answerErrors: {},
+    orphanedErrors: [],
+    answerClientIds: {},
     setAnswer: jest.fn(),
     addRepeat: jest.fn(),
     removeRepeat: jest.fn(),
+    retry: jest.fn(),
+    discardAnswer: jest.fn(),
     ...overrides,
   });
 }
@@ -148,5 +155,100 @@ describe('InterviewScreen', () => {
 
     expect(getByText('interview.saving')).toBeTruthy();
     expect(queryByText('interview.savedLocally')).toBeNull();
+  });
+});
+
+describe('an interview the server refused', () => {
+  it('says nothing about sync on an ordinary draft', async () => {
+    mockInterview({ syncStatus: 'draft' });
+
+    const { queryByTestId } = await render(<InterviewScreen />);
+
+    expect(queryByTestId('sync-banner')).toBeNull();
+  });
+
+  it('explains why a whole interview was rejected', async () => {
+    mockInterview({ syncStatus: 'rejected', syncError: 'api.sync.form_not_in_project' });
+
+    const { getByTestId, getByText } = await render(<InterviewScreen />);
+
+    expect(getByTestId('sync-banner')).toBeTruthy();
+    expect(getByText('sync.instanceErrors.api.sync.form_not_in_project')).toBeTruthy();
+  });
+
+  it('offers to send a refused interview again', async () => {
+    const retry = jest.fn();
+    mockInterview({ syncStatus: 'rejected', syncError: 'api.sync.not_owner', retry });
+
+    const { getByTestId } = await render(<InterviewScreen />);
+    await fireEvent.press(getByTestId('sync-retry'));
+
+    expect(retry).toHaveBeenCalled();
+  });
+
+  it('marks the individual answers the server refused', async () => {
+    mockInterview({
+      syncStatus: 'partial',
+      answerErrors: { '10:x': 'api.sync.item_not_in_form' },
+      answerClientIds: { '10:x': 'a-1' },
+    });
+
+    const { getByTestId, getByText } = await render(<InterviewScreen />);
+
+    expect(getByTestId('answer-error-10')).toBeTruthy();
+    expect(getByText('sync.answerErrors.api.sync.item_not_in_form')).toBeTruthy();
+  });
+
+  it('discards a refused answer only after the loss is confirmed', async () => {
+    const discardAnswer = jest.fn();
+    mockInterview({
+      syncStatus: 'partial',
+      answerErrors: { '10:x': 'api.sync.item_not_in_form' },
+      answerClientIds: { '10:x': 'a-1' },
+      discardAnswer,
+    });
+
+    const { getByTestId } = await render(<InterviewScreen />);
+    await fireEvent.press(getByTestId('discard-answer-10'));
+
+    expect(discardAnswer).not.toHaveBeenCalled();
+    pressAlertButton('destructive');
+    expect(discardAnswer).toHaveBeenCalledWith('a-1');
+  });
+
+  it('keeps the answer when the discard is cancelled', async () => {
+    const discardAnswer = jest.fn();
+    mockInterview({
+      syncStatus: 'partial',
+      answerErrors: { '10:x': 'api.sync.item_not_in_form' },
+      answerClientIds: { '10:x': 'a-1' },
+      discardAnswer,
+    });
+
+    const { getByTestId } = await render(<InterviewScreen />);
+    await fireEvent.press(getByTestId('discard-answer-10'));
+    pressAlertButton('cancel');
+
+    expect(discardAnswer).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Once the bundle catches up with the deletion that caused the refusal, the
+   * answer has no field left to render against — but it still blocks the
+   * interview, so it needs its own way out.
+   */
+  it('offers to discard a refused answer whose question is gone', async () => {
+    const discardAnswer = jest.fn();
+    mockInterview({
+      syncStatus: 'partial',
+      orphanedErrors: [{ clientId: 'a-9', itemId: 999, error: 'api.sync.item_not_in_form' }],
+      discardAnswer,
+    });
+
+    const { getByTestId } = await render(<InterviewScreen />);
+    await fireEvent.press(getByTestId('discard-orphan-a-9'));
+    pressAlertButton('destructive');
+
+    expect(discardAnswer).toHaveBeenCalledWith('a-9');
   });
 });

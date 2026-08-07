@@ -43,6 +43,7 @@ function instance(overrides: Partial<InstanceRow> = {}): InstanceRow {
     location_captured_at: '2026-07-13T10:00:00Z',
     form_version_cursor: '2026-07-01T00:00:00Z',
     sync_status: 'draft',
+    sync_error: null,
     created_at: '2026-07-13T09:00:00Z',
     updated_at: '2026-07-13T10:00:00Z',
     ...overrides,
@@ -58,6 +59,7 @@ function answer(overrides: Partial<AnswerRow> = {}): AnswerRow {
     repeatable_index: 0,
     value: 'guaba',
     edited_at: '2026-07-13T10:00:00Z',
+    sync_error: null,
     ...overrides,
   };
 }
