@@ -13,7 +13,13 @@
       "missingFields": "Enter your email and password.",
       "invalidCredentials": "Incorrect email or password.",
       "generic": "Couldn't sign in. Please try again."
-    }
+    },
+    "replaceStoreTitle": "This device holds another account’s work",
+    "replaceStoreInterviews_one": "There is 1 unsent interview from another account. Signing in deletes it, and it cannot be recovered.",
+    "replaceStoreInterviews_other": "There are {{count}} unsent interviews from another account. Signing in deletes them, and they cannot be recovered.",
+    "replaceStoreMedia_one": "There is 1 unuploaded file from another account. Signing in deletes it, and it cannot be recovered.",
+    "replaceStoreMedia_other": "There are {{count}} unuploaded files from another account. Signing in deletes them, and they cannot be recovered.",
+    "replaceStoreConfirm": "Delete and sign in"
   },
   "common": {
     "cancel": "Cancel"

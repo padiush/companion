@@ -13,7 +13,13 @@
       "missingFields": "Ingresa tu correo y contraseña.",
       "invalidCredentials": "Correo o contraseña incorrectos.",
       "generic": "No se pudo iniciar sesión. Inténtalo de nuevo."
-    }
+    },
+    "replaceStoreTitle": "Este dispositivo tiene trabajo de otra cuenta",
+    "replaceStoreInterviews_one": "Hay 1 entrevista sin enviar de otra cuenta. Si inicias sesión, se borrará y no se podrá recuperar.",
+    "replaceStoreInterviews_other": "Hay {{count}} entrevistas sin enviar de otra cuenta. Si inicias sesión, se borrarán y no se podrán recuperar.",
+    "replaceStoreMedia_one": "Hay 1 archivo sin subir de otra cuenta. Si inicias sesión, se borrará y no se podrá recuperar.",
+    "replaceStoreMedia_other": "Hay {{count}} archivos sin subir de otra cuenta. Si inicias sesión, se borrarán y no se podrán recuperar.",
+    "replaceStoreConfirm": "Borrar e iniciar sesión"
   },
   "common": {
     "cancel": "Cancelar"

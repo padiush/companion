@@ -1,7 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import { getOrCreateDatabaseKey } from './encryptionKey';
+import { forgetDatabaseKey, getOrCreateDatabaseKey } from './encryptionKey';
 import { migrate } from './schema';
 
 const DATABASE_NAME = 'padiush.db';
@@ -23,6 +23,28 @@ export function getDatabase(): Promise<SQLiteDatabase> {
   }
 
   return databasePromise;
+}
+
+/**
+ * Destroy the capture store and the key that opens it, then leave the module
+ * ready to mint both afresh on the next `getDatabase()`.
+ *
+ * Used when a different account signs in on this device. Deleting the file
+ * rather than emptying the tables leaves no freed pages holding informant
+ * responses, and dropping the key means any copy of those bytes that outlives
+ * the delete cannot be read back.
+ */
+export async function resetDatabase(): Promise<void> {
+  const opened = databasePromise;
+  // Stop handing out the old connection before the file underneath it goes.
+  databasePromise = null;
+
+  if (opened) {
+    await opened.then((db) => db.closeAsync()).catch(() => {});
+  }
+
+  await SQLite.deleteDatabaseAsync(DATABASE_NAME).catch(() => {});
+  await forgetDatabaseKey();
 }
 
 async function openEncryptedDatabase(): Promise<SQLiteDatabase> {
