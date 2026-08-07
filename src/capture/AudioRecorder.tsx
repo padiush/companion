@@ -3,6 +3,7 @@ import {
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
   useAudioRecorder,
+  type RecordingStatus,
 } from 'expo-audio';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -66,7 +67,23 @@ async function askToShowRecordingNotification() {
 export function AudioRecorder({ instanceId }: { instanceId: string }) {
   const { t } = useTranslation();
   const theme = useTheme();
-  const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
+
+  // Native emits a finish event whenever a take ends, including when it is
+  // ended from the notification. The listener has to be handed over at
+  // hook-call time, before the state it needs exists, so it delegates through
+  // a ref that an effect below keeps pointed at the current handler. That also
+  // keeps its identity stable, rather than resubscribing on every render.
+  const onRecordingFinishedRef = useRef<() => void>(() => {});
+  const handleRecordingStatus = useCallback((status: RecordingStatus) => {
+    if (status.isFinished) {
+      onRecordingFinishedRef.current();
+    }
+  }, []);
+
+  const recorder = useAudioRecorder(
+    { ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true },
+    handleRecordingStatus
+  );
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [durationMillis, setDurationMillis] = useState(0);
@@ -80,6 +97,13 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
   // a second, and because a recorder the system has already stopped reports a
   // duration of zero — this is the only record of how long the take ran.
   const lastDurationRef = useRef(0);
+
+  /**
+   * True while a take is being closed out. Stopping the recorder itself emits
+   * the finish event, so without this the deliberate stop would immediately
+   * trigger the salvage path and attach the same audio twice.
+   */
+  const settlingRef = useRef(false);
 
   const refresh = useCallback(async () => {
     const db = await getDatabase();
@@ -140,6 +164,11 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
    * harmlessly if the recorder is gone.
    */
   const salvage = useCallback(async () => {
+    if (settlingRef.current) {
+      return;
+    }
+    settlingRef.current = true;
+
     const durationS = Math.max(1, Math.round(lastDurationRef.current / 1000));
     setPhase('idle');
     setBusy(true);
@@ -165,24 +194,40 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
     } catch {
       setError(t('interview.recordingLost'));
     } finally {
+      settlingRef.current = false;
       setBusy(false);
     }
   }, [ingest, recorder, t]);
 
   /**
-   * Recording now survives the app being backgrounded — a phone goes in a
-   * pocket mid-interview and that has to keep working — but it can still be
-   * ended without us: the recording notification carries a stop button, an
-   * incoming call takes exclusive audio focus, and Android may reclaim the
-   * service under memory pressure.
+   * Recording survives the app being backgrounded — a phone goes in a pocket
+   * mid-interview and that has to keep working — but a take can still be ended
+   * without us: the notification's stop button, an incoming call taking audio
+   * focus, Android reclaiming the service. Native emits the finish event in
+   * all of those cases, so that event is the signal to trust.
    *
-   * The failure that matters is the silent one. The clock freezes, the screen
-   * still says "recording", and the researcher keeps talking to a recorder
-   * that stopped ten minutes ago. So on the way back to the foreground,
-   * believe the recorder over our own state, and keep what it did capture.
+   * This originally hung on an AppState transition to `active` instead, and a
+   * device test showed why that was wrong: stopping from the notification left
+   * the screen still showing a live recording with a frozen waveform and a
+   * stop button that no longer had anything to stop. A locked phone can be
+   * woken without ever producing a background-to-active edge, so the check
+   * simply never ran. The event has no such gap.
    *
    * Only a running take is reconciled. A pause reads as "not recording" too,
    * but it is deliberate and short, and the phone is in someone's hand.
+   */
+  useEffect(() => {
+    onRecordingFinishedRef.current = () => {
+      if (phase === 'recording') {
+        void salvage();
+      }
+    };
+  }, [phase, salvage]);
+
+  /**
+   * Backstop for the event never arriving — a process suspended long enough to
+   * miss it, say. Cheap, and the alternative is the stale-recording screen
+   * that this whole path exists to prevent.
    */
   useEffect(() => {
     if (phase !== 'recording') {
@@ -251,6 +296,13 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
   };
 
   const stop = async () => {
+    if (settlingRef.current) {
+      return;
+    }
+    // Claimed before stopping, because stopping emits the finish event and the
+    // salvage path must not treat a deliberate stop as an interruption.
+    settlingRef.current = true;
+
     // Read the recorded length before stopping — the status resets afterward.
     // Paused time is not counted, so this is the real audio duration.
     const durationS = Math.max(1, Math.round(recorder.getStatus().durationMillis / 1000));
@@ -272,6 +324,7 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
       setPhase('idle');
       setError(t('interview.mediaSaveFailed'));
     } finally {
+      settlingRef.current = false;
       setBusy(false);
     }
   };
