@@ -104,6 +104,10 @@ export async function getRejectedAnswers(
   );
 }
 
+export async function deleteAnswer(db: SQLiteDatabase, clientId: string): Promise<void> {
+  await db.runAsync('DELETE FROM answers WHERE client_id = ?', [clientId]);
+}
+
 /** Delete all answers for one repeatable set (e.g. when a set is removed). */
 export async function deleteAnswersForSet(
   db: SQLiteDatabase,

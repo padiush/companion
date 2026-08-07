@@ -25,8 +25,24 @@ export function InterviewScreen() {
   const theme = useTheme();
   const navigation = useNavigation();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Interview'>>();
-  const { form, instanceId, loading, saving, answers, repeats, setAnswer, addRepeat, removeRepeat } =
-    useInterview(params.formId, params.projectId, params.instanceId);
+  const {
+    form,
+    instanceId,
+    loading,
+    saving,
+    answers,
+    repeats,
+    syncStatus,
+    syncError,
+    answerErrors,
+    orphanedErrors,
+    answerClientIds,
+    setAnswer,
+    addRepeat,
+    removeRepeat,
+    retry,
+    discardAnswer,
+  } = useInterview(params.formId, params.projectId, params.instanceId);
 
   if (loading || !form) {
     return (
@@ -48,14 +64,42 @@ export function InterviewScreen() {
     ]);
   };
 
-  const renderItem = (item: Item, sectionId: number, repeatableIndex: number | null) => (
-    <FormItemInput
-      key={answerKey(item.id, repeatableIndex)}
-      item={item}
-      value={answers[answerKey(item.id, repeatableIndex)] ?? emptyValueFor(item.type)}
-      onChange={(value) => setAnswer(sectionId, item.id, repeatableIndex, value)}
-    />
-  );
+  const renderItem = (item: Item, sectionId: number, repeatableIndex: number | null) => {
+    const key = answerKey(item.id, repeatableIndex);
+
+    return (
+      <FormItemInput
+        key={key}
+        item={item}
+        value={answers[key] ?? emptyValueFor(item.type)}
+        error={answerErrors[key]}
+        onChange={(value) => setAnswer(sectionId, item.id, repeatableIndex, value)}
+        onDiscard={
+          answerErrors[key]
+            ? () => confirmDiscard(answerClientIds[key], item.label)
+            : undefined
+        }
+      />
+    );
+  };
+
+  const confirmDiscard = (clientId: string, label: string) => {
+    if (!clientId) {
+      return;
+    }
+
+    Alert.alert(t('sync.discardAnswerTitle'), t('sync.discardAnswerMessage', { label }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('sync.discardAnswer'),
+        style: 'destructive',
+        onPress: () => discardAnswer(clientId),
+      },
+    ]);
+  };
+
+  /** The banner is only about refusals; a plain draft says nothing. */
+  const refused = syncStatus === 'rejected' || syncStatus === 'partial';
 
   return (
     <ScrollView
@@ -65,6 +109,48 @@ export function InterviewScreen() {
       keyboardDismissMode="interactive"
       automaticallyAdjustKeyboardInsets
     >
+      {refused ? (
+        <View
+          testID="sync-banner"
+          style={[styles.banner, { borderColor: theme.danger, backgroundColor: theme.card }]}
+        >
+          <Text style={[styles.bannerTitle, { color: theme.danger }]}>
+            {t(syncStatus === 'rejected' ? 'sync.rejectedTitle' : 'sync.partialTitle')}
+          </Text>
+          <Text style={[styles.bannerText, { color: theme.text }]}>
+            {syncError
+              ? t(`sync.instanceErrors.${syncError}`, {
+                  defaultValue: t('sync.instanceErrors.unknown'),
+                })
+              : t('sync.partialMessage')}
+          </Text>
+
+          {orphanedErrors.map((orphan) => (
+            <View key={orphan.clientId} style={styles.orphan}>
+              <Text style={[styles.bannerText, { color: theme.muted }]}>
+                {t('sync.orphanedAnswer')}{' '}
+                {t(`sync.answerErrors.${orphan.error}`, {
+                  defaultValue: t('sync.answerErrors.unknown'),
+                })}
+              </Text>
+              <TouchableOpacity
+                testID={`discard-orphan-${orphan.clientId}`}
+                onPress={() => confirmDiscard(orphan.clientId, t('sync.orphanedLabel'))}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.bannerAction, { color: theme.danger }]}>
+                  {t('sync.discardAnswer')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+
+          <TouchableOpacity testID="sync-retry" onPress={retry} accessibilityRole="button">
+            <Text style={[styles.bannerAction, { color: theme.primary }]}>{t('sync.retry')}</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       {instanceId ? <AudioRecorder instanceId={instanceId} /> : null}
 
       {form.sections.map((section) => (
@@ -144,6 +230,28 @@ const styles = StyleSheet.create({
   },
   preparing: {
     fontSize: 15,
+  },
+  banner: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    gap: 8,
+  },
+  bannerTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  bannerText: {
+    fontSize: 14,
+  },
+  bannerAction: {
+    fontSize: 15,
+    fontWeight: '700',
+    paddingVertical: 6,
+  },
+  orphan: {
+    gap: 2,
   },
   section: {
     marginBottom: 24,

@@ -3,9 +3,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { deleteAnswersForSet } from '../db/answersRepository';
 import { getDatabase } from '../db/database';
 import { getForm } from '../db/formsRepository';
+import { getInstance } from '../db/instancesRepository';
 import type { AnswerRow, CachedForm } from '../db/types';
+import { discardRejectedAnswer, retryInstance } from '../sync/resolve';
 import { createDraft, getDraftAnswers, saveAnswer } from './captureService';
-import { hydrateDraft } from './hydrateDraft';
+import { hydrateDraft, type OrphanedAnswer } from './hydrateDraft';
 import { captureLocation } from './location';
 import { answerKey, type AnswerValue } from './values';
 
@@ -19,6 +21,16 @@ export interface InterviewState {
   answers: Record<string, AnswerValue>;
   /** Number of sets rendered per repeatable section. */
   repeats: Record<number, number>;
+  /** How the last push went: draft, synced, partial or rejected. */
+  syncStatus: string | null;
+  /** Why the whole interview was rejected, if it was (a message key). */
+  syncError: string | null;
+  /** The server's refusal per slot, keyed like `answers`. */
+  answerErrors: Record<string, string>;
+  /** Refused answers whose item has gone from the form. */
+  orphanedErrors: OrphanedAnswer[];
+  /** The stored row's client id per slot, for acting on a specific answer. */
+  answerClientIds: Record<string, string>;
   setAnswer: (
     sectionId: number,
     itemId: number,
@@ -27,6 +39,10 @@ export interface InterviewState {
   ) => void;
   addRepeat: (sectionId: number) => void;
   removeRepeat: (sectionId: number) => void;
+  /** Queue the interview to be sent again, unchanged. */
+  retry: () => void;
+  /** Drop a refused answer so the rest of the interview can go. */
+  discardAnswer: (clientId: string) => void;
 }
 
 /**
@@ -46,6 +62,11 @@ export function useInterview(
   const [saving, setSaving] = useState(false);
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
   const [repeats, setRepeats] = useState<Record<number, number>>({});
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [answerErrors, setAnswerErrors] = useState<Record<string, string>>({});
+  const [orphanedErrors, setOrphanedErrors] = useState<OrphanedAnswer[]>([]);
+  const [clientIds, setClientIds] = useState<Record<string, string>>({});
   const pendingSaves = useRef(0);
 
   useEffect(() => {
@@ -57,9 +78,15 @@ export function useInterview(
 
       let id: string;
       let rows: AnswerRow[];
+      let status = 'draft';
+      let error: string | null = null;
+
       if (existingInstanceId) {
         id = existingInstanceId;
         rows = await getDraftAnswers(db, existingInstanceId);
+        const instance = await getInstance(db, existingInstanceId);
+        status = instance?.sync_status ?? 'draft';
+        error = instance?.sync_error ?? null;
       } else {
         const location = await captureLocation();
         id = await createDraft(db, { formId, projectId, location });
@@ -71,10 +98,15 @@ export function useInterview(
       }
 
       const hydrated = hydrateDraft(loadedForm, rows);
+      setClientIds(hydrated.clientIds);
       setForm(loadedForm);
       setInstanceId(id);
       setAnswers(hydrated.answers);
       setRepeats(hydrated.repeats);
+      setAnswerErrors(hydrated.errors);
+      setOrphanedErrors(hydrated.orphaned);
+      setSyncStatus(status);
+      setSyncError(error);
       setLoading(false);
     })();
 
@@ -85,7 +117,22 @@ export function useInterview(
 
   const setAnswer = useCallback(
     (sectionId: number, itemId: number, repeatableIndex: number | null, value: AnswerValue) => {
-      setAnswers((prev) => ({ ...prev, [answerKey(itemId, repeatableIndex)]: value }));
+      const key = answerKey(itemId, repeatableIndex);
+      setAnswers((prev) => ({ ...prev, [key]: value }));
+
+      // Editing an answer is an attempt to fix it, so its refusal stops
+      // applying; the next push decides afresh. The interview leaves whatever
+      // failed state it was in, because saving requeues it.
+      setAnswerErrors((prev) => {
+        if (!(key in prev)) {
+          return prev;
+        }
+        const next = { ...prev };
+        delete next[key];
+        return next;
+      });
+      setSyncStatus('draft');
+      setSyncError(null);
 
       if (instanceId) {
         pendingSaves.current += 1;
@@ -101,6 +148,44 @@ export function useInterview(
       }
     },
     [instanceId]
+  );
+
+  const retry = useCallback(() => {
+    if (!instanceId) {
+      return;
+    }
+
+    setSyncStatus('draft');
+    setSyncError(null);
+    void getDatabase().then((db) => retryInstance(db, instanceId));
+  }, [instanceId]);
+
+  const discardAnswer = useCallback(
+    (clientId: string) => {
+      if (!instanceId) {
+        return;
+      }
+
+      // Drop it from the rendered slots as well as the orphan list — it may be
+      // either, depending on whether the cached form still has its item.
+      const key = Object.keys(clientIds).find((slot) => clientIds[slot] === clientId);
+      if (key) {
+        const without = (prev: Record<string, unknown>) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        };
+        setAnswers((prev) => without(prev) as Record<string, AnswerValue>);
+        setAnswerErrors((prev) => without(prev) as Record<string, string>);
+        setClientIds((prev) => without(prev) as Record<string, string>);
+      }
+
+      setOrphanedErrors((prev) => prev.filter((orphan) => orphan.clientId !== clientId));
+      setSyncStatus('draft');
+      setSyncError(null);
+      void getDatabase().then((db) => discardRejectedAnswer(db, instanceId, clientId));
+    },
+    [instanceId, clientIds]
   );
 
   const addRepeat = useCallback((sectionId: number) => {
@@ -140,5 +225,22 @@ export function useInterview(
     [instanceId, form]
   );
 
-  return { form, instanceId, loading, saving, answers, repeats, setAnswer, addRepeat, removeRepeat };
+  return {
+    form,
+    instanceId,
+    loading,
+    saving,
+    answers,
+    repeats,
+    syncStatus,
+    syncError,
+    answerErrors,
+    orphanedErrors,
+    answerClientIds: clientIds,
+    setAnswer,
+    addRepeat,
+    removeRepeat,
+    retry,
+    discardAnswer,
+  };
 }

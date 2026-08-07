@@ -50,6 +50,8 @@ export interface InstanceRow {
   location_captured_at: string | null;
   form_version_cursor: string | null;
   sync_status: string;
+  /** Why the server rejected the whole interview, if it did (a message key). */
+  sync_error: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -63,6 +65,8 @@ export interface AnswerRow {
   repeatable_index: number | null;
   value: string | null;
   edited_at: string | null;
+  /** Why the server refused this answer, if it did (a message key). */
+  sync_error: string | null;
 }
 
 /** A recorded interview with its form name and answer/media counts, for the list. */

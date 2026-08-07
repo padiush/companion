@@ -40,13 +40,20 @@ function row(overrides: Partial<AnswerRow>): AnswerRow {
     repeatable_index: null,
     value: null,
     edited_at: null,
+    sync_error: null,
     ...overrides,
   };
 }
 
 describe('hydrateDraft', () => {
   it('returns empty state for a missing form', () => {
-    expect(hydrateDraft(null, [])).toEqual({ answers: {}, repeats: {} });
+    expect(hydrateDraft(null, [])).toEqual({
+      answers: {},
+      repeats: {},
+      clientIds: {},
+      errors: {},
+      orphaned: [],
+    });
   });
 
   it('seeds repeatable sections at one set with no answers', () => {
@@ -77,5 +84,45 @@ describe('hydrateDraft', () => {
   it('ignores answers for items no longer in the form', () => {
     const { answers } = hydrateDraft(form(), [row({ item_id: 999, value: 'stale' })]);
     expect(answers).toEqual({});
+  });
+});
+
+describe('refused answers', () => {
+  it('reports the server’s reason against the slot it belongs to', () => {
+    const hydrated = hydrateDraft(form(), [
+      row({ item_id: 10, value: 'Sábila', sync_error: 'api.sync.item_not_in_form' }),
+    ]);
+
+    expect(hydrated.errors).toEqual({ '10:x': 'api.sync.item_not_in_form' });
+    expect(hydrated.orphaned).toEqual([]);
+  });
+
+  it('exposes the client id per slot, so an answer can be acted on', () => {
+    const hydrated = hydrateDraft(form(), [row({ client_id: 'a-1', item_id: 10 })]);
+
+    expect(hydrated.clientIds).toEqual({ '10:x': 'a-1' });
+  });
+
+  /**
+   * The case that causes the refusal in the first place: the item was deleted
+   * on the web, and once the bundle catches up the device has no field to
+   * render the answer against. It still blocks the interview, so it cannot
+   * simply be dropped from view.
+   */
+  it('surfaces a refused answer whose item has gone from the form', () => {
+    const hydrated = hydrateDraft(form(), [
+      row({ client_id: 'a-9', item_id: 999, sync_error: 'api.sync.item_not_in_form' }),
+    ]);
+
+    expect(hydrated.orphaned).toEqual([
+      { clientId: 'a-9', itemId: 999, error: 'api.sync.item_not_in_form' },
+    ]);
+  });
+
+  it('still ignores an answer for a departed item when nothing was refused', () => {
+    const hydrated = hydrateDraft(form(), [row({ item_id: 999, value: 'x' })]);
+
+    expect(hydrated.orphaned).toEqual([]);
+    expect(hydrated.answers).toEqual({});
   });
 });

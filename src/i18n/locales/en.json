@@ -95,5 +95,28 @@
     "sendMedia_other": "Upload {{count}} files",
     "sendUnresolved_one": "1 interview has answers the server did not accept. Open it to resolve them.",
     "sendUnresolved_other": "{{count}} interviews have answers the server did not accept. Open them to resolve them."
+  },
+  "sync": {
+    "rejectedTitle": "The server did not accept this interview",
+    "partialTitle": "Some answers were not sent",
+    "partialMessage": "The interview reached the server, but it refused the answers marked below. Correct or discard them to finish sending.",
+    "retry": "Try sending again",
+    "discardAnswer": "Discard answer",
+    "discardAnswerTitle": "Discard this answer?",
+    "discardAnswerMessage": "“{{label}}” will be deleted from this device and the rest of the interview will be sent. This cannot be undone.",
+    "orphanedAnswer": "An answer whose question is no longer in the form:",
+    "orphanedLabel": "this answer",
+    "answerErrors": {
+      "api.sync.item_not_in_form": "The question is no longer in the form, so the server has nowhere to put this answer.",
+      "api.sync.section_mismatch": "The question moved to a different section of the form.",
+      "api.sync.client_id_conflict": "This answer is already recorded against another interview.",
+      "unknown": "The server did not accept this answer."
+    },
+    "instanceErrors": {
+      "api.sync.form_not_in_project": "The form no longer belongs to this project.",
+      "api.sync.form_mismatch": "An interview cannot be moved to another form.",
+      "api.sync.not_owner": "Another account recorded this interview.",
+      "unknown": "The server did not accept this interview."
+    }
   }
 }
