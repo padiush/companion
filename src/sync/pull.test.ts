@@ -2,6 +2,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { api } from '../api/client';
 import type { Bundle, Capabilities, Form, ProjectSummary } from '../api/types';
+import { saveSession } from '../auth/session';
 import { upsertForms } from '../db/formsRepository';
 import { upsertProjects } from '../db/projectsRepository';
 import { getMeta, setMeta } from '../db/syncMetaRepository';
@@ -11,6 +12,7 @@ jest.mock('../api/client', () => ({ api: { me: jest.fn(), bundle: jest.fn() } })
 jest.mock('../db/projectsRepository', () => ({ upsertProjects: jest.fn() }));
 jest.mock('../db/formsRepository', () => ({ upsertForms: jest.fn() }));
 jest.mock('../db/syncMetaRepository', () => ({ getMeta: jest.fn(), setMeta: jest.fn() }));
+jest.mock('../auth/session', () => ({ saveSession: jest.fn() }));
 
 const mockApi = api as jest.Mocked<typeof api>;
 const mockGetMeta = getMeta as jest.MockedFunction<typeof getMeta>;
@@ -57,6 +59,23 @@ describe('pullProjects', () => {
 
     expect(upsertProjects).toHaveBeenCalledWith(db, [project(1), project(2)]);
     expect(result).toHaveLength(2);
+  });
+
+  /**
+   * /me succeeding is the server confirming the identity, so it also refreshes
+   * the offline window. Without this, someone who syncs daily but never cold-
+   * launches online would still be locked out when the window lapsed.
+   */
+  it('refreshes the cached identity, extending the offline window', async () => {
+    mockApi.me.mockResolvedValue(me([project(1)]));
+
+    await pullProjects(db);
+
+    expect(saveSession).toHaveBeenCalledWith({
+      id: 1,
+      name: 'Field',
+      email: 'field@example.org',
+    });
   });
 });
 

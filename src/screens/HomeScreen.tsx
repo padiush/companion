@@ -30,7 +30,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 export function HomeScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const { user, signOut } = useAuth();
+  const { user, offline, signOut } = useAuth();
   const { projects, loading, syncing, error, sync } = useProjects();
   const { count } = useOutbox();
   const navigation = useNavigation<Nav>();
@@ -87,6 +87,15 @@ export function HomeScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {offline ? (
+        <View
+          testID="offline-notice"
+          style={[styles.offline, { backgroundColor: theme.card, borderColor: theme.border }]}
+        >
+          <Text style={[styles.offlineText, { color: theme.muted }]}>{t('home.offline')}</Text>
+        </View>
+      ) : null}
 
       <View style={styles.projectsHeader}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('home.projects')}</Text>
@@ -174,6 +183,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     paddingVertical: 4,
+  },
+  offline: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+  offlineText: {
+    fontSize: 14,
   },
   projectsHeader: {
     flexDirection: 'row',

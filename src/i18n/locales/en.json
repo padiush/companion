@@ -35,7 +35,8 @@
     "empty": "No projects yet. Sync to load them.",
     "syncError": "Couldn't sync. Check your connection.",
     "synced": "Projects updated",
-    "drafts": "My interviews"
+    "drafts": "My interviews",
+    "offline": "Offline. You are using the session saved on this device; sync when you have signal again."
   },
   "project": {
     "forms": "Forms",

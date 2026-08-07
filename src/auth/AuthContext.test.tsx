@@ -25,12 +25,22 @@ beforeEach(() => {
 
 describe('AuthContext', () => {
   it('restores a signed-in session on launch', async () => {
-    mockRestore.mockResolvedValue(user);
+    mockRestore.mockResolvedValue({ user, offline: false });
 
     const { result } = await renderHook(() => useAuth(), { wrapper });
 
     await waitFor(() => expect(result.current.status).toBe('signedIn'));
     expect(result.current.user?.name).toBe('Field');
+    expect(result.current.offline).toBe(false);
+  });
+
+  it('signs in offline on a cached identity and says so', async () => {
+    mockRestore.mockResolvedValue({ user, offline: true });
+
+    const { result } = await renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => expect(result.current.status).toBe('signedIn'));
+    expect(result.current.offline).toBe(true);
   });
 
   it('lands signed-out when there is no session', async () => {
@@ -40,6 +50,28 @@ describe('AuthContext', () => {
 
     await waitFor(() => expect(result.current.status).toBe('signedOut'));
     expect(result.current.user).toBeNull();
+  });
+
+  it('lands signed-out when restoring itself fails', async () => {
+    mockRestore.mockRejectedValue(new Error('secure store unavailable'));
+
+    const { result } = await renderHook(() => useAuth(), { wrapper });
+
+    await waitFor(() => expect(result.current.status).toBe('signedOut'));
+  });
+
+  it('clears the offline flag once a real sign-in succeeds', async () => {
+    mockRestore.mockResolvedValue({ user, offline: true });
+    mockSignIn.mockResolvedValue(user);
+
+    const { result } = await renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.offline).toBe(true));
+
+    await act(async () => {
+      await result.current.signIn('field@example.org', 'password');
+    });
+
+    expect(result.current.offline).toBe(false);
   });
 
   it('signIn transitions to signed-in with the device name', async () => {
@@ -59,7 +91,7 @@ describe('AuthContext', () => {
   });
 
   it('signOut transitions back to signed-out', async () => {
-    mockRestore.mockResolvedValue(user);
+    mockRestore.mockResolvedValue({ user, offline: false });
     mockSignOut.mockResolvedValue(undefined);
 
     const { result } = await renderHook(() => useAuth(), { wrapper });

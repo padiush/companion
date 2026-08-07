@@ -35,7 +35,8 @@
     "empty": "Aún no hay proyectos. Sincroniza para cargarlos.",
     "syncError": "No se pudo sincronizar. Revisa tu conexión.",
     "synced": "Proyectos actualizados",
-    "drafts": "Mis entrevistas"
+    "drafts": "Mis entrevistas",
+    "offline": "Sin conexión. Estás usando la sesión guardada en este dispositivo; sincroniza cuando vuelvas a tener señal."
   },
   "project": {
     "forms": "Formularios",

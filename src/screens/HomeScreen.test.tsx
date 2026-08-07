@@ -35,10 +35,11 @@ function pressAlertButton(style: 'cancel' | 'destructive') {
   buttons?.find((button) => button.style === style)?.onPress?.();
 }
 
-function mockAuth(signOut = jest.fn()) {
+function mockAuth(signOut = jest.fn(), offline = false) {
   mockUseAuth.mockReturnValue({
     status: 'signedIn',
     user: { id: 1, name: 'Field', email: 'field@example.org' },
+    offline,
     signIn: jest.fn(),
     signOut,
   });
@@ -74,6 +75,20 @@ beforeEach(() => {
 });
 
 describe('HomeScreen', () => {
+  it('says nothing about connectivity when the session was verified online', async () => {
+    const { queryByTestId } = await render(<HomeScreen />);
+
+    expect(queryByTestId('offline-notice')).toBeNull();
+  });
+
+  it('tells the user when they opened on a cached session', async () => {
+    mockAuth(jest.fn(), true);
+
+    const { getByTestId } = await render(<HomeScreen />);
+
+    expect(getByTestId('offline-notice')).toBeTruthy();
+  });
+
   it('greets the signed-in user and signs out after confirming', async () => {
     const signOut = jest.fn().mockResolvedValue(undefined);
     mockAuth(signOut);
