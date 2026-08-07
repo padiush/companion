@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { deleteAnswersForSet } from '../db/answersRepository';
 import { getDatabase } from '../db/database';
 import { getForm } from '../db/formsRepository';
-import { getInstance } from '../db/instancesRepository';
+import { getInstance, updateInstanceLocation } from '../db/instancesRepository';
 import type { AnswerRow, CachedForm } from '../db/types';
 import { readBundleCursor } from '../sync/pull';
 import { discardRejectedAnswer, retryInstance } from '../sync/resolve';
@@ -48,9 +48,13 @@ export interface InterviewState {
 
 /**
  * Drives one interview: loads the cached form and either reopens an existing
- * draft (rehydrating its saved answers) or starts a new one with a GPS fix, then
- * persists each answer as it changes. Repeatable sections start with one set and
- * grow on demand.
+ * draft (rehydrating its saved answers) or starts a new one, then persists each
+ * answer as it changes. Repeatable sections start with one set and grow on
+ * demand.
+ *
+ * A new draft exists before its GPS fix does. Recording usually starts the
+ * moment the informant does — the audio is often the whole point of the visit,
+ * with the form filled in afterwards — so nothing waits on a coordinate.
  */
 export function useInterview(
   formId: number,
@@ -73,6 +77,25 @@ export function useInterview(
   useEffect(() => {
     let active = true;
 
+    /**
+     * Best effort, and deliberately fire-and-forget: an interview with no
+     * coordinate is a complete interview, so nothing here is allowed to fail
+     * the capture it belongs to.
+     */
+    const attachLocationWhenReady = async (instanceId: string) => {
+      try {
+        const location = await captureLocation();
+        if (!location) {
+          return;
+        }
+
+        const db = await getDatabase();
+        await updateInstanceLocation(db, instanceId, location);
+      } catch {
+        // No fix, or permission refused — the interview stands regardless.
+      }
+    };
+
     (async () => {
       const db = await getDatabase();
       const loadedForm = await getForm(db, formId);
@@ -89,13 +112,19 @@ export function useInterview(
         status = instance?.sync_status ?? 'draft';
         error = instance?.sync_error ?? null;
       } else {
-        const location = await captureLocation();
         // Stamp the structure version this interview is being recorded
         // against. It was always part of the payload and never actually read
         // from the store, so every interview reached the server claiming none.
         const formVersionCursor = await readBundleCursor(db, projectId);
-        id = await createDraft(db, { formId, projectId, location, formVersionCursor });
+        id = await createDraft(db, { formId, projectId, formVersionCursor });
         rows = [];
+
+        // The GPS fix is chased separately and attached when it lands.
+        // Awaiting it here used to hold the whole screen — including the audio
+        // recorder — behind a fix that is slowest exactly where signal is
+        // worst, which is where fieldwork happens. Recording has to be able to
+        // start the moment the informant does.
+        void attachLocationWhenReady(id);
       }
 
       if (!active) {

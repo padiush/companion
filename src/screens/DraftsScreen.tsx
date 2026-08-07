@@ -17,15 +17,16 @@ import { formatDateTime } from '../capture/dateValue';
 import { Chevron } from '../components/Chevron';
 import { useDrafts } from '../hooks/useDrafts';
 import { useOutbox } from '../hooks/useOutbox';
+import type { DraftListItem } from '../db/types';
 import type { RootStackParamList } from '../navigation/types';
 import type { PushSummary } from '../sync/push';
-import { useTheme } from '../theme';
+import { border, radius, space, type, useTheme } from '../theme';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 /** The Entrevistas tab: recorded interviews with their sync status, and a Send action. */
 export function DraftsScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
@@ -59,6 +60,35 @@ export function DraftsScreen() {
 
   /** Anything the server would not take is reported, never silently swallowed. */
   const unresolved = (sent?.partial ?? 0) + (sent?.rejected ?? 0);
+
+  /**
+   * What this interview actually holds, said positively.
+   *
+   * A recording with no answers yet is the normal result of a visit — the
+   * audio is captured live and the form filled in afterwards — so it is
+   * described as recorded work awaiting a form, not as a row of zeros. Only an
+   * interview holding nothing at all is called empty.
+   */
+  const describeContents = (draft: DraftListItem) => {
+    const parts: string[] = [];
+
+    if (draft.audio_count > 0) {
+      parts.push(t('drafts.contents.audio', { count: draft.audio_count }));
+    }
+
+    const photos = draft.media_count - draft.audio_count;
+    if (photos > 0) {
+      parts.push(t('drafts.contents.photos', { count: photos }));
+    }
+
+    if (draft.answer_count > 0) {
+      parts.push(t('drafts.contents.answers', { count: draft.answer_count }));
+    } else if (parts.length > 0) {
+      parts.push(t('drafts.contents.formPending'));
+    }
+
+    return parts.length > 0 ? parts.join('  ·  ') : t('drafts.contents.empty');
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg, paddingTop: insets.top + 12 }]}>
@@ -134,23 +164,34 @@ export function DraftsScreen() {
               style={[styles.row, { backgroundColor: theme.card, borderColor: theme.border }]}
             >
               <View style={styles.rowMain}>
-                <Text style={[styles.formName, { color: theme.text }]}>
-                  {draft.form_name ?? '—'}
-                </Text>
-                {draft.preview ? (
-                  <Text style={[styles.preview, { color: theme.text }]} numberOfLines={1}>
-                    {draft.preview}
+                <View style={styles.rowHeader}>
+                  <Text
+                    style={[styles.formName, { color: theme.text }]}
+                    numberOfLines={1}
+                    // The name can be long and is rarely what distinguishes two
+                    // interviews; one line keeps every row the same height.
+                  >
+                    {draft.preview ?? draft.form_name ?? '—'}
                   </Text>
-                ) : null}
-                <Text style={[styles.meta, { color: theme.muted }]}>
-                  {formatDateTime(new Date(draft.captured_at ?? draft.created_at))}
+                  <View
+                    style={[styles.status, { borderColor: statusColor(draft.sync_status) }]}
+                  >
+                    <Text
+                      style={[styles.statusText, { color: statusColor(draft.sync_status) }]}
+                    >
+                      {t(`drafts.status.${draft.sync_status}`, {
+                        defaultValue: draft.sync_status,
+                      })}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={[styles.meta, { color: theme.muted }]} numberOfLines={1}>
+                  {formatDateTime(new Date(draft.captured_at ?? draft.created_at), i18n.language)}
                   {'  ·  '}
-                  {t('drafts.summary', { answers: draft.answer_count, media: draft.media_count })}
+                  {describeContents(draft)}
                 </Text>
               </View>
-              <Text style={[styles.status, { color: statusColor(draft.sync_status) }]}>
-                {t(`drafts.status.${draft.sync_status}`, { defaultValue: draft.sync_status })}
-              </Text>
               <Chevron color={theme.muted} />
             </TouchableOpacity>
           ))
@@ -209,24 +250,28 @@ const styles = StyleSheet.create({
   },
   rowMain: {
     flex: 1,
-    gap: 4,
+    gap: space.xs,
+  },
+  rowHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
   },
   formName: {
-    fontSize: 16,
+    ...type.body,
     fontWeight: '600',
+    flexShrink: 1,
   },
-  preview: {
-    fontSize: 14,
-    marginTop: 2,
-  },
-  meta: {
-    fontSize: 13,
-    marginTop: 2,
-  },
+  meta: type.caption,
   status: {
-    fontSize: 13,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    borderWidth: border.width,
+    borderRadius: radius.pill,
+    paddingHorizontal: space.sm,
+    paddingVertical: 2,
+  },
+  statusText: {
+    ...type.kicker,
+    fontSize: 11,
   },
 });

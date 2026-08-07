@@ -9,6 +9,7 @@ import {
   listInstancesWithMeta,
   recordLocalEdit,
   setSyncStatus,
+  updateInstanceLocation,
 } from './instancesRepository';
 
 let db: TestDatabase;
@@ -261,5 +262,50 @@ describe('cascading deletes', () => {
     // media_blobs cascades through media, so the bytes go too — informant
     // audio must never outlive the interview it belongs to.
     await expect(db.getAllAsync('SELECT * FROM media_blobs')).resolves.toEqual([]);
+  });
+});
+
+describe('updateInstanceLocation', () => {
+  /**
+   * Capture never waits for a fix, so the coordinate arrives after the
+   * interview already exists — often after answers have been recorded.
+   */
+  it('attaches a fix to an interview that already exists', async () => {
+    await seedInstance('i-1');
+
+    await updateInstanceLocation(db, 'i-1', {
+      lat: 13.7,
+      lng: -89.2,
+      accuracyM: 8.5,
+      capturedAt: AT,
+    });
+
+    await expect(getInstance(db, 'i-1')).resolves.toMatchObject({
+      location_lat: 13.7,
+      location_lng: -89.2,
+      location_accuracy_m: 8.5,
+      location_captured_at: AT,
+    });
+  });
+
+  it('accepts a fix with no accuracy reported', async () => {
+    await seedInstance('i-1');
+
+    await updateInstanceLocation(db, 'i-1', { lat: 13.7, lng: -89.2 });
+
+    await expect(getInstance(db, 'i-1')).resolves.toMatchObject({
+      location_lat: 13.7,
+      location_accuracy_m: null,
+    });
+  });
+
+  /** Acquiring a coordinate is not the recorder editing anything. */
+  it('leaves the sync status alone', async () => {
+    await seedInstance('i-1');
+    await setSyncStatus(db, 'i-1', 'synced');
+
+    await updateInstanceLocation(db, 'i-1', { lat: 13.7, lng: -89.2 });
+
+    await expect(getInstance(db, 'i-1')).resolves.toMatchObject({ sync_status: 'synced' });
   });
 });
