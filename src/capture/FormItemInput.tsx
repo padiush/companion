@@ -5,6 +5,7 @@ import type { Item } from '../api/types';
 import { selectionTick } from '../haptics';
 import { useTheme } from '../theme';
 import { DateField } from './DateField';
+import type { ValidationIssue } from './validate';
 import type { AnswerValue } from './values';
 
 interface Props {
@@ -13,12 +14,14 @@ interface Props {
   onChange: (value: AnswerValue) => void;
   /** A message key for why the server refused this answer, if it did. */
   error?: string;
+  /** A constraint this answer currently breaches, once completion is attempted. */
+  issue?: ValidationIssue;
   /** Offered alongside an error the device cannot fix by retrying. */
   onDiscard?: () => void;
 }
 
 /** Renders the right input for an item type and reports changes as an AnswerValue. */
-export function FormItemInput({ item, value, onChange, error, onDiscard }: Props) {
+export function FormItemInput({ item, value, onChange, error, issue, onDiscard }: Props) {
   const theme = useTheme();
   const { t } = useTranslation();
 
@@ -51,6 +54,16 @@ export function FormItemInput({ item, value, onChange, error, onDiscard }: Props
         </TouchableOpacity>
       ) : null}
     </View>
+  ) : null;
+
+  /** What the form itself requires, shown once completion has been attempted. */
+  const issueNotice = issue ? (
+    <Text
+      testID={`answer-issue-${item.id}`}
+      style={[styles.errorText, styles.issue, { color: theme.danger }]}
+    >
+      {t(`interview.issues.${issue.reason}`, { limit: issue.limit })}
+    </Text>
   ) : null;
 
   if (item.type === 'select' || item.type === 'multi') {
@@ -97,6 +110,7 @@ export function FormItemInput({ item, value, onChange, error, onDiscard }: Props
           })}
         </View>
         {errorNotice}
+        {issueNotice}
       </View>
     );
   }
@@ -112,6 +126,7 @@ export function FormItemInput({ item, value, onChange, error, onDiscard }: Props
           onChange={onChange}
         />
         {errorNotice}
+        {issueNotice}
       </View>
     );
   }
@@ -135,6 +150,7 @@ export function FormItemInput({ item, value, onChange, error, onDiscard }: Props
         placeholderTextColor={theme.muted}
       />
       {errorNotice}
+      {issueNotice}
     </View>
   );
 }
@@ -178,5 +194,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     paddingVertical: 4,
+  },
+  issue: {
+    marginTop: 6,
   },
 });

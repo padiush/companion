@@ -141,7 +141,8 @@ describe('InterviewScreen', () => {
   });
 
   it('reflects the save state and returns on Done', async () => {
-    mockInterview({ saving: false });
+    // The fixture's only field is required, so answer it before leaving.
+    mockInterview({ saving: false, answers: { '10:x': 'guaba' } });
     const saved = await render(<InterviewScreen />);
     expect(saved.getByText('interview.savedLocally')).toBeTruthy();
 
@@ -250,5 +251,51 @@ describe('an interview the server refused', () => {
     pressAlertButton('destructive');
 
     expect(discardAnswer).toHaveBeenCalledWith('a-9');
+  });
+});
+
+describe('constraints the form declares', () => {
+  it('says nothing about a required field until completion is attempted', async () => {
+    mockInterview({ answers: {} });
+
+    const { queryByTestId } = await render(<InterviewScreen />);
+
+    // Marking the whole interview red before a word is recorded helps nobody.
+    expect(queryByTestId('answer-issue-10')).toBeNull();
+  });
+
+  it('marks what is missing when Done is pressed', async () => {
+    mockInterview({ answers: {} });
+
+    const { getByTestId, getByText } = await render(<InterviewScreen />);
+    await fireEvent.press(getByTestId('interview-done'));
+
+    expect(getByTestId('answer-issue-10')).toBeTruthy();
+    expect(getByText('interview.issues.required')).toBeTruthy();
+  });
+
+  it('does not leave while there is something to review', async () => {
+    mockInterview({ answers: {} });
+
+    const { getByTestId } = await render(<InterviewScreen />);
+    await fireEvent.press(getByTestId('interview-done'));
+
+    expect(mockGoBack).not.toHaveBeenCalled();
+  });
+
+  /**
+   * An interview left half-filled is ordinary fieldwork — the informant had to
+   * go, an answer needs checking. Trapping the recorder would not fill it in,
+   * and everything is saved either way.
+   */
+  it('lets the recorder leave anyway once told', async () => {
+    mockInterview({ answers: {} });
+
+    const { getByTestId } = await render(<InterviewScreen />);
+    await fireEvent.press(getByTestId('interview-done'));
+    const buttons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as AlertButton[];
+    buttons?.find((button) => button.style !== 'cancel')?.onPress?.();
+
+    expect(mockGoBack).toHaveBeenCalled();
   });
 });

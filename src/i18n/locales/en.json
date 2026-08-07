@@ -75,7 +75,19 @@
     "addPhoto": "Add photo",
     "photo": "Photo",
     "mediaPermission": "Camera or microphone permission is needed.",
-    "mediaSaveFailed": "The file could not be saved. Try again."
+    "mediaSaveFailed": "The file could not be saved. Try again.",
+    "incompleteTitle": "Some answers need attention",
+    "incomplete_one": "1 answer needs attention. You can review it now or come back later; everything is saved either way.",
+    "incomplete_other": "{{count}} answers need attention. You can review them now or come back later; everything is saved either way.",
+    "reviewAnswers": "Review",
+    "leaveAnyway": "Leave anyway",
+    "issues": {
+      "required": "This question is required.",
+      "notANumber": "Enter a number.",
+      "min": "Must be {{limit}} or more.",
+      "max": "Must be {{limit}} or less.",
+      "step": "Must go in steps of {{limit}}."
+    }
   },
   "drafts": {
     "title": "Interviews",
@@ -110,7 +122,11 @@
       "api.sync.item_not_in_form": "The question is no longer in the form, so the server has nowhere to put this answer.",
       "api.sync.section_mismatch": "The question moved to a different section of the form.",
       "api.sync.client_id_conflict": "This answer is already recorded against another interview.",
-      "unknown": "The server did not accept this answer."
+      "unknown": "The server did not accept this answer.",
+      "api.sync.not_a_number": "The server expected a number for this question.",
+      "api.sync.below_min": "The value is below the allowed minimum.",
+      "api.sync.above_max": "The value is above the allowed maximum.",
+      "api.sync.off_step": "The value does not match the allowed steps."
     },
     "instanceErrors": {
       "api.sync.form_not_in_project": "The form no longer belongs to this project.",

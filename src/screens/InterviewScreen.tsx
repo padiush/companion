@@ -1,4 +1,5 @@
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -15,6 +16,7 @@ import { AudioRecorder } from '../capture/AudioRecorder';
 import { FormItemInput } from '../capture/FormItemInput';
 import { MediaSection } from '../capture/MediaSection';
 import { useInterview } from '../capture/useInterview';
+import { validateInstance } from '../capture/validate';
 import { answerKey, emptyValueFor } from '../capture/values';
 import type { RootStackParamList } from '../navigation/types';
 import { useTheme } from '../theme';
@@ -43,6 +45,11 @@ export function InterviewScreen() {
     retry,
     discardAnswer,
   } = useInterview(params.formId, params.projectId, params.instanceId);
+
+  // Constraints are only shown once completion has been attempted: flagging a
+  // required field the moment the screen opens would mark the whole interview
+  // red before a word has been recorded.
+  const [checked, setChecked] = useState(false);
 
   if (loading || !form) {
     return (
@@ -73,6 +80,7 @@ export function InterviewScreen() {
         item={item}
         value={answers[key] ?? emptyValueFor(item.type)}
         error={answerErrors[key]}
+        issue={checked ? issues[key] : undefined}
         onChange={(value) => setAnswer(sectionId, item.id, repeatableIndex, value)}
         onDiscard={
           answerErrors[key]
@@ -100,6 +108,29 @@ export function InterviewScreen() {
 
   /** The banner is only about refusals; a plain draft says nothing. */
   const refused = syncStatus === 'rejected' || syncStatus === 'partial';
+
+  const issues = validateInstance(form, answers, repeats);
+  const issueCount = Object.keys(issues).length;
+
+  /**
+   * Done never blocks. An interview left half-filled is ordinary fieldwork —
+   * the informant had to go, the answer needs checking — and trapping the
+   * recorder on the screen would not fill it in. What was missed is named, and
+   * leaving anyway is their call; everything is already saved either way.
+   */
+  const onDone = () => {
+    setChecked(true);
+
+    if (issueCount === 0) {
+      navigation.goBack();
+      return;
+    }
+
+    Alert.alert(t('interview.incompleteTitle'), t('interview.incomplete', { count: issueCount }), [
+      { text: t('interview.reviewAnswers'), style: 'cancel' },
+      { text: t('interview.leaveAnyway'), onPress: () => navigation.goBack() },
+    ]);
+  };
 
   return (
     <ScrollView
@@ -204,7 +235,7 @@ export function InterviewScreen() {
 
       <TouchableOpacity
         testID="interview-done"
-        onPress={() => navigation.goBack()}
+        onPress={onDone}
         accessibilityRole="button"
         style={[styles.done, { backgroundColor: theme.primary }]}
       >
