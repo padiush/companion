@@ -69,6 +69,13 @@ export interface Form {
 export interface Bundle {
   form_version_cursor: string | null;
   server_time: string;
+  /**
+   * Every form the project still records against. `forms` is a delta once
+   * `since` is sent, and a delta cannot express a removal — a retired form
+   * simply stops appearing — so this full set is what tells the device which
+   * cached forms to retire. Optional so a server predating it is detectable.
+   */
+  active_form_ids?: number[];
   forms: Form[];
 }
 

@@ -3,7 +3,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { api } from '../api/client';
 import type { ProjectSummary } from '../api/types';
 import { saveSession } from '../auth/session';
-import { upsertForms } from '../db/formsRepository';
+import { pruneForms, upsertForms } from '../db/formsRepository';
 import { upsertProjects } from '../db/projectsRepository';
 import { getMeta, setMeta } from '../db/syncMetaRepository';
 
@@ -33,6 +33,15 @@ export async function pullForms(db: SQLiteDatabase, projectId: number): Promise<
   const bundle = await api.bundle(projectId, since);
 
   await upsertForms(db, bundle.forms, projectId);
+
+  // The bundle's delta cannot express a removal — a retired form just stops
+  // appearing — so the server sends the full active set alongside it, and
+  // anything cached but missing from that set is retired here too. Guarded on
+  // undefined so a server predating the field leaves the cache untouched
+  // rather than wiping every form in it.
+  if (bundle.active_form_ids !== undefined) {
+    await pruneForms(db, projectId, bundle.active_form_ids);
+  }
 
   if (bundle.form_version_cursor) {
     await setMeta(db, bundleCursorKey(projectId), bundle.form_version_cursor);

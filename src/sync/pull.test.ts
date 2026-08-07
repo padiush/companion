@@ -3,14 +3,14 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { api } from '../api/client';
 import type { Bundle, Capabilities, Form, ProjectSummary } from '../api/types';
 import { saveSession } from '../auth/session';
-import { upsertForms } from '../db/formsRepository';
+import { pruneForms, upsertForms } from '../db/formsRepository';
 import { upsertProjects } from '../db/projectsRepository';
 import { getMeta, setMeta } from '../db/syncMetaRepository';
 import { pull, pullForms, pullProjects } from './pull';
 
 jest.mock('../api/client', () => ({ api: { me: jest.fn(), bundle: jest.fn() } }));
 jest.mock('../db/projectsRepository', () => ({ upsertProjects: jest.fn() }));
-jest.mock('../db/formsRepository', () => ({ upsertForms: jest.fn() }));
+jest.mock('../db/formsRepository', () => ({ upsertForms: jest.fn(), pruneForms: jest.fn() }));
 jest.mock('../db/syncMetaRepository', () => ({ getMeta: jest.fn(), setMeta: jest.fn() }));
 jest.mock('../auth/session', () => ({ saveSession: jest.fn() }));
 
@@ -39,8 +39,13 @@ const project = (id: number): ProjectSummary => ({
 
 const forms = [{ id: 3 }] as unknown as Form[];
 
-function bundle(cursor: string | null): Bundle {
-  return { form_version_cursor: cursor, server_time: '2026-07-12T00:00:00Z', forms };
+function bundle(cursor: string | null, activeFormIds: number[] | undefined = [3]): Bundle {
+  return {
+    form_version_cursor: cursor,
+    server_time: '2026-07-12T00:00:00Z',
+    active_form_ids: activeFormIds,
+    forms,
+  };
 }
 
 function me(projects: ProjectSummary[]) {
@@ -114,5 +119,51 @@ describe('pull', () => {
     expect(mockApi.bundle).toHaveBeenCalledTimes(2);
     expect(mockApi.bundle).toHaveBeenCalledWith(1, undefined);
     expect(mockApi.bundle).toHaveBeenCalledWith(2, undefined);
+  });
+});
+
+describe('retiring forms the server no longer lists', () => {
+  /**
+   * The bundle's delta cannot express a removal — a retired form just stops
+   * appearing, which is indistinguishable from one that has not changed — so
+   * the server sends the full active set and the device reconciles against it.
+   */
+  it('reconciles the cache against the active set', async () => {
+    mockGetMeta.mockResolvedValue(null);
+    mockApi.bundle.mockResolvedValue(bundle('2026-07-12T00:00:00Z', [3, 4]));
+
+    await pullForms(db, 9);
+
+    expect(pruneForms).toHaveBeenCalledWith(db, 9, [3, 4]);
+  });
+
+  it('retires everything when the project has no active forms left', async () => {
+    mockGetMeta.mockResolvedValue(null);
+    mockApi.bundle.mockResolvedValue(bundle(null, []));
+
+    await pullForms(db, 9);
+
+    expect(pruneForms).toHaveBeenCalledWith(db, 9, []);
+  });
+
+  /**
+   * Against a server predating the field, an absent list must not read as "no
+   * forms are active" — that would wipe every cached form on the device.
+   */
+  it('leaves the cache alone when the server does not send the set', async () => {
+    mockGetMeta.mockResolvedValue(null);
+    // Built without the key rather than with it undefined: a default parameter
+    // would fill an explicit undefined back in, and the test would pass while
+    // never exercising an older server's response at all.
+    mockApi.bundle.mockResolvedValue({
+      form_version_cursor: null,
+      server_time: '2026-07-12T00:00:00Z',
+      forms,
+    });
+
+    await pullForms(db, 9);
+
+    expect(pruneForms).not.toHaveBeenCalled();
+    expect(upsertForms).toHaveBeenCalled();
   });
 });
