@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -12,8 +13,10 @@ import {
 } from 'react-native';
 
 import { ApiError } from '../api/client';
-import { useAuth } from '../auth/AuthContext';
+import { SignInCancelled } from '../auth/accountStore';
+import { useAuth, type ConfirmReplace } from '../auth/AuthContext';
 import { AppLogo } from '../components/AppLogo';
+import type { PendingWork } from '../db/ownership';
 import { useTheme } from '../theme';
 
 export function SignInScreen() {
@@ -26,6 +29,31 @@ export function SignInScreen() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  /**
+   * This device already holds another account's unsent work, and signing in
+   * destroys it. There is no way to send it first — that needs the other
+   * account's session — so the only honest choice is to say exactly what will
+   * be lost and let them cancel.
+   */
+  const confirmReplace: ConfirmReplace = (pending: PendingWork) =>
+    new Promise((resolve) => {
+      Alert.alert(
+        t('auth.replaceStoreTitle'),
+        t(pending.interviews > 0 ? 'auth.replaceStoreInterviews' : 'auth.replaceStoreMedia', {
+          count: pending.interviews > 0 ? pending.interviews : pending.media,
+        }),
+        [
+          { text: t('common.cancel'), style: 'cancel', onPress: () => resolve(false) },
+          {
+            text: t('auth.replaceStoreConfirm'),
+            style: 'destructive',
+            onPress: () => resolve(true),
+          },
+        ],
+        { onDismiss: () => resolve(false) }
+      );
+    });
+
   const onSubmit = async () => {
     if (!email.trim() || !password) {
       setError(t('auth.errors.missingFields'));
@@ -35,8 +63,13 @@ export function SignInScreen() {
     setError(null);
     setSubmitting(true);
     try {
-      await signIn(email.trim(), password);
+      await signIn(email.trim(), password, confirmReplace);
     } catch (e) {
+      if (e instanceof SignInCancelled) {
+        // They chose to keep the other account's work; not an error.
+        return;
+      }
+
       setError(
         e instanceof ApiError && e.status === 422
           ? t('auth.errors.invalidCredentials')

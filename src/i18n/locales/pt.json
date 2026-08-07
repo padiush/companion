@@ -13,7 +13,13 @@
       "missingFields": "Digite seu e-mail e senha.",
       "invalidCredentials": "E-mail ou senha incorretos.",
       "generic": "Não foi possível entrar. Tente novamente."
-    }
+    },
+    "replaceStoreTitle": "Este dispositivo tem trabalho de outra conta",
+    "replaceStoreInterviews_one": "Há 1 entrevista não enviada de outra conta. Ao entrar, ela será apagada e não poderá ser recuperada.",
+    "replaceStoreInterviews_other": "Há {{count}} entrevistas não enviadas de outra conta. Ao entrar, elas serão apagadas e não poderão ser recuperadas.",
+    "replaceStoreMedia_one": "Há 1 arquivo não enviado de outra conta. Ao entrar, ele será apagado e não poderá ser recuperado.",
+    "replaceStoreMedia_other": "Há {{count}} arquivos não enviados de outra conta. Ao entrar, eles serão apagados e não poderão ser recuperados.",
+    "replaceStoreConfirm": "Apagar e entrar"
   },
   "common": {
     "cancel": "Cancelar"

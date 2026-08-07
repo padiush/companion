@@ -20,3 +20,14 @@ export async function getOrCreateDatabaseKey(): Promise<string> {
   await SecureStore.setItemAsync(DB_KEY, key);
   return key;
 }
+
+/**
+ * Discard the key so the next open mints a fresh one. Used when the store is
+ * destroyed on an account switch: deleting the database file releases its
+ * blocks back to the filesystem, and without the key any copy of them that
+ * survives elsewhere — a device backup, an unerased page — stays ciphertext
+ * that nobody holds a key for.
+ */
+export async function forgetDatabaseKey(): Promise<void> {
+  await SecureStore.deleteItemAsync(DB_KEY);
+}
