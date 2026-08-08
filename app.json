@@ -8,12 +8,12 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.padiush.companion",
+      "bundleIdentifier": "com.padiushbio.companion",
       "appleTeamId": "LH6D6NFDK8"
     },
     "android": {
-      "package": "com.padiush.companion",
-      "versionCode": 1,
+      "package": "com.padiushbio.companion",
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#3c6200",
         "foregroundImage": "./assets/android-icon-foreground.png"
@@ -23,7 +23,10 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MICROPHONE"
       ]
     },
     "web": {
@@ -73,6 +76,12 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "66635fbf-41b6-44ba-b821-a11fedac8888"
+      }
+    },
+    "owner": "arevalo-menendez"
   }
 }
