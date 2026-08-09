@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.padiushbio.companion",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "backgroundColor": "#3c6200",
         "foregroundImage": "./assets/android-icon-foreground.png"
