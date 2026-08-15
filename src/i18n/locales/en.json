@@ -147,5 +147,11 @@
       "api.sync.not_owner": "Another account recorded this interview.",
       "unknown": "The server did not accept this interview."
     }
+  },
+  "licences": {
+    "title": "Open source licences",
+    "intro": "This app is built on {{count}} open-source packages. Their authors require the licence notices to travel with the copies, so here they are. Packages sharing an identical notice are grouped together.",
+    "noNotice": "No licence file of their own",
+    "noNoticeBody": "These packages declare a licence in their metadata but ship no notice file. They are listed so the attribution is complete."
   }
 }

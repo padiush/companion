@@ -147,5 +147,11 @@
       "api.sync.not_owner": "Esta entrevista la registró otra cuenta.",
       "unknown": "El servidor no aceptó esta entrevista."
     }
+  },
+  "licences": {
+    "title": "Licencias de código abierto",
+    "intro": "Esta aplicación se construye sobre {{count}} paquetes de código abierto. Sus autores exigen que sus avisos de licencia acompañen a las copias, así que aquí están. Los paquetes con un aviso idéntico se agrupan.",
+    "noNotice": "Sin archivo de licencia propio",
+    "noNoticeBody": "Estos paquetes declaran su licencia en sus metadatos pero no incluyen un archivo de aviso. Se listan para que la atribución esté completa."
   }
 }

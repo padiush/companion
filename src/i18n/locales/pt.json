@@ -147,5 +147,11 @@
       "api.sync.not_owner": "Outra conta registrou esta entrevista.",
       "unknown": "O servidor não aceitou esta entrevista."
     }
+  },
+  "licences": {
+    "title": "Licenças de código aberto",
+    "intro": "Esta aplicação apoia-se em {{count}} pacotes de código aberto. Os seus autores exigem que os avisos de licença acompanhem as cópias, por isso estão aqui. Pacotes com um aviso idêntico são agrupados.",
+    "noNotice": "Sem ficheiro de licença próprio",
+    "noNoticeBody": "Estes pacotes declaram a licença nos seus metadados mas não incluem um ficheiro de aviso. São listados para que a atribuição fique completa."
   }
 }

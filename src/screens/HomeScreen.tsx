@@ -151,6 +151,22 @@ export function HomeScreen() {
             </TouchableOpacity>
           ))
         )}
+
+        {/*
+          Attribution for the packages this app is built from. Shipping a
+          binary is distribution, and the licences require their notice to
+          travel with it.
+        */}
+        <TouchableOpacity
+          testID="licences"
+          onPress={() => navigation.navigate('Licences')}
+          accessibilityRole="button"
+          style={styles.licences}
+        >
+          <Text style={[styles.licencesText, { color: theme.muted }]}>
+            {t('licences.title')}
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
@@ -219,6 +235,14 @@ const styles = StyleSheet.create({
   empty: {
     ...type.body,
     marginTop: space.sm,
+  },
+  licences: {
+    marginTop: space.xl,
+    alignSelf: 'center',
+    paddingVertical: space.sm,
+  },
+  licencesText: {
+    ...type.caption,
   },
   projectRow: {
     flexDirection: 'row',
