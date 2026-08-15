@@ -14,6 +14,7 @@ authors:
     country: SV
   - family-names: "Arévalo"
     given-names: "Rodrigo"
+    orcid: "https://orcid.org/0009-0008-0614-1417"
     country: SV
 license: AGPL-3.0-or-later
 repository-code: "https://github.com/padiush/companion"
