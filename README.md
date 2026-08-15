@@ -4,6 +4,30 @@ The mobile field-capture app for [Padiush](https://padiushbio.com), the
 ethnobotanical research platform ([source](https://github.com/padiush/platform)).
 Built with **Expo / React Native** and TypeScript.
 
+An interview happens once. The informant is there, they are talking, and the
+signal is not. So the app is built around **recording first and filling the form
+in afterwards** — the recorder is the first thing on the interview screen, and
+nothing about capture waits on a network, a GPS fix, or a complete answer sheet.
+
+## In the field
+
+- **Nothing waits for a signal.** Interviews, answers, audio, photographs and
+  location are captured into an encrypted store on the phone and sent when
+  connectivity returns. A researcher can work all day with the radio off.
+- **Recording survives the phone going away** — locked, pocketed, or left on
+  another app. If something outside the app ends a take (the notification's stop
+  button, a call taking audio focus, Android reclaiming the service) the app
+  keeps whatever reached disk and says the take was cut short, rather than
+  showing a frozen clock that still claims to be recording.
+- **GPS never blocks the record button.** The fix attaches whenever it arrives —
+  which matters most exactly where signal is worst.
+- **Nothing the server refuses disappears.** If the web has since removed a
+  field, that interview is marked incomplete with the reason kept against the
+  answer, and reopening it offers to retry, discard just that answer, or fix it.
+- **Sign-out keeps your work; switching accounts does not.** A different account
+  replaces the store, and says how much unsent work that destroys before it does.
+- **Spanish, English and Portuguese**, throughout.
+
 ## Scope — capture only
 
 This app records interviews in the field, **fully offline**, and syncs when
@@ -105,29 +129,36 @@ or try again. Nothing the server refuses is dropped silently.
   worth engineering against, so on return the app believes the recorder over
   its own state, keeps whatever reached disk, and says the take was cut short.
 
-## Releases
+## Building a release
 
-Builds go through EAS ([eas.json](eas.json)). `development` serves JS from your
-Metro server and so honours your local `.env`; `preview` and `production` bake
-in the production API URL, so a release never ships whatever a developer left
-in `.env`.
+Builds go through EAS ([eas.json](eas.json)). The `development` profile serves
+JS from your Metro server and so honours your local `.env`; `preview` and
+`production` pin the API URL in the profile itself, so **a release can never
+ship whatever a developer happened to leave in `.env`**.
 
 ```bash
 npx eas-cli build --platform android --profile production
-npx eas-cli submit --platform android --profile closed-testing
+npx eas-cli submit --platform android --profile production
 ```
 
 `android.versionCode` in [app.json](app.json) is the record of what shipped —
 the production profile increments it, so commit the bump.
 
-Two documents back a store submission and should be revisited whenever what the
-app transmits changes:
+## Forking this app
 
-- [docs/play-listing.md](docs/play-listing.md) — the store listing copy, in
-  Spanish, English and Portuguese.
-- [docs/play-data-safety.md](docs/play-data-safety.md) — the Data safety answer
-  sheet, derived from what the app actually sends, with each row traceable to
-  the file that sends it.
+Everything needed to build your own is here, but four values belong to this
+deployment and have to become yours before a build will work:
+
+| Where | What | Why |
+|---|---|---|
+| [app.json](app.json) | `expo.owner`, `expo.extra.eas.projectId` | These name our EAS project. Run `eas init` to create your own, or a build will aim at ours and fail on permissions. |
+| [app.json](app.json) | `android.package`, `ios.bundleIdentifier` | Reverse a domain you own; an app id cannot be shared. |
+| [eas.json](eas.json) | `EXPO_PUBLIC_API_BASE_URL` in `preview` and `production` | Point them at your own Padiush server. |
+| [eas.json](eas.json) | the `submit` profiles | Your store track and your own service-account key, which is gitignored and never committed. |
+
+Then work from [docs/play-data-safety.md](docs/play-data-safety.md): it records
+what the app transmits, with every row traceable to the file that sends it, and
+is what a store submission's data declaration should be built on.
 
 ## Testing
 

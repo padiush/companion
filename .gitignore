@@ -53,6 +53,11 @@ play-service-account.json
 # Working notes and pre-decision analysis, kept out of the published history.
 AGENTS.md
 CLAUDE.md
+/.claude/
+
+# The store listing is copy for our own Play entry, in three languages against
+# Play's character limits. Anyone publishing their own build writes their own.
+/docs/play-listing.md
 
 # A database pulled off a device for debugging holds real interview records,
 # audio and photographs. It must never be committable.

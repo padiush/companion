@@ -1,9 +1,16 @@
-# Google Play Data safety — answer sheet
+# What this app transmits
 
-What to enter in Play Console → **App content → Data safety**, derived from what
-this app actually transmits rather than from what it plausibly might. Every row
-below is traceable to code; the "why" column names the file so a future change
-can be checked against it.
+An account of every kind of data the companion sends off the device, derived
+from what it actually transmits rather than from what it plausibly might. Every
+row is traceable to code: the "why" column names the file that sends it, so a
+future change can be checked against this document.
+
+It is written in the shape of Google Play's **App content → Data safety**
+questionnaire, because that form asks the right questions and the answers have
+to be defensible either way. If you publish your own build, this is the sheet to
+work from — the answers about *what* the app sends hold for any deployment, and
+the ones naming a server or a privacy policy are this deployment's for you to
+replace.
 
 Re-read this whenever a dependency starts sending something, and especially
 before adding any third-party SDK — the "Shared: No" column below is the part
