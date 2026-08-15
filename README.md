@@ -1,6 +1,6 @@
 # Padiush Companion
 
-The mobile field-capture app for the [Padiush](https://padiushbio.test)
+The mobile field-capture app for the [Padiush](https://github.com/padiush/platform)
 ethnobotanical research platform. Built with **Expo / React Native** and
 TypeScript.
 
@@ -131,3 +131,30 @@ npm run lint
 The DB layer cannot load expo-sqlite under jest, so `test-utils/sqliteDatabase.ts`
 puts Node's built-in SQLite behind the same interface. SQLCipher is not part of
 it, so the encryption path is covered by its own mocked tests and on-device runs.
+
+## Provenance
+
+Padiush began as a system written for a single ethnobotanical thesis. It was
+rebuilt as a general tool once it was clear the same instrument served studies
+beyond that one, and this app was written for that second version. The design
+of the offline store, the sync model and the capture workflow are recorded in
+the platform repository's [architecture decisions](https://github.com/padiush/platform/tree/master/docs/decisions).
+Development since 2026 has been AI-assisted; the architecture and the decisions
+behind it are not.
+
+## Licence
+
+Copyright © Mercedes Menéndez and Rodrigo Arévalo.
+
+Released under the **GNU Affero General Public License v3.0 or later** — see
+[LICENSE](LICENSE). In short: you may use, study, modify and redistribute this
+app, including running your own instance against your own Padiush server, so
+long as those you distribute it to receive the same freedoms and the source of
+your changes.
+
+This is research software, published so that researchers can verify how
+captured data is stored and transmitted rather than take our word for it. It
+comes with **no support commitment** — see [CONTRIBUTING.md](CONTRIBUTING.md),
+which also covers the sign-off required on contributions.
+
+If you use it in published research, please cite it — see [CITATION.cff](CITATION.cff).

@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: If you use Padiush Companion in your research, please cite it as below.
+title: "Padiush Companion"
+abstract: >-
+  The mobile field-capture application for the Padiush platform. It records
+  interviews entirely offline — answers, audio, photographs and location — in
+  an encrypted on-device store, and synchronises them when connectivity allows.
+type: software
+version: "1.0.0"
+authors:
+  - family-names: "Menéndez"
+    given-names: "Mercedes"
+    country: SV
+  - family-names: "Arévalo"
+    given-names: "Rodrigo"
+    country: SV
+license: AGPL-3.0-or-later
+repository-code: "https://github.com/padiush/companion"
+keywords:
+  - ethnobotany
+  - ethnobiology
+  - offline data capture
+  - mobile field research
+  - traditional knowledge
+
+# When the methods paper is published, add a preferred-citation block here so
+# that citing the software resolves to the paper.
