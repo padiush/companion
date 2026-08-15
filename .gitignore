@@ -49,3 +49,15 @@ yarn-error.*
 # Play Store submission — the service account key can publish releases
 play-service-account.json
 *-service-account.json
+
+# Working notes and pre-decision analysis, kept out of the published history.
+AGENTS.md
+CLAUDE.md
+
+# A database pulled off a device for debugging holds real interview records,
+# audio and photographs. It must never be committable.
+*.db
+*.sqlite
+*.sqlite3
+*.csv
+*.xlsx
