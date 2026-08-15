@@ -10,6 +10,7 @@ version: "1.0.0"
 authors:
   - family-names: "Menéndez"
     given-names: "Mercedes"
+    orcid: "https://orcid.org/0009-0007-8862-8618"
     country: SV
   - family-names: "Arévalo"
     given-names: "Rodrigo"
