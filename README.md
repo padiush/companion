@@ -138,7 +138,7 @@ Padiush began as a system written for a single ethnobotanical thesis. It was
 rebuilt as a general tool once it was clear the same instrument served studies
 beyond that one, and this app was written for that second version. The design
 of the offline store, the sync model and the capture workflow are recorded in
-the platform repository's [architecture decisions](https://github.com/padiush/platform/tree/master/docs/decisions).
+the platform repository's [architecture decisions](https://github.com/padiush/platform/tree/main/docs/decisions).
 Development since 2026 has been AI-assisted; the architecture and the decisions
 behind it are not.
 
