@@ -1,6 +1,15 @@
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Linking,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
+import { SOURCE_URL } from '../config';
 import licences from '../licences.json';
 import { border, radius, space, type, useTheme } from '../theme';
 import { SectionLabel } from '../ui/SectionLabel';
@@ -12,13 +21,17 @@ type Group = {
 };
 
 /**
- * Attribution for the open-source packages the app is built from.
+ * This app's own licence, and attribution for the packages it is built from.
  *
- * Shipping a binary through an app store is distribution, and MIT, ISC and BSD
- * all require their notice to travel with the copies they are in. The list is
- * generated from the dependency tree by `npm run licences`, so it cannot drift
- * from what is actually shipped; packages carrying an identical notice are
- * grouped, since most are the same MIT text differing only in a copyright line.
+ * Our terms come first: the app is conveyed as a binary through an app store,
+ * so the licence has to travel with it and whoever receives it is entitled to
+ * the source. Crediting every dependency while saying nothing about ourselves
+ * would have it exactly backwards.
+ *
+ * The dependency list is generated from the tree by `npm run licences`, so it
+ * cannot drift from what is actually shipped; packages carrying an identical
+ * notice are grouped, since most are the same MIT text differing only in a
+ * copyright line.
  */
 export function LicencesScreen() {
   const { t } = useTranslation();
@@ -30,6 +43,24 @@ export function LicencesScreen() {
       style={{ backgroundColor: theme.bg }}
       contentContainerStyle={styles.content}
     >
+      <View style={[styles.group, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <SectionLabel>{t('licences.thisApp')}</SectionLabel>
+
+        <Text style={[styles.intro, { color: theme.text }]}>
+          {t('licences.thisAppBody')}
+        </Text>
+
+        <TouchableOpacity
+          testID="app-source"
+          onPress={() => Linking.openURL(SOURCE_URL)}
+          accessibilityRole="link"
+        >
+          <Text style={[styles.sourceLink, { color: theme.primary }]}>
+            {t('licences.viewSource')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <Text style={[styles.intro, { color: theme.muted }]}>
         {t('licences.intro', { count: licences.packageCount })}
       </Text>
@@ -87,6 +118,10 @@ const styles = StyleSheet.create({
   packages: {
     ...type.caption,
     lineHeight: 19,
+  },
+  sourceLink: {
+    ...type.label,
+    paddingVertical: space.xs,
   },
   // Licence texts are laid out for a fixed width; a monospaced face keeps
   // their wrapping readable rather than ragged.

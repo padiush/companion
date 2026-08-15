@@ -152,6 +152,9 @@
     "title": "Licencias de código abierto",
     "intro": "Esta aplicación se construye sobre {{count}} paquetes de código abierto. Sus autores exigen que sus avisos de licencia acompañen a las copias, así que aquí están. Los paquetes con un aviso idéntico se agrupan.",
     "noNotice": "Sin archivo de licencia propio",
-    "noNoticeBody": "Estos paquetes declaran su licencia en sus metadatos pero no incluyen un archivo de aviso. Se listan para que la atribución esté completa."
+    "noNoticeBody": "Estos paquetes declaran su licencia en sus metadatos pero no incluyen un archivo de aviso. Se listan para que la atribución esté completa.",
+    "thisApp": "Esta aplicación",
+    "thisAppBody": "Padiush Companion es software libre, publicado bajo la Licencia Pública General Affero de GNU, versión 3 o posterior (AGPL-3.0-or-later). © Mercedes Menéndez y Rodrigo Arévalo. Puedes usarla, estudiarla, modificarla y redistribuirla; tienes derecho a obtener el código fuente de la versión que estás ejecutando.",
+    "viewSource": "Ver el código fuente"
   }
 }
