@@ -1,8 +1,8 @@
 # Padiush Companion
 
-The mobile field-capture app for the [Padiush](https://github.com/padiush/platform)
-ethnobotanical research platform. Built with **Expo / React Native** and
-TypeScript.
+The mobile field-capture app for [Padiush](https://padiushbio.com), the
+ethnobotanical research platform ([source](https://github.com/padiush/platform)).
+Built with **Expo / React Native** and TypeScript.
 
 ## Scope — capture only
 
