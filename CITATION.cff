@@ -16,6 +16,16 @@ authors:
     given-names: "Rodrigo"
     orcid: "https://orcid.org/0009-0008-0614-1417"
     country: SV
+doi: 10.5281/zenodo.21943749
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.21943749
+    description: >-
+      The concept DOI, which always resolves to the most recent release.
+      Cite this when you mean the software rather than one version of it.
+  - type: doi
+    value: 10.5281/zenodo.21943750
+    description: The DOI of version 1.0.0 specifically.
 license: AGPL-3.0-or-later
 repository-code: "https://github.com/padiush/companion"
 url: "https://padiushbio.com"

@@ -1,5 +1,8 @@
 # Padiush Companion
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21943749.svg)](https://doi.org/10.5281/zenodo.21943749)
+[![Licence: AGPL v3](https://img.shields.io/badge/licence-AGPL--3.0--or--later-blue.svg)](LICENSE)
+
 The mobile field-capture app for [Padiush](https://padiushbio.com), the
 ethnobotanical research platform ([source](https://github.com/padiush/platform)).
 Built with **Expo / React Native** and TypeScript.
@@ -198,4 +201,15 @@ captured data is stored and transmitted rather than take our word for it. It
 comes with **no support commitment** — see [CONTRIBUTING.md](CONTRIBUTING.md),
 which also covers the sign-off required on contributions.
 
-If you use it in published research, please cite it — see [CITATION.cff](CITATION.cff).
+## Citing
+
+If you use the companion in published research, please cite it. The metadata is
+in [CITATION.cff](CITATION.cff), and GitHub will format a citation for you from
+the sidebar.
+
+Cite **[10.5281/zenodo.21943749](https://doi.org/10.5281/zenodo.21943749)** when
+you mean the app; it always resolves to the newest release. For version 1.0.0
+specifically, cite
+[10.5281/zenodo.21943750](https://doi.org/10.5281/zenodo.21943750).
+
+A methods paper is in preparation and will be linked here once published.
