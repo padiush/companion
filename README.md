@@ -120,6 +120,15 @@ npx eas-cli submit --platform android --profile closed-testing
 `android.versionCode` in [app.json](app.json) is the record of what shipped —
 the production profile increments it, so commit the bump.
 
+Two documents back a store submission and should be revisited whenever what the
+app transmits changes:
+
+- [docs/play-listing.md](docs/play-listing.md) — the store listing copy, in
+  Spanish, English and Portuguese.
+- [docs/play-data-safety.md](docs/play-data-safety.md) — the Data safety answer
+  sheet, derived from what the app actually sends, with each row traceable to
+  the file that sends it.
+
 ## Testing
 
 ```bash
@@ -146,7 +155,8 @@ behind it are not.
 
 Copyright © Mercedes Menéndez and Rodrigo Arévalo.
 
-Released under the **GNU Affero General Public License v3.0 or later** — see
+Released under the **GNU Affero General Public License v3.0 or later**
+(**AGPL-3.0-or-later**) — see
 [LICENSE](LICENSE). In short: you may use, study, modify and redistribute this
 app, including running your own instance against your own Padiush server, so
 long as those you distribute it to receive the same freedoms and the source of
