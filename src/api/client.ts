@@ -4,6 +4,8 @@ import type {
   Bundle,
   DiagnosticsRequest,
   DiagnosticsResponse,
+  FieldRecordSyncRequest,
+  FieldRecordSyncResponse,
   InstanceDetail,
   MediaCompleteRequest,
   MediaCompleteResponse,
@@ -95,6 +97,13 @@ export const api = {
 
   syncInstances: (projectId: number, payload: SyncRequest, idempotencyKey?: string) =>
     request<SyncResponse>(`/projects/${projectId}/instances:sync`, {
+      method: 'POST',
+      body: payload,
+      idempotencyKey,
+    }),
+
+  syncRecords: (projectId: number, payload: FieldRecordSyncRequest, idempotencyKey?: string) =>
+    request<FieldRecordSyncResponse>(`/projects/${projectId}/records:sync`, {
       method: 'POST',
       body: payload,
       idempotencyKey,

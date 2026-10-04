@@ -163,6 +163,10 @@
     "sendError": "Couldn't send. Check your connection.",
     "sent_one": "1 interview sent",
     "sent_other": "{{count}} interviews sent",
+    "recordsSent_one": "1 field record sent",
+    "recordsSent_other": "{{count}} field records sent",
+    "recordsRefused_one": "The server did not accept 1 field record. Open it from its project to see why.",
+    "recordsRefused_other": "The server did not accept {{count}} field records. Open them from their project to see why.",
     "empty": "No interviews yet.",
     "status": {
       "draft": "Draft",

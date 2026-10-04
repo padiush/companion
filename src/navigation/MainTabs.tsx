@@ -18,7 +18,10 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 export function MainTabs() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const { count } = useOutbox();
+  const { count, fieldRecords } = useOutbox();
+  // Everything the Send action on this tab will push, records included: they
+  // are made in a project, but this is where they are sent from.
+  const unsent = count + fieldRecords;
 
   return (
     <Tab.Navigator
@@ -42,7 +45,7 @@ export function MainTabs() {
         component={DraftsScreen}
         options={{
           tabBarLabel: t('tabs.interviews'),
-          tabBarBadge: count > 0 ? count : undefined,
+          tabBarBadge: unsent > 0 ? unsent : undefined,
           tabBarIcon: ({ color, size }) => <InterviewsIcon color={color} size={size} />,
         }}
       />

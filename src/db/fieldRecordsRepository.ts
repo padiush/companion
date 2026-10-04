@@ -179,16 +179,30 @@ export async function countDraftFieldRecords(db: SQLiteDatabase): Promise<number
  * an interview, whose id it minted — and it is what the record's media will be
  * uploaded against. A rejection keeps the reason so it can be shown and acted
  * on rather than discarded, matching how a refused interview is handled.
+ *
+ * `sentEditedAt` is the edit time of the copy the result is about. The record
+ * can be edited while its push is in flight, and that newer edit has not been
+ * sent: marking the record synced would leave it on the device, read-only,
+ * never to be pushed. So the status only changes if the record still carries
+ * the edit that was sent; otherwise it stays in the outbox for the next push.
+ * The server id is kept either way — the server holds the record regardless.
  */
 export async function setFieldRecordSyncResult(
   db: SQLiteDatabase,
   clientId: string,
-  result: { status: string; serverId?: number | null; error?: string | null }
+  result: { status: string; serverId?: number | null; error?: string | null },
+  sentEditedAt?: string | null
 ): Promise<void> {
-  await db.runAsync(
-    `UPDATE field_records
-        SET sync_status = ?, sync_error = ?, server_id = COALESCE(?, server_id)
-      WHERE client_id = ?`,
-    [result.status, result.error ?? null, result.serverId ?? null, clientId]
-  );
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(
+      'UPDATE field_records SET server_id = COALESCE(?, server_id) WHERE client_id = ?',
+      [result.serverId ?? null, clientId]
+    );
+
+    await db.runAsync(
+      `UPDATE field_records SET sync_status = ?, sync_error = ?
+        WHERE client_id = ? AND (? IS NULL OR edited_at IS ?)`,
+      [result.status, result.error ?? null, clientId, sentEditedAt ?? null, sentEditedAt ?? null]
+    );
+  });
 }

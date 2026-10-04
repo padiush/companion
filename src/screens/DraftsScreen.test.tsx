@@ -44,7 +44,9 @@ function mockDrafts(overrides: Record<string, unknown> = {}) {
 function mockOutbox(overrides: Record<string, unknown> = {}) {
   const state = {
     count: 0,
+    fieldRecords: 0,
     pendingMedia: 0,
+    lastRecordResult: null,
     sending: false,
     error: false,
     send: jest.fn(),
@@ -53,7 +55,7 @@ function mockOutbox(overrides: Record<string, unknown> = {}) {
 
   mockUseOutbox.mockReturnValue({
     ...state,
-    hasWork: state.count > 0 || state.pendingMedia > 0,
+    hasWork: state.count > 0 || state.fieldRecords > 0 || state.pendingMedia > 0,
   });
 }
 
@@ -66,10 +68,7 @@ beforeEach(() => {
 describe('DraftsScreen', () => {
   it('lists interviews with their status', async () => {
     mockDrafts({
-      drafts: [
-        draft(),
-        draft({ id: 'd2', preview: 'Sábila', sync_status: 'rejected' }),
-      ],
+      drafts: [draft(), draft({ id: 'd2', preview: 'Sábila', sync_status: 'rejected' })],
     });
 
     const { getByTestId, getByText } = await render(<DraftsScreen />);
@@ -119,6 +118,34 @@ describe('DraftsScreen', () => {
     const { getByText } = await render(<DraftsScreen />);
 
     expect(getByText('drafts.send · 2')).toBeTruthy();
+  });
+
+  /** Records are made in a project, but this is the Send that carries them. */
+  it('counts field records on the send action alongside interviews', async () => {
+    mockOutbox({ count: 2, fieldRecords: 3 });
+
+    const { getByText } = await render(<DraftsScreen />);
+
+    expect(getByText('drafts.send · 5')).toBeTruthy();
+  });
+
+  it('offers to send when only field records are waiting', async () => {
+    mockOutbox({ count: 0, fieldRecords: 1 });
+
+    const { getByText } = await render(<DraftsScreen />);
+
+    expect(getByText('drafts.send · 1')).toBeTruthy();
+  });
+
+  it('says how many field records went, and how many the server refused', async () => {
+    const send = jest.fn().mockResolvedValue({ synced: 0, partial: 0, rejected: 0 });
+    mockOutbox({ fieldRecords: 3, send, lastRecordResult: { synced: 2, rejected: 1 } });
+
+    const { getByTestId, findByTestId } = await render(<DraftsScreen />);
+    await fireEvent.press(getByTestId('send'));
+
+    expect(await findByTestId('records-sent')).toHaveTextContent('drafts.recordsSent');
+    expect(await findByTestId('records-refused')).toHaveTextContent('drafts.recordsRefused');
   });
 
   it('shows the empty state when there are no interviews', async () => {
