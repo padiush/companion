@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useColorScheme } from 'react-native';
 
+import { FieldRecordScreen } from '../screens/FieldRecordScreen';
 import { InterviewScreen } from '../screens/InterviewScreen';
 import { LicencesScreen } from '../screens/LicencesScreen';
 import { ProjectScreen } from '../screens/ProjectScreen';
@@ -32,6 +33,13 @@ export function RootNavigator() {
           name="Interview"
           component={InterviewScreen}
           options={({ route }) => ({ title: route.params.formName })}
+        />
+        <Stack.Screen
+          name="FieldRecord"
+          component={FieldRecordScreen}
+          options={({ route }) => ({
+            title: t(route.params.clientId ? 'fieldRecord.title' : 'fieldRecord.newTitle'),
+          })}
         />
         <Stack.Screen
           name="Licences"

@@ -47,7 +47,10 @@
   "project": {
     "forms": "Formularios",
     "newInterview": "Nueva entrevista",
-    "empty": "Este proyecto no tiene formularios activos."
+    "empty": "Este proyecto no tiene formularios activos.",
+    "fieldRecords": "Registros de campo",
+    "newFieldRecord": "Añadir un registro",
+    "noFieldRecords": "Aún no hay registros en este dispositivo. Anota aquí lo que documentes en campo, lo recolectes o no; la identificación y el depósito se hacen después en la web."
   },
   "interview": {
     "preparing": "Preparando la entrevista…",
@@ -89,6 +92,67 @@
       "min": "Debe ser {{limit}} o más.",
       "max": "Debe ser {{limit}} o menos.",
       "step": "Debe ir de {{limit}} en {{limit}}."
+    }
+  },
+  "fieldRecord": {
+    "title": "Registro de campo",
+    "newTitle": "Nuevo registro",
+    "untitled": "Registro sin nombre",
+    "sections": {
+      "record": "El registro",
+      "place": "Cuándo y dónde",
+      "permit": "Permiso",
+      "notes": "Notas"
+    },
+    "basis": "¿Se recolectó?",
+    "bases": {
+      "preserved_specimen": "Sí — ejemplar recolectado",
+      "human_observation": "No — solo observado",
+      "living_specimen": "Planta viva (huerto, vivero)",
+      "material_sample": "Muestra parcial"
+    },
+    "basisHint": {
+      "preserved_specimen": "Se prensará y depositará; podrá llevar número de herbario.",
+      "human_observation": "Se documenta con fotos y descripción. No llevará voucher.",
+      "living_specimen": "Planta en pie, identificable in situ.",
+      "material_sample": "Se tomó una parte, no el ejemplar completo."
+    },
+    "vernacularName": "Nombre local",
+    "vernacularNameHint": "Como lo llamó quien te acompañaba. Se guarda cifrado.",
+    "collectionNumber": "Número de colecta",
+    "collectionNumberHint": "El número que escribiste en la etiqueta.",
+    "collector": "Colector",
+    "collectedOn": "Fecha de colecta",
+    "locality": "Localidad",
+    "coordinates": "Coordenadas",
+    "locating": "Buscando señal GPS…",
+    "locationFailed": "No se pudo obtener la ubicación. Revisa el permiso de ubicación o inténtalo al aire libre.",
+    "noCoordinates": "Sin coordenadas",
+    "locate": "Usar mi ubicación",
+    "relocate": "Actualizar con mi ubicación",
+    "permit": "Permiso",
+    "permitUnnamed": "Permiso sin referencia",
+    "permitUnlisted": "Un permiso que el proyecto ya no tiene",
+    "noPermits": "Este proyecto no tiene permisos en el dispositivo. Se registran en la web y llegan con la siguiente sincronización.",
+    "exemption": "Motivo de exención",
+    "exemptionHint": "Solo si la recolecta no necesitaba permiso.",
+    "exemptions": {
+      "private_land": "Terreno privado, con acuerdo del propietario",
+      "cultivated": "Material cultivado",
+      "market": "Comprado en mercado",
+      "other": "Otro motivo (ver notas)"
+    },
+    "notes": "Notas",
+    "saving": "Guardando…",
+    "savedLocally": "Guardado en este dispositivo",
+    "notSavedYet": "Se guarda en cuanto anotes algo.",
+    "done": "Listo",
+    "sentReadOnly": "Este registro ya se envió. Las correcciones se hacen en la web.",
+    "refusedTitle": "El servidor no aceptó este registro",
+    "status": {
+      "notSent": "Sin enviar",
+      "sent": "Enviado",
+      "refused": "Rechazado"
     }
   },
   "drafts": {
@@ -146,6 +210,12 @@
       "api.sync.form_mismatch": "La entrevista no puede cambiar de formulario.",
       "api.sync.not_owner": "Esta entrevista la registró otra cuenta.",
       "unknown": "El servidor no aceptó esta entrevista."
+    },
+    "recordErrors": {
+      "api.sync.client_id_conflict": "Este registro ya existe en otro proyecto.",
+      "api.sync.permit_not_in_project": "El permiso elegido ya no pertenece a este proyecto. Elige otro o un motivo de exención.",
+      "api.sync.answer_not_found": "La respuesta de la que salió este registro aún no está en el servidor. Envía primero la entrevista.",
+      "unknown": "El servidor no aceptó este registro."
     }
   },
   "licences": {

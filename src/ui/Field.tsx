@@ -8,6 +8,8 @@ interface Props {
   /** Marks the field as required, as the form declares it. */
   required?: boolean;
   children: ReactNode;
+  /** A line under the control explaining what belongs in it. */
+  hint?: string;
   /** A problem with what was entered, or with what the server made of it. */
   error?: string;
   errorTestID?: string;
@@ -24,6 +26,7 @@ export function Field({
   label,
   required = false,
   children,
+  hint,
   error,
   errorTestID,
   action,
@@ -38,6 +41,8 @@ export function Field({
       </Text>
 
       {children}
+
+      {hint ? <Text style={[styles.hint, { color: theme.muted }]}>{hint}</Text> : null}
 
       {error ? (
         <View testID={errorTestID} style={styles.error}>
@@ -55,6 +60,7 @@ const styles = StyleSheet.create({
     gap: space.sm,
   },
   label: type.label,
+  hint: type.caption,
   error: {
     gap: space.xs,
   },

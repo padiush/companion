@@ -12,6 +12,8 @@ export type RootStackParamList = {
   Project: { projectId: number; projectName: string };
   /** `instanceId` is set when reopening an existing draft; omitted starts a new one. */
   Interview: { formId: number; projectId: number; formName: string; instanceId?: string };
+  /** `clientId` is set when reopening a record; omitted starts a new one. */
+  FieldRecord: { projectId: number; clientId?: string };
   /** Attribution for the open-source packages the app ships. */
   Licences: undefined;
 };
