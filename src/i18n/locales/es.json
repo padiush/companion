@@ -168,6 +168,8 @@
     "recordsRefused_one": "El servidor no aceptó 1 registro de campo. Ábrelo desde su proyecto para ver por qué.",
     "recordsRefused_other": "El servidor no aceptó {{count}} registros de campo. Ábrelos desde su proyecto para ver por qué.",
     "empty": "Aún no hay entrevistas.",
+    "fieldRecords": "Registros de campo",
+    "interviews": "Entrevistas",
     "status": {
       "draft": "Borrador",
       "synced": "Enviada",

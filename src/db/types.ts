@@ -160,6 +160,12 @@ export interface FieldRecordRow {
   updated_at: string;
 }
 
+/** A field record not yet accepted by the server, with the project it belongs to. */
+export interface WaitingFieldRecord extends FieldRecordRow {
+  /** Null if the project is no longer cached on this device. */
+  project_name: string | null;
+}
+
 /**
  * A row of the `collecting_permits` table — the read-side cache of the permits
  * a project holds. Read-only on the device: a permit is obtained before the
