@@ -88,31 +88,44 @@ function instanceError(errors: SyncResultErrors | undefined): string | null {
  * An interview that landed with refusals is 'partial': it is on the server, so
  * re-pushing it unchanged would fail identically, and the outbox rightly leaves
  * it alone. It needs the answer corrected or dropped first.
+ *
+ * `sentUpdatedAt` is the interview's edit stamp when its copy was taken. If an
+ * answer was saved while the push was in flight, the result describes an older
+ * version: nothing is applied, and the interview stays in the outbox, as the
+ * save left it, for the next push to decide. Applying it would mark the
+ * interview sent with the new answer never pushed. The server still holds what
+ * was sent, so the next push only repeats it — the server upserts.
  */
-async function applyResult(db: SQLiteDatabase, result: SyncResult): Promise<PushOutcome> {
+async function applyResult(
+  db: SQLiteDatabase,
+  result: SyncResult,
+  sentUpdatedAt?: string
+): Promise<PushOutcome> {
+  const refused = result.status === 'rejected' ? [] : (result.errors?.answers ?? []);
+  const outcome: PushOutcome =
+    result.status === 'rejected' ? 'rejected' : refused.length === 0 ? 'synced' : 'partial';
+
+  const written = await setSyncStatus(
+    db,
+    result.id,
+    outcome,
+    outcome === 'rejected' ? instanceError(result.errors) : null,
+    sentUpdatedAt
+  );
+
+  if (!written) {
+    return outcome;
+  }
+
   // Whatever failed last time is re-decided by this response.
   await clearAnswerSyncErrors(db, result.id);
-
-  if (result.status === 'rejected') {
-    await setSyncStatus(db, result.id, 'rejected', instanceError(result.errors));
-    return 'rejected';
-  }
-
-  const refused = result.errors?.answers ?? [];
-
-  if (refused.length === 0) {
-    await setSyncStatus(db, result.id, 'synced');
-    return 'synced';
-  }
-
-  await setSyncStatus(db, result.id, 'partial');
   for (const answer of refused) {
     if (answer.client_id) {
       await setAnswerSyncError(db, answer.client_id, answer.error);
     }
   }
 
-  return 'partial';
+  return outcome;
 }
 
 /**
@@ -134,6 +147,10 @@ export async function pushDrafts(db: SQLiteDatabase): Promise<PushSummary> {
 
   for (const [projectId, instances] of byProject) {
     const payload: InstancePush[] = [];
+    // Taken before the answers are read, so an edit landing in between makes
+    // the result look stale and is re-sent, rather than looking current and
+    // being lost.
+    const sentUpdatedAt = new Map(instances.map((instance) => [instance.id, instance.updated_at]));
 
     for (const instance of instances) {
       const answers = await getAnswersForInstance(db, instance.id);
@@ -150,7 +167,7 @@ export async function pushDrafts(db: SQLiteDatabase): Promise<PushSummary> {
     const response = await api.syncInstances(projectId, { instances: payload });
 
     for (const result of response.results) {
-      summary[await applyResult(db, result)] += 1;
+      summary[await applyResult(db, result, sentUpdatedAt.get(result.id))] += 1;
     }
   }
 
