@@ -34,6 +34,7 @@ function media(overrides: Partial<MediaRow> = {}): MediaRow {
   return {
     client_id: 'm1',
     instance_id: 'inst-1',
+    field_record_id: null,
     kind: 'photo',
     local_uri: null,
     storage_key: null,

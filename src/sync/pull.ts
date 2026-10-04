@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import type { ProjectSummary } from '../api/types';
 import { saveSession } from '../auth/session';
 import { pruneForms, upsertForms } from '../db/formsRepository';
+import { replacePermits } from '../db/permitsRepository';
 import { pruneProjects, upsertProjects } from '../db/projectsRepository';
 import { getMeta, setMeta } from '../db/syncMetaRepository';
 
@@ -60,6 +61,14 @@ export async function pullForms(db: SQLiteDatabase, projectId: number): Promise<
   // rather than wiping every form in it.
   if (bundle.active_form_ids !== undefined) {
     await pruneForms(db, projectId, bundle.active_form_ids);
+  }
+
+  // Permits come as the full set every time, so the cache is replaced rather
+  // than merged — a permit revoked on the web stops being offered. Guarded on
+  // undefined for the same reason as above: an older server saying nothing
+  // about permits must not read as "this project holds none".
+  if (bundle.collecting_permits !== undefined) {
+    await replacePermits(db, projectId, bundle.collecting_permits);
   }
 
   if (bundle.form_version_cursor) {

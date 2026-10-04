@@ -90,22 +90,41 @@ describe('SignInScreen', () => {
     }
 
     it('confirms a takeover only when the user accepts it', async () => {
-      const { answered } = await answerPrompt('destructive', { interviews: 2, media: 0 });
+      const { answered } = await answerPrompt('destructive', {
+        interviews: 2,
+        media: 0,
+        fieldRecords: 0,
+      });
 
       expect(answered).toBe(true);
     });
 
     it('refuses the takeover when the user cancels', async () => {
-      const { answered } = await answerPrompt('cancel', { interviews: 2, media: 0 });
+      const { answered } = await answerPrompt('cancel', {
+        interviews: 2,
+        media: 0,
+        fieldRecords: 0,
+      });
 
       expect(answered).toBe(false);
     });
 
-    it('counts interviews when there are any, and files otherwise', async () => {
-      const withInterviews = await answerPrompt('cancel', { interviews: 2, media: 9 });
+    it('names interviews first, then field records, then files', async () => {
+      const withInterviews = await answerPrompt('cancel', {
+        interviews: 2,
+        media: 9,
+        fieldRecords: 3,
+      });
       expect(withInterviews.alert.mock.calls.at(-1)?.[1]).toBe('auth.replaceStoreInterviews');
 
-      const mediaOnly = await answerPrompt('cancel', { interviews: 0, media: 9 });
+      const withRecords = await answerPrompt('cancel', {
+        interviews: 0,
+        media: 9,
+        fieldRecords: 3,
+      });
+      expect(withRecords.alert.mock.calls.at(-1)?.[1]).toBe('auth.replaceStoreFieldRecords');
+
+      const mediaOnly = await answerPrompt('cancel', { interviews: 0, media: 9, fieldRecords: 0 });
       expect(mediaOnly.alert.mock.calls.at(-1)?.[1]).toBe('auth.replaceStoreMedia');
     });
 

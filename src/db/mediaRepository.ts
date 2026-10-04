@@ -2,9 +2,15 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 
 import type { MediaRow } from './types';
 
+/** Media the uploader can actually address: an interview owns it. */
+export type InterviewMediaRow = MediaRow & { instance_id: string };
+
 export interface MediaInsert {
   clientId: string;
-  instanceId: string;
+  /** The owning interview, when an interview owns it. */
+  instanceId?: string | null;
+  /** The owning field record's client_id, when a record owns it. */
+  fieldRecordId?: string | null;
   kind: 'audio' | 'photo';
   contentType: string;
   byteSize: number;
@@ -16,16 +22,28 @@ export interface MediaInsert {
  * The media row holds metadata only; the bytes go into `media_blobs` chunks
  * (see the chunk functions below). `local_uri` stays NULL — media never lives
  * as a plaintext file once ingested.
+ *
+ * Exactly one owner: an interview or a field record, never both and never
+ * neither. Enforced here rather than by the schema, because the two supported
+ * shapes differ and a CHECK constraint would have to be written twice.
  */
 export async function insertMedia(db: SQLiteDatabase, media: MediaInsert): Promise<void> {
+  const instanceId = media.instanceId ?? null;
+  const fieldRecordId = media.fieldRecordId ?? null;
+
+  if ((instanceId === null) === (fieldRecordId === null)) {
+    throw new Error('media must belong to exactly one of an interview or a field record');
+  }
+
   await db.runAsync(
     `INSERT INTO media (
-       client_id, instance_id, kind, local_uri, storage_key,
+       client_id, instance_id, field_record_id, kind, local_uri, storage_key,
        content_type, byte_size, duration_s, upload_status, transcription_status, captured_at
-     ) VALUES (?, ?, ?, NULL, NULL, ?, ?, ?, 'pending', NULL, ?)`,
+     ) VALUES (?, ?, ?, ?, NULL, NULL, ?, ?, ?, 'pending', NULL, ?)`,
     [
       media.clientId,
-      media.instanceId,
+      instanceId,
+      fieldRecordId,
       media.kind,
       media.contentType,
       media.byteSize,
@@ -89,12 +107,21 @@ export async function listMediaForInstance(
 /**
  * Media awaiting upload whose interview has already synced — the server needs
  * the instance to exist before a media intent can be registered against it.
+ *
+ * Interview media only, and the `instance_id IS NOT NULL` is deliberate rather
+ * than implied by the join: media on a field record has no upload path yet.
+ * `records:sync` pushes the record, but there is no
+ * `records/{record}/media/intent` for its photographs, so returning them here
+ * would hand the uploader a null instance to address. The narrowed return type
+ * is what keeps that a compile error rather than a crash in the field.
  */
-export async function listPendingMedia(db: SQLiteDatabase): Promise<MediaRow[]> {
-  return db.getAllAsync<MediaRow>(
+export async function listPendingMedia(db: SQLiteDatabase): Promise<InterviewMediaRow[]> {
+  return db.getAllAsync<InterviewMediaRow>(
     `SELECT m.* FROM media m
      JOIN instances i ON i.id = m.instance_id
-     WHERE m.upload_status = 'pending' AND i.sync_status = 'synced'`
+     WHERE m.upload_status = 'pending'
+       AND m.instance_id IS NOT NULL
+       AND i.sync_status = 'synced'`
   );
 }
 
@@ -108,7 +135,10 @@ export async function listPendingMedia(db: SQLiteDatabase): Promise<MediaRow[]> 
  */
 export async function countPendingMedia(db: SQLiteDatabase): Promise<number> {
   const row = await db.getFirstAsync<{ count: number }>(
-    "SELECT COUNT(*) AS count FROM media WHERE upload_status != 'uploaded'"
+    // Interview media only, for the same reason listPendingMedia is: a field
+    // record's photographs cannot be uploaded yet, and counting them would put
+    // a number on the Send action that no amount of sending clears.
+    "SELECT COUNT(*) AS count FROM media WHERE upload_status != 'uploaded' AND instance_id IS NOT NULL"
   );
 
   return row?.count ?? 0;
@@ -151,7 +181,8 @@ export async function recordUploadFailure(
 /** Media that has been tried and is still failing, for reporting. */
 export async function countFailedMedia(db: SQLiteDatabase): Promise<number> {
   const row = await db.getFirstAsync<{ count: number }>(
-    "SELECT COUNT(*) AS count FROM media WHERE upload_status != 'uploaded' AND upload_error IS NOT NULL"
+    `SELECT COUNT(*) AS count FROM media
+      WHERE upload_status != 'uploaded' AND upload_error IS NOT NULL AND instance_id IS NOT NULL`
   );
 
   return row?.count ?? 0;

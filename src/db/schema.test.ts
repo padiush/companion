@@ -17,7 +17,7 @@ function fakeDatabase(userVersion: number) {
       statements.push(sql);
     }),
     getFirstAsync: jest.fn(async (sql: string) =>
-      sql.includes('user_version') ? { user_version: userVersion } : null,
+      sql.includes('user_version') ? { user_version: userVersion } : null
     ),
     withTransactionAsync: jest.fn(async (work: () => Promise<void>) => {
       statements.push('BEGIN');
@@ -39,7 +39,7 @@ describe('migrate', () => {
 
     expect(db.statements).toContain(`PRAGMA user_version = ${SCHEMA_VERSION};`);
     expect(db.statements.some((sql) => sql.includes('CREATE TABLE IF NOT EXISTS instances'))).toBe(
-      true,
+      true
     );
   });
 
@@ -131,11 +131,11 @@ describe('upgrading a store that already holds captures', () => {
     await db.execAsync('PRAGMA user_version = 1;');
     await db.runAsync(
       `INSERT INTO instances (id, form_id, project_id, sync_status, created_at, updated_at)
-       VALUES ('kept', 10, 1, 'draft', '2026-08-01T00:00:00Z', '2026-08-01T00:00:00Z')`,
+       VALUES ('kept', 10, 1, 'draft', '2026-08-01T00:00:00Z', '2026-08-01T00:00:00Z')`
     );
     await db.runAsync(
       `INSERT INTO answers (client_id, instance_id, section_id, item_id, value, edited_at)
-       VALUES ('a-1', 'kept', 1, 1, 'Sábila', '2026-08-01T00:00:00Z')`,
+       VALUES ('a-1', 'kept', 1, 1, 'Sábila', '2026-08-01T00:00:00Z')`
     );
 
     await migrate(db);
@@ -147,8 +147,84 @@ describe('upgrading a store that already holds captures', () => {
     await expect(db.getAllAsync('SELECT id FROM instances')).resolves.toEqual([{ id: 'kept' }]);
     // …and the columns added since are there, empty, ready to be written.
     await expect(
-      db.getFirstAsync('SELECT sync_error FROM answers WHERE client_id = ?', ['a-1']),
+      db.getFirstAsync('SELECT sync_error FROM answers WHERE client_id = ?', ['a-1'])
     ).resolves.toEqual({ sync_error: null });
+
+    await db.closeAsync();
+  });
+
+  /**
+   * v5 rebuilds `media` to let a field record own one, which means dropping a
+   * table that `media_blobs` cascades off. With foreign keys enforced — as the
+   * app enforces them — dropping it while it still has children deletes every
+   * blob, and those bytes are the unsynced informant audio.
+   *
+   * The pragma is set here deliberately. `adapt()` leaves foreign keys OFF,
+   * which is SQLite's default, so a version of this test written without it
+   * passes against a migration that destroys the recordings.
+   */
+  it('keeps the recorded bytes when media is rebuilt for field records', async () => {
+    const engine = new DatabaseSync(':memory:');
+    const db = adapt(engine);
+    await db.execAsync('PRAGMA foreign_keys = ON;');
+
+    // Come up to the version before this one, then capture into it.
+    for (const migration of MIGRATIONS.filter((m) => m.version < SCHEMA_VERSION)) {
+      await db.execAsync(migration.sql);
+    }
+    await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION - 1};`);
+
+    await db.runAsync(
+      `INSERT INTO instances (id, form_id, project_id, sync_status, created_at, updated_at)
+       VALUES ('kept', 10, 1, 'draft', '2026-08-01T00:00:00Z', '2026-08-01T00:00:00Z')`
+    );
+    await db.runAsync(
+      `INSERT INTO media (client_id, instance_id, kind, content_type, byte_size, duration_s,
+                          upload_status, upload_attempts, captured_at)
+       VALUES ('m-1', 'kept', 'audio', 'audio/m4a', 4, 42, 'pending', 3, '2026-08-01T00:00:00Z')`
+    );
+    await db.runAsync('INSERT INTO media_blobs (client_id, seq, data) VALUES (?, ?, ?)', [
+      'm-1',
+      0,
+      new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+    ]);
+
+    await migrate(db);
+
+    // The recording survives, bytes intact.
+    await expect(
+      db.getAllAsync('SELECT hex(data) AS hex FROM media_blobs WHERE client_id = ?', ['m-1'])
+    ).resolves.toEqual([{ hex: 'DEADBEEF' }]);
+    // …still attached to its interview, and still carrying the v3 columns.
+    await expect(
+      db.getFirstAsync('SELECT instance_id, upload_attempts FROM media WHERE client_id = ?', [
+        'm-1',
+      ])
+    ).resolves.toEqual({ instance_id: 'kept', upload_attempts: 3 });
+
+    // And the point of the rebuild: media with no interview at all.
+    await db.runAsync(
+      `INSERT INTO field_records (client_id, project_id, created_at, updated_at)
+       VALUES ('fr-1', 1, '2026-08-23T00:00:00Z', '2026-08-23T00:00:00Z')`
+    );
+    await db.runAsync(
+      `INSERT INTO media (client_id, field_record_id, kind, upload_status)
+       VALUES ('m-2', 'fr-1', 'photo', 'pending')`
+    );
+    await expect(
+      db.getFirstAsync('SELECT instance_id FROM media WHERE client_id = ?', ['m-2'])
+    ).resolves.toEqual({ instance_id: null });
+
+    // Both cascades still have teeth after the rebuild.
+    await db.runAsync('DELETE FROM field_records WHERE client_id = ?', ['fr-1']);
+    await expect(
+      db.getFirstAsync('SELECT COUNT(*) AS count FROM media WHERE client_id = ?', ['m-2'])
+    ).resolves.toEqual({ count: 0 });
+
+    await db.runAsync('DELETE FROM media WHERE client_id = ?', ['m-1']);
+    await expect(db.getFirstAsync('SELECT COUNT(*) AS count FROM media_blobs')).resolves.toEqual({
+      count: 0,
+    });
 
     await db.closeAsync();
   });

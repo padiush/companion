@@ -8,7 +8,8 @@ import { formatDate, parseDate } from './dateValue';
 const CLEAR_HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
 
 interface Props {
-  itemId: number;
+  /** Distinguishes this field's test ids: a form item's id, or a name. */
+  itemId: number | string;
   value: string;
   placeholder: string;
   onChange: (value: string) => void;

@@ -17,6 +17,8 @@
     "replaceStoreTitle": "This device holds another account’s work",
     "replaceStoreInterviews_one": "There is 1 unsent interview from another account. Signing in deletes it, and it cannot be recovered.",
     "replaceStoreInterviews_other": "There are {{count}} unsent interviews from another account. Signing in deletes them, and they cannot be recovered.",
+    "replaceStoreFieldRecords_one": "There is 1 unsent field record from another account. Signing in deletes it, and it cannot be recovered.",
+    "replaceStoreFieldRecords_other": "There are {{count}} unsent field records from another account. Signing in deletes them, and they cannot be recovered.",
     "replaceStoreMedia_one": "There is 1 unuploaded file from another account. Signing in deletes it, and it cannot be recovered.",
     "replaceStoreMedia_other": "There are {{count}} unuploaded files from another account. Signing in deletes them, and they cannot be recovered.",
     "replaceStoreConfirm": "Delete and sign in"
@@ -47,7 +49,10 @@
   "project": {
     "forms": "Forms",
     "newInterview": "New interview",
-    "empty": "This project has no active forms."
+    "empty": "This project has no active forms.",
+    "fieldRecords": "Field records",
+    "newFieldRecord": "Add a record",
+    "noFieldRecords": "No records on this device yet. Note here what you document in the field, whether or not you collect it; identifying and depositing it happen later, on the web."
   },
   "interview": {
     "preparing": "Preparing interview…",
@@ -89,6 +94,67 @@
       "min": "Must be {{limit}} or more.",
       "max": "Must be {{limit}} or less.",
       "step": "Must go in steps of {{limit}}."
+    }
+  },
+  "fieldRecord": {
+    "title": "Field record",
+    "newTitle": "New record",
+    "untitled": "Unnamed record",
+    "sections": {
+      "record": "The record",
+      "place": "When and where",
+      "permit": "Permit",
+      "notes": "Notes"
+    },
+    "basis": "Was it collected?",
+    "bases": {
+      "preserved_specimen": "Yes — specimen collected",
+      "human_observation": "No — observed only",
+      "living_specimen": "Living plant (garden, nursery)",
+      "material_sample": "Partial sample"
+    },
+    "basisHint": {
+      "preserved_specimen": "It will be pressed and deposited, and can carry an accession number.",
+      "human_observation": "Documented with photographs and a description. It will carry no voucher.",
+      "living_specimen": "A standing plant, identifiable where it grows.",
+      "material_sample": "A part was taken, not the whole plant."
+    },
+    "vernacularName": "Local name",
+    "vernacularNameHint": "What the person with you called it. Stored encrypted.",
+    "collectionNumber": "Collection number",
+    "collectionNumberHint": "The number you wrote on the tag.",
+    "collector": "Collector",
+    "collectedOn": "Collection date",
+    "locality": "Locality",
+    "coordinates": "Coordinates",
+    "locating": "Getting a GPS fix…",
+    "locationFailed": "Couldn’t get a location. Check the location permission or try again outdoors.",
+    "noCoordinates": "No coordinates",
+    "locate": "Use my location",
+    "relocate": "Update with my location",
+    "permit": "Permit",
+    "permitUnnamed": "Permit without a reference",
+    "permitUnlisted": "A permit the project no longer holds",
+    "noPermits": "This project has no permits on this device. They are recorded on the web and arrive with the next sync.",
+    "exemption": "Exemption reason",
+    "exemptionHint": "Only if the collection needed no permit.",
+    "exemptions": {
+      "private_land": "Private land, with the owner’s agreement",
+      "cultivated": "Cultivated material",
+      "market": "Bought in a market",
+      "other": "Another reason (see notes)"
+    },
+    "notes": "Notes",
+    "saving": "Saving…",
+    "savedLocally": "Saved on this device",
+    "notSavedYet": "Saved as soon as you enter something.",
+    "done": "Done",
+    "sentReadOnly": "This record has been sent. Corrections are made on the web.",
+    "refusedTitle": "The server did not accept this record",
+    "status": {
+      "notSent": "Not sent yet",
+      "sent": "Sent",
+      "refused": "Refused"
     }
   },
   "drafts": {
@@ -146,6 +212,12 @@
       "api.sync.form_mismatch": "An interview cannot be moved to another form.",
       "api.sync.not_owner": "Another account recorded this interview.",
       "unknown": "The server did not accept this interview."
+    },
+    "recordErrors": {
+      "api.sync.client_id_conflict": "This record already exists in another project.",
+      "api.sync.permit_not_in_project": "The chosen permit no longer belongs to this project. Choose another, or an exemption reason.",
+      "api.sync.answer_not_found": "The answer this record came from is not on the server yet. Send the interview first.",
+      "unknown": "The server did not accept this record."
     }
   },
   "licences": {

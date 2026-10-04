@@ -77,6 +77,21 @@ export interface Bundle {
    */
   active_form_ids?: number[];
   forms: Form[];
+  /**
+   * The permits the project holds, so a field record made offline can name the
+   * one it was collected under. Always the full set, never a delta. Optional
+   * for the same reason as `active_form_ids`.
+   */
+  collecting_permits?: Permit[];
+}
+
+/** A collecting permit as the bundle sends it: structured, so the device localizes. */
+export interface Permit {
+  id: number;
+  authority: string | null;
+  reference: string | null;
+  issued_on: string | null;
+  expires_on: string | null;
 }
 
 export interface Location {

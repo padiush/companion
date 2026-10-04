@@ -38,9 +38,14 @@ export function SignInScreen() {
     new Promise((resolve) => {
       Alert.alert(
         t('auth.replaceStoreTitle'),
-        t(pending.interviews > 0 ? 'auth.replaceStoreInterviews' : 'auth.replaceStoreMedia', {
-          count: pending.interviews > 0 ? pending.interviews : pending.media,
-        }),
+        // The message names the weightiest kind of work at stake: interviews,
+        // then field records, then files. Each is something that happened
+        // once in the field and exists nowhere else.
+        pending.interviews > 0
+          ? t('auth.replaceStoreInterviews', { count: pending.interviews })
+          : pending.fieldRecords > 0
+            ? t('auth.replaceStoreFieldRecords', { count: pending.fieldRecords })
+            : t('auth.replaceStoreMedia', { count: pending.media }),
         [
           { text: t('common.cancel'), style: 'cancel', onPress: () => resolve(false) },
           {
