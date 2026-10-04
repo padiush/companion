@@ -123,6 +123,7 @@
     "vernacularNameHint": "What the person with you called it. Stored encrypted.",
     "collectionNumber": "Collection number",
     "collectionNumberHint": "The number you wrote on the tag.",
+    "audioHint": "A voice note: the name as it was said, or what you were told about the plant.",
     "collector": "Collector",
     "collectedOn": "Collection date",
     "locality": "Locality",

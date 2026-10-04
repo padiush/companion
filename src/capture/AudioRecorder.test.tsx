@@ -2,7 +2,7 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { requestRecordingPermissionsAsync, setAudioModeAsync } from 'expo-audio';
 import { AppState, PermissionsAndroid, Platform } from 'react-native';
 
-import { listMediaForInstance } from '../db/mediaRepository';
+import { listMediaForFieldRecord, listMediaForInstance } from '../db/mediaRepository';
 import { impact } from '../haptics';
 import { AudioRecorder } from './AudioRecorder';
 import { attachMedia } from './mediaService';
@@ -40,7 +40,10 @@ jest.mock('expo-audio', () => ({
   },
 }));
 jest.mock('../db/database', () => ({ getDatabase: jest.fn().mockResolvedValue({}) }));
-jest.mock('../db/mediaRepository', () => ({ listMediaForInstance: jest.fn() }));
+jest.mock('../db/mediaRepository', () => ({
+  listMediaForInstance: jest.fn(),
+  listMediaForFieldRecord: jest.fn(),
+}));
 jest.mock('./mediaService', () => ({ attachMedia: jest.fn().mockResolvedValue('audio-1') }));
 jest.mock('../haptics', () => ({ impact: jest.fn() }));
 jest.mock('react-i18next', () => ({
@@ -52,6 +55,7 @@ jest.mock('react-i18next', () => ({
 const mockPermission = requestRecordingPermissionsAsync as jest.Mock;
 const mockSetAudioMode = setAudioModeAsync as jest.Mock;
 const mockList = listMediaForInstance as jest.Mock;
+const mockListForRecord = listMediaForFieldRecord as jest.Mock;
 
 // A faithful stand-in for AppState: handlers are added and genuinely removed,
 // so a test can tell the difference between "ignored the event" and "was no
@@ -68,6 +72,8 @@ beforeEach(() => {
   mockStatus.isRecording = true;
   mockStatus.durationMillis = 5000;
   mockList.mockResolvedValue([]);
+  mockListForRecord.mockResolvedValue([]);
+  (attachMedia as jest.Mock).mockResolvedValue('audio-1');
 
   statusListener = undefined;
   appStateHandlers = [];
@@ -358,5 +364,120 @@ describe('AudioRecorder', () => {
     // Audio is listed here; photos are not (they live in MediaSection).
     expect(await findByTestId('recording-aud-1')).toBeTruthy();
     expect(queryByTestId('recording-pho-1')).toBeNull();
+  });
+
+  describe('on a field record', () => {
+    const ensureFieldRecord = jest.fn();
+
+    beforeEach(() => {
+      mockPermission.mockResolvedValue({ granted: true });
+      ensureFieldRecord.mockResolvedValue('fr-1');
+    });
+
+    /** Record, then stop: the take is kept. */
+    const recordATake = async (screen: Awaited<ReturnType<typeof render>>) => {
+      await fireEvent.press(screen.getByTestId('record-audio'));
+      await waitFor(() => expect(screen.getByTestId('stop-recording')).toBeTruthy());
+      await fireEvent.press(screen.getByTestId('stop-recording'));
+    };
+
+    it('says what a voice note on a record is for', async () => {
+      const { findByText, queryByText } = await render(
+        <AudioRecorder fieldRecordId={null} ensureFieldRecord={ensureFieldRecord} />
+      );
+
+      expect(await findByText('fieldRecord.audioHint')).toBeTruthy();
+      expect(queryByText('interview.recordHint')).toBeNull();
+    });
+
+    it('stores a new record once a take is kept, then attaches the take to it', async () => {
+      const screen = await render(
+        <AudioRecorder fieldRecordId={null} ensureFieldRecord={ensureFieldRecord} />
+      );
+
+      await fireEvent.press(screen.getByTestId('record-audio'));
+      await waitFor(() => expect(screen.getByTestId('stop-recording')).toBeTruthy());
+      // Recording is not yet a record of anything: abandoning the take here
+      // must leave nothing behind.
+      expect(ensureFieldRecord).not.toHaveBeenCalled();
+
+      await fireEvent.press(screen.getByTestId('stop-recording'));
+
+      await waitFor(() =>
+        expect(attachMedia).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            fieldRecordId: 'fr-1',
+            kind: 'audio',
+            localUri: 'file:///rec.m4a',
+            durationS: 5,
+          })
+        )
+      );
+      expect(ensureFieldRecord).toHaveBeenCalledTimes(1);
+      expect((attachMedia as jest.Mock).mock.calls[0][1]).not.toHaveProperty('instanceId');
+      await waitFor(() =>
+        expect(mockListForRecord).toHaveBeenCalledWith(expect.anything(), 'fr-1')
+      );
+    });
+
+    it('keeps a take the system cut short on a new record too', async () => {
+      const screen = await render(
+        <AudioRecorder fieldRecordId={null} ensureFieldRecord={ensureFieldRecord} />
+      );
+      await fireEvent.press(screen.getByTestId('record-audio'));
+      await waitFor(() => expect(screen.getByTestId('recording-clock')).toHaveTextContent('0:05'));
+
+      await act(async () => finishRecording());
+
+      await waitFor(() =>
+        expect(attachMedia).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({ fieldRecordId: 'fr-1', kind: 'audio', durationS: 5 })
+        )
+      );
+      expect(await screen.findByText('interview.recordingInterrupted')).toBeTruthy();
+    });
+
+    it('keeps nothing, and says so, when the record can no longer take it', async () => {
+      ensureFieldRecord.mockResolvedValue(null);
+      const screen = await render(
+        <AudioRecorder fieldRecordId={null} ensureFieldRecord={ensureFieldRecord} />
+      );
+
+      await recordATake(screen);
+
+      expect(await screen.findByText('interview.mediaSaveFailed')).toBeTruthy();
+      expect(attachMedia).not.toHaveBeenCalled();
+    });
+
+    it('lists the recordings a stored record already has', async () => {
+      mockListForRecord.mockResolvedValue([
+        { client_id: 'aud-1', field_record_id: 'fr-1', kind: 'audio', duration_s: 12 },
+        { client_id: 'pho-1', field_record_id: 'fr-1', kind: 'photo' },
+      ]);
+
+      const { findByTestId, queryByTestId } = await render(
+        <AudioRecorder fieldRecordId="fr-1" ensureFieldRecord={ensureFieldRecord} />
+      );
+
+      expect(await findByTestId('recording-aud-1')).toBeTruthy();
+      expect(queryByTestId('recording-pho-1')).toBeNull();
+      expect(mockList).not.toHaveBeenCalled();
+    });
+
+    it('lists what a sent record has, and records nothing more', async () => {
+      mockListForRecord.mockResolvedValue([
+        { client_id: 'aud-1', field_record_id: 'fr-1', kind: 'audio', duration_s: 12 },
+      ]);
+
+      const { findByTestId, queryByTestId, queryByText } = await render(
+        <AudioRecorder fieldRecordId="fr-1" ensureFieldRecord={ensureFieldRecord} readOnly />
+      );
+
+      expect(await findByTestId('recording-aud-1')).toBeTruthy();
+      expect(queryByTestId('record-audio')).toBeNull();
+      expect(queryByText('fieldRecord.audioHint')).toBeNull();
+    });
   });
 });
