@@ -133,18 +133,30 @@ export async function countDrafts(db: SQLiteDatabase): Promise<number> {
  * Record what the server made of this interview. The error is written in the
  * same statement as the status so the two cannot disagree — clearing it on a
  * clean push is what stops a resolved failure from being shown forever.
+ *
+ * `sentUpdatedAt`, when given, is the edit stamp of the copy a push result is
+ * about, and the status only changes if the interview still carries it. An
+ * answer saved while the push was in flight has moved the stamp and put the
+ * interview back in the outbox; overwriting that with the older result would
+ * mark it sent and leave the new answer on the device for good. The check is
+ * part of the UPDATE itself, so no edit can land between it and the write.
+ *
+ * Returns whether the status was written.
  */
 export async function setSyncStatus(
   db: SQLiteDatabase,
   id: string,
   status: string,
-  error: string | null = null
-): Promise<void> {
-  await db.runAsync('UPDATE instances SET sync_status = ?, sync_error = ? WHERE id = ?', [
-    status,
-    error,
-    id,
-  ]);
+  error: string | null = null,
+  sentUpdatedAt?: string
+): Promise<boolean> {
+  const result = await db.runAsync(
+    `UPDATE instances SET sync_status = ?, sync_error = ?
+      WHERE id = ? AND (? IS NULL OR updated_at IS ?)`,
+    [status, error, id, sentUpdatedAt ?? null, sentUpdatedAt ?? null]
+  );
+
+  return result.changes > 0;
 }
 
 /**

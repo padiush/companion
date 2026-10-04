@@ -31,6 +31,9 @@ const mockGetForm = getForm as jest.Mock;
 
 const db = {} as SQLiteDatabase;
 
+/** The edit stamp `instance()` carries, which a result is applied against. */
+const SENT = '2026-07-13T10:00:00Z';
+
 function instance(overrides: Partial<InstanceRow> = {}): InstanceRow {
   return {
     id: 'inst-1',
@@ -115,6 +118,7 @@ describe('pushDrafts', () => {
   beforeEach(() => {
     mockAnswers.mockResolvedValue([]);
     mockGetForm.mockResolvedValue({ sections: [] });
+    (setSyncStatus as jest.Mock).mockResolvedValue(true);
   });
 
   it('pushes a project batch and marks each instance by its result', async () => {
@@ -136,8 +140,8 @@ describe('pushDrafts', () => {
       9,
       expect.objectContaining({ instances: expect.any(Array) })
     );
-    expect(setSyncStatus).toHaveBeenCalledWith(db, 'i1', 'synced');
-    expect(setSyncStatus).toHaveBeenCalledWith(db, 'i2', 'rejected', null);
+    expect(setSyncStatus).toHaveBeenCalledWith(db, 'i1', 'synced', null, SENT);
+    expect(setSyncStatus).toHaveBeenCalledWith(db, 'i2', 'rejected', null, SENT);
     expect(summary).toEqual({ synced: 1, partial: 0, rejected: 1 });
   });
 
@@ -187,7 +191,7 @@ describe('pushDrafts', () => {
 
       const summary = await pushDrafts(db);
 
-      expect(setSyncStatus).toHaveBeenCalledWith(db, 'i1', 'partial');
+      expect(setSyncStatus).toHaveBeenCalledWith(db, 'i1', 'partial', null, SENT);
       expect(summary).toEqual({ synced: 0, partial: 1, rejected: 0 });
     });
 
@@ -223,7 +227,7 @@ describe('pushDrafts', () => {
       // Otherwise an answer fixed on this attempt keeps the last one's error.
       expect(clearAnswerSyncErrors).toHaveBeenCalledWith(db, 'i1');
       expect(setAnswerSyncError).not.toHaveBeenCalled();
-      expect(setSyncStatus).toHaveBeenCalledWith(db, 'i1', 'synced');
+      expect(setSyncStatus).toHaveBeenCalledWith(db, 'i1', 'synced', null, SENT);
     });
 
     it('skips a refusal the server could not attribute to an answer', async () => {
@@ -263,8 +267,34 @@ describe('pushDrafts', () => {
         db,
         'i1',
         'rejected',
-        'api.sync.form_not_in_project'
+        'api.sync.form_not_in_project',
+        SENT
       );
     });
+  });
+
+  /**
+   * A result for a copy that has since been edited describes an older version.
+   * Writing its status would mark the interview sent with the newer answer
+   * never pushed; writing its refusals could flag an answer just corrected.
+   */
+  it('applies nothing to an interview edited while its push was in flight', async () => {
+    mockList.mockResolvedValue([instance({ id: 'i1', project_id: 9 })]);
+    (setSyncStatus as jest.Mock).mockResolvedValue(false);
+    mockSync.mockResolvedValue({
+      results: [
+        {
+          id: 'i1',
+          status: 'updated',
+          errors: { answers: [{ client_id: 'a-1', error: 'api.sync.item_not_in_form' }] },
+        },
+      ],
+    });
+
+    await pushDrafts(db);
+
+    expect(setSyncStatus).toHaveBeenCalledWith(db, 'i1', 'partial', null, SENT);
+    expect(clearAnswerSyncErrors).not.toHaveBeenCalled();
+    expect(setAnswerSyncError).not.toHaveBeenCalled();
   });
 });

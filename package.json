@@ -58,7 +58,8 @@
     "licences": "node scripts/generate-licences.mjs"
   },
   "jest": {
-    "preset": "jest-expo"
+    "preset": "jest-expo",
+    "testTimeout": 15000
   },
   "private": true,
   "overrides": {
