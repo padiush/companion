@@ -123,6 +123,22 @@ export const api = {
       body: payload,
     }),
 
+  /**
+   * A field record's photographs and audio: the same handshake, addressed by
+   * the server id records:sync returned — the device has no other name for it.
+   */
+  recordMediaIntent: (recordId: number, payload: MediaIntentRequest) =>
+    request<MediaIntentResponse>(`/records/${recordId}/media/intent`, {
+      method: 'POST',
+      body: payload,
+    }),
+
+  recordMediaComplete: (recordId: number, payload: MediaCompleteRequest) =>
+    request<MediaCompleteResponse>(`/records/${recordId}/media/complete`, {
+      method: 'POST',
+      body: payload,
+    }),
+
   reportDiagnostics: (payload: DiagnosticsRequest) =>
     request<DiagnosticsResponse>('/diagnostics', { method: 'POST', body: payload }),
 };

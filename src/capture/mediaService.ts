@@ -9,7 +9,10 @@ import { uuid } from '../ids';
 const CHUNK_BYTES = 4 * 1024 * 1024;
 
 export interface AttachMediaParams {
-  instanceId: string;
+  /** The interview it belongs to — or, instead, the field record. */
+  instanceId?: string;
+  /** The field record's client_id, when a record owns the file. */
+  fieldRecordId?: string;
   kind: 'audio' | 'photo';
   localUri: string;
   contentType: string;
@@ -35,6 +38,7 @@ export async function attachMedia(db: SQLiteDatabase, params: AttachMediaParams)
       await insertMedia(db, {
         clientId,
         instanceId: params.instanceId,
+        fieldRecordId: params.fieldRecordId,
         kind: params.kind,
         contentType: params.contentType,
         byteSize,

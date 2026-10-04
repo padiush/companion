@@ -242,7 +242,13 @@ export interface MediaIntentRequest {
 
 export interface MediaIntentResponse {
   upload_url: string;
-  headers: Record<string, string>;
+  /**
+   * Headers to send with the PUT. The contract says strings, but servers have
+   * passed the storage SDK's signed headers through as-is — each value a list,
+   * `Host` among them — so the type admits what actually arrives, and the
+   * uploader normalizes it.
+   */
+  headers: Record<string, string | string[]>;
   storage_key: string;
   expires_at: string;
 }

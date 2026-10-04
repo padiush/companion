@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { DateField } from '../capture/DateField';
+import { MediaSection } from '../capture/MediaSection';
 import { BASES, EXEMPTIONS, permitLabel, type FieldRecordDraft } from '../capture/fieldRecord';
 import { useFieldRecord } from '../capture/useFieldRecord';
 import type { RootStackParamList } from '../navigation/types';
@@ -45,6 +46,7 @@ export function FieldRecordScreen() {
     loading,
     saving,
     stored,
+    clientId,
     readOnly,
     syncStatus,
     syncError,
@@ -52,6 +54,7 @@ export function FieldRecordScreen() {
     locationFailed,
     update,
     locate,
+    ensureStored,
   } = useFieldRecord(params.projectId, params.clientId);
 
   if (loading || !draft) {
@@ -154,6 +157,17 @@ export function FieldRecordScreen() {
         >
           {input('collectionNumber', { autoCapitalize: 'none' })}
         </Field>
+
+        {/*
+          Right after what the record is: for an observation the photograph is
+          the evidence itself, and it is often the first thing captured. Taking
+          one stores the record if nothing else has yet.
+        */}
+        <MediaSection
+          fieldRecordId={clientId}
+          ensureFieldRecord={ensureStored}
+          readOnly={readOnly}
+        />
 
         <SectionLabel>{t('fieldRecord.sections.place')}</SectionLabel>
 

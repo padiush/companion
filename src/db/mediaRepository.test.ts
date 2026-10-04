@@ -1,4 +1,5 @@
 import { createTestDatabase, type TestDatabase } from '../../test-utils/sqliteDatabase';
+import { insertFieldRecord, setFieldRecordSyncResult } from './fieldRecordsRepository';
 import { insertInstance, setSyncStatus } from './instancesRepository';
 import {
   countFailedMedia,
@@ -39,7 +40,27 @@ async function seedInstance(id: string, status = 'draft') {
 const seedMedia = (clientId: string, instanceId: string, status = 'pending') =>
   db.runAsync(
     `INSERT INTO media (client_id, instance_id, kind, upload_status) VALUES (?, ?, 'photo', ?)`,
-    [clientId, instanceId, status],
+    [clientId, instanceId, status]
+  );
+
+async function seedRecord(clientId: string, serverId: number | null) {
+  await insertFieldRecord(db, {
+    clientId,
+    projectId: 1,
+    basisOfRecord: 'human_observation',
+    editedAt: AT,
+    createdAt: AT,
+    updatedAt: AT,
+  });
+  if (serverId !== null) {
+    await setFieldRecordSyncResult(db, clientId, { status: 'synced', serverId });
+  }
+}
+
+const seedRecordMedia = (clientId: string, fieldRecordId: string) =>
+  db.runAsync(
+    `INSERT INTO media (client_id, field_record_id, kind, upload_status) VALUES (?, ?, 'photo', 'pending')`,
+    [clientId, fieldRecordId]
   );
 
 describe('listPendingMedia', () => {
@@ -56,6 +77,20 @@ describe('listPendingMedia', () => {
     const pending = await listPendingMedia(db);
 
     expect(pending.map((row) => row.client_id)).toEqual(['ready']);
+  });
+
+  /** A record's media is addressed by the record's server id, so it waits for one. */
+  it('returns a field record’s media once the record has a server id, with that id', async () => {
+    await seedRecord('fr-sent', 41);
+    await seedRecord('fr-unsent', null);
+    await seedRecordMedia('rec-ready', 'fr-sent');
+    await seedRecordMedia('rec-too-early', 'fr-unsent');
+
+    const pending = await listPendingMedia(db);
+
+    expect(pending.map((row) => [row.client_id, row.record_server_id])).toEqual([
+      ['rec-ready', 41],
+    ]);
   });
 
   it('skips media that already uploaded', async () => {
@@ -91,6 +126,13 @@ describe('countPendingMedia', () => {
     await expect(countPendingMedia(db)).resolves.toBe(1);
   });
 
+  it('counts a field record’s media too, synced or not', async () => {
+    await seedRecord('fr-unsent', null);
+    await seedRecordMedia('rec-waiting', 'fr-unsent');
+
+    await expect(countPendingMedia(db)).resolves.toBe(1);
+  });
+
   it('counts nothing in an empty store', async () => {
     await expect(countPendingMedia(db)).resolves.toBe(0);
   });
@@ -105,7 +147,7 @@ describe('setMediaUploaded', () => {
 
     const row = await db.getFirstAsync<{ upload_status: string; storage_key: string }>(
       'SELECT upload_status, storage_key FROM media WHERE client_id = ?',
-      ['m-1'],
+      ['m-1']
     );
     expect(row).toEqual({ upload_status: 'uploaded', storage_key: 'projects/1/media/abc' });
   });
@@ -122,7 +164,7 @@ describe('recordUploadFailure', () => {
 
     const row = await db.getFirstAsync<{ upload_attempts: number; upload_error: string }>(
       'SELECT upload_attempts, upload_error FROM media WHERE client_id = ?',
-      ['m-1'],
+      ['m-1']
     );
     expect(row).toEqual({ upload_attempts: 1, upload_error: 'Upload failed with status 503' });
   });
@@ -133,7 +175,7 @@ describe('recordUploadFailure', () => {
 
     const row = await db.getFirstAsync<{ upload_attempts: number; upload_error: string }>(
       'SELECT upload_attempts, upload_error FROM media WHERE client_id = ?',
-      ['m-1'],
+      ['m-1']
     );
     // The latest reason wins; the count says how long it has been failing.
     expect(row).toEqual({ upload_attempts: 2, upload_error: 'second' });
