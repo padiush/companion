@@ -32,8 +32,18 @@ export function DraftsScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { drafts, loading, refresh } = useDrafts();
-  const { count, pendingMedia, hasWork, sending, error, lastMediaResult, send } =
-    useOutbox();
+  const {
+    count,
+    fieldRecords,
+    pendingMedia,
+    hasWork,
+    sending,
+    error,
+    lastRecordResult,
+    lastMediaResult,
+    send,
+  } = useOutbox();
+  const unsent = count + fieldRecords;
   const [sent, setSent] = useState<PushSummary | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -99,8 +109,8 @@ export function DraftsScreen() {
         <Button
           testID="send"
           label={
-            count > 0
-              ? `${t('drafts.send')} · ${count}`
+            unsent > 0
+              ? `${t('drafts.send')} · ${unsent}`
               : t('drafts.sendMedia', { count: pendingMedia })
           }
           onPress={onSend}
@@ -121,6 +131,16 @@ export function DraftsScreen() {
           {unresolved > 0 ? (
             <Text testID="send-unresolved" style={[styles.error, { color: theme.danger }]}>
               {t('drafts.sendUnresolved', { count: unresolved })}
+            </Text>
+          ) : null}
+          {sent && lastRecordResult && lastRecordResult.synced > 0 ? (
+            <Text testID="records-sent" style={[styles.sent, { color: theme.primary }]}>
+              {t('drafts.recordsSent', { count: lastRecordResult.synced })}
+            </Text>
+          ) : null}
+          {sent && lastRecordResult && lastRecordResult.rejected > 0 ? (
+            <Text testID="records-refused" style={[styles.error, { color: theme.danger }]}>
+              {t('drafts.recordsRefused', { count: lastRecordResult.rejected })}
             </Text>
           ) : null}
           {lastMediaResult && lastMediaResult.failed > 0 ? (

@@ -153,6 +153,49 @@ export interface SyncResponse {
   results: SyncResult[];
 }
 
+/**
+ * One field record as `records:sync` takes it: the recorded stage only. The
+ * server applies the fields a payload names, so every one is sent — a null is
+ * how a field cleared on the device is cleared there too. The permit and the
+ * exemption travel together for the same reason, one of them null.
+ */
+export interface FieldRecordPush {
+  client_id: string;
+  basis_of_record: string;
+  vernacular_name: string | null;
+  collection_number: string | null;
+  collector: string | null;
+  collected_on: string | null;
+  locality: string | null;
+  notes: string | null;
+  location?: { lat: number; lng: number };
+  collecting_permit_id: number | null;
+  permit_exemption: string | null;
+  answer_client_id?: string;
+  edited_at?: string;
+}
+
+export interface FieldRecordSyncRequest {
+  records: FieldRecordPush[];
+}
+
+/**
+ * What the server did with one record. `id` is how the device learns the
+ * record's server identity — unlike an interview, it did not mint one — and is
+ * present on every result but a rejection. A rejection's `errors` name the
+ * field and a message key, e.g. `collecting_permit_id: [api.sync.permit_not_in_project]`.
+ */
+export interface FieldRecordSyncResult {
+  client_id: string;
+  id?: number;
+  status: SyncStatus;
+  errors?: Record<string, string[]>;
+}
+
+export interface FieldRecordSyncResponse {
+  results: FieldRecordSyncResult[];
+}
+
 export type MediaKind = 'audio' | 'photo';
 
 export interface Transcription {
