@@ -21,6 +21,8 @@ export interface FieldRecordState {
   saving: boolean;
   /** Whether the record has been stored at all; a new one is not until edited. */
   stored: boolean;
+  /** The stored record's client_id — what its photographs belong to. */
+  clientId: string | null;
   /**
    * A record the server has accepted belongs to the web from then on: the web
    * identifies and deposits it while this copy would go on claiming to be the
@@ -39,6 +41,14 @@ export interface FieldRecordState {
   update: (changes: Partial<FieldRecordDraft>) => void;
   /** Take the device's position now, replacing any coordinate already set. */
   locate: () => void;
+  /**
+   * Store the record if it is not stored yet, and resolve its client_id — or
+   * null for a record that can no longer change. For things that belong to
+   * the record rather than edit a field of it, such as a photograph: for an
+   * observation that is often the first thing captured, and it needs a record
+   * to belong to.
+   */
+  ensureStored: () => Promise<string | null>;
 }
 
 /**
@@ -62,6 +72,7 @@ export function useFieldRecord(projectId: number, existingClientId?: string): Fi
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [stored, setStored] = useState(existingClientId !== undefined);
+  const [clientId, setClientId] = useState<string | null>(existingClientId ?? null);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
@@ -96,6 +107,9 @@ export function useFieldRecord(projectId: number, existingClientId?: string): Fi
           await saveFieldRecord(db, clientIdRef.current, current);
         } else {
           clientIdRef.current = await createFieldRecord(db, projectId, current);
+          if (mounted.current) {
+            setClientId(clientIdRef.current);
+          }
         }
       })
       .catch(() => {
@@ -178,6 +192,7 @@ export function useFieldRecord(projectId: number, existingClientId?: string): Fi
         clientIdRef.current = null;
         started.current = false;
         setStored(false);
+        setClientId(null);
         const session = await readSession();
         initial = emptyDraft({
           collector: session?.user.name ?? '',
@@ -225,12 +240,27 @@ export function useFieldRecord(projectId: number, existingClientId?: string): Fi
     void chaseLocation({ save: true, onlyIfMissing: false });
   }, [chaseLocation, readOnly]);
 
+  const ensureStored = useCallback(async () => {
+    if (readOnly || !draftRef.current) {
+      return null;
+    }
+
+    if (!started.current) {
+      persist();
+    }
+
+    // Every queued write, the insert among them, has run once this settles.
+    await writes.current;
+    return clientIdRef.current;
+  }, [persist, readOnly]);
+
   return {
     draft,
     permits,
     loading,
     saving,
     stored,
+    clientId,
     readOnly,
     syncStatus,
     syncError,
@@ -238,5 +268,6 @@ export function useFieldRecord(projectId: number, existingClientId?: string): Fi
     locationFailed,
     update,
     locate,
+    ensureStored,
   };
 }

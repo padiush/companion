@@ -15,9 +15,15 @@ jest.mock('@react-navigation/native', () => ({
 }));
 jest.mock('../capture/useFieldRecord', () => ({ useFieldRecord: jest.fn() }));
 
+const mockMediaSection = jest.fn((_props: Record<string, unknown>) => null);
+jest.mock('../capture/MediaSection', () => ({
+  MediaSection: (props: Record<string, unknown>) => mockMediaSection(props),
+}));
+
 const mockUseFieldRecord = useFieldRecord as jest.Mock;
 const update = jest.fn();
 const locate = jest.fn();
+const ensureStored = jest.fn();
 
 const PERMIT = {
   id: 5,
@@ -38,6 +44,7 @@ function state(
     loading: false,
     saving: false,
     stored: false,
+    clientId: null,
     readOnly: false,
     syncStatus: 'draft',
     syncError: null,
@@ -45,6 +52,7 @@ function state(
     locationFailed: false,
     update,
     locate,
+    ensureStored,
     ...overrides,
   };
 }
@@ -179,6 +187,29 @@ describe('FieldRecordScreen', () => {
     expect(getByTestId('record-vernacularName').props.editable).toBe(false);
     expect(queryByTestId('record-locate')).toBeNull();
     expect(queryByTestId('record-save-state')).toBeNull();
+  });
+
+  /** For an observation the photograph is the evidence; taking one stores the record. */
+  it('offers photographs, storing the record on demand', async () => {
+    mockUseFieldRecord.mockReturnValue(state({}, { clientId: 'fr-1' }));
+
+    await render(<FieldRecordScreen />);
+
+    expect(mockMediaSection).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        fieldRecordId: 'fr-1',
+        ensureFieldRecord: ensureStored,
+        readOnly: false,
+      })
+    );
+  });
+
+  it('takes no new photographs for a sent record', async () => {
+    mockUseFieldRecord.mockReturnValue(state({}, { readOnly: true, clientId: 'fr-1' }));
+
+    await render(<FieldRecordScreen />);
+
+    expect(mockMediaSection).toHaveBeenLastCalledWith(expect.objectContaining({ readOnly: true }));
   });
 
   it('explains why the server refused a record', async () => {

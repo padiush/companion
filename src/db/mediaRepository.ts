@@ -2,8 +2,13 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 
 import type { MediaRow } from './types';
 
-/** Media the uploader can actually address: an interview owns it. */
-export type InterviewMediaRow = MediaRow & { instance_id: string };
+/**
+ * Media the uploader can address now. An interview's media goes up against the
+ * interview's id, which the device minted; a field record's against the
+ * record's server id, which it only learns once the record has synced — so
+ * that id comes along with the row.
+ */
+export type UploadableMediaRow = MediaRow & { record_server_id: number | null };
 
 export interface MediaInsert {
   clientId: string;
@@ -104,41 +109,48 @@ export async function listMediaForInstance(
   );
 }
 
-/**
- * Media awaiting upload whose interview has already synced — the server needs
- * the instance to exist before a media intent can be registered against it.
- *
- * Interview media only, and the `instance_id IS NOT NULL` is deliberate rather
- * than implied by the join: media on a field record has no upload path yet.
- * `records:sync` pushes the record, but there is no
- * `records/{record}/media/intent` for its photographs, so returning them here
- * would hand the uploader a null instance to address. The narrowed return type
- * is what keeps that a compile error rather than a crash in the field.
- */
-export async function listPendingMedia(db: SQLiteDatabase): Promise<InterviewMediaRow[]> {
-  return db.getAllAsync<InterviewMediaRow>(
-    `SELECT m.* FROM media m
-     JOIN instances i ON i.id = m.instance_id
-     WHERE m.upload_status = 'pending'
-       AND m.instance_id IS NOT NULL
-       AND i.sync_status = 'synced'`
+export async function listMediaForFieldRecord(
+  db: SQLiteDatabase,
+  fieldRecordId: string
+): Promise<MediaRow[]> {
+  return db.getAllAsync<MediaRow>(
+    'SELECT * FROM media WHERE field_record_id = ? ORDER BY captured_at',
+    [fieldRecordId]
   );
 }
 
 /**
- * Media the server does not have yet, whether or not its interview has synced.
+ * Media awaiting upload whose owner the server already knows. The server needs
+ * the owner to exist before a media intent can be registered against it: an
+ * interview once it has synced, a field record once it has a server id — the
+ * id the upload is addressed by. A record edited after it synced is back in
+ * the outbox but keeps that id, so its photographs need not wait for it.
+ */
+export async function listPendingMedia(db: SQLiteDatabase): Promise<UploadableMediaRow[]> {
+  return db.getAllAsync<UploadableMediaRow>(
+    `SELECT m.*, NULL AS record_server_id FROM media m
+       JOIN instances i ON i.id = m.instance_id
+      WHERE m.upload_status = 'pending' AND i.sync_status = 'synced'
+     UNION ALL
+     SELECT m.*, r.server_id AS record_server_id FROM media m
+       JOIN field_records r ON r.client_id = m.field_record_id
+      WHERE m.upload_status = 'pending' AND r.server_id IS NOT NULL
+     ORDER BY captured_at`
+  );
+}
+
+/**
+ * Media the server does not have yet, whether or not its owner has synced.
  *
  * Deliberately broader than `listPendingMedia`: this drives the outbox, and a
- * photo attached to a draft becomes uploadable the moment that draft is pushed,
- * in the same send. Counting only the immediately-uploadable ones would hide
- * the Send action in exactly the case where it is needed.
+ * photo attached to a draft — interview or field record — becomes uploadable
+ * the moment that draft is pushed, in the same send. Counting only the
+ * immediately-uploadable ones would hide the Send action in exactly the case
+ * where it is needed.
  */
 export async function countPendingMedia(db: SQLiteDatabase): Promise<number> {
   const row = await db.getFirstAsync<{ count: number }>(
-    // Interview media only, for the same reason listPendingMedia is: a field
-    // record's photographs cannot be uploaded yet, and counting them would put
-    // a number on the Send action that no amount of sending clears.
-    "SELECT COUNT(*) AS count FROM media WHERE upload_status != 'uploaded' AND instance_id IS NOT NULL"
+    "SELECT COUNT(*) AS count FROM media WHERE upload_status != 'uploaded'"
   );
 
   return row?.count ?? 0;
@@ -182,7 +194,7 @@ export async function recordUploadFailure(
 export async function countFailedMedia(db: SQLiteDatabase): Promise<number> {
   const row = await db.getFirstAsync<{ count: number }>(
     `SELECT COUNT(*) AS count FROM media
-      WHERE upload_status != 'uploaded' AND upload_error IS NOT NULL AND instance_id IS NOT NULL`
+      WHERE upload_status != 'uploaded' AND upload_error IS NOT NULL`
   );
 
   return row?.count ?? 0;

@@ -208,3 +208,41 @@ it('offers the permits cached for the project', async () => {
 
   expect(result.current.permits.map((permit) => permit.id)).toEqual([5]);
 });
+
+describe('storing on demand, for a photograph', () => {
+  /** For an observation, the photograph is often the first thing captured. */
+  it('stores a new record and resolves its id, once', async () => {
+    const { result } = await openNew();
+
+    let first: string | null = null;
+    let second: string | null = null;
+    await act(async () => {
+      first = await result.current.ensureStored();
+      second = await result.current.ensureStored();
+    });
+
+    expect(first).toBe(second);
+    expect(await listFieldRecords(db, 9)).toHaveLength(1);
+    expect(result.current.clientId).toBe(first);
+    expect(result.current.stored).toBe(true);
+  });
+
+  it('stores nothing for a record that can no longer change', async () => {
+    const clientId = await createFieldRecord(
+      db,
+      9,
+      emptyDraft({ collector: 'R. Arévalo', today: '2026-10-01' })
+    );
+    await setFieldRecordSyncResult(db, clientId, { status: 'synced', serverId: 41 });
+
+    const { result } = await renderHook(() => useFieldRecord(9, clientId));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let resolved: string | null = 'unset';
+    await act(async () => {
+      resolved = await result.current.ensureStored();
+    });
+
+    expect(resolved).toBeNull();
+  });
+});

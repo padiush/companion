@@ -2,13 +2,14 @@ import { fetch } from 'expo/fetch';
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import { api } from '../api/client';
-import type { MediaKind } from '../api/types';
+import type { MediaCompleteRequest, MediaIntentRequest, MediaKind } from '../api/types';
 import {
   deleteMediaBytes,
   listPendingMedia,
   readMediaBytes,
   recordUploadFailure,
   setMediaUploaded,
+  type UploadableMediaRow,
 } from '../db/mediaRepository';
 
 export interface MediaUploadSummary {
@@ -34,7 +35,8 @@ const uploadViaFetch: BytesUploader = async (url, data, headers) => {
 };
 
 /**
- * Upload each pending media item for an already-synced interview: register
+ * Upload each pending media item whose owner the server already has — an
+ * interview that has synced, or a field record with a server id: register
  * intent, PUT the bytes direct to storage, then complete. Media bytes live only
  * inside the encrypted store, so they are read from their blob chunks and sent
  * from memory — never through a plaintext temp file — and deleted from the
@@ -59,7 +61,16 @@ export async function uploadMedia(
         continue;
       }
 
-      const intent = await api.mediaIntent(media.instance_id, {
+      const owner = ownerEndpoints(media);
+      if (!owner) {
+        // Listed as uploadable but owned by neither — a row the store's
+        // one-owner rule should have made impossible. Kept, and reported.
+        await recordUploadFailure(db, media.client_id, 'media.errors.noOwner');
+        summary.failed += 1;
+        continue;
+      }
+
+      const intent = await owner.intent({
         client_id: media.client_id,
         kind: media.kind as MediaKind,
         content_type: media.content_type ?? 'application/octet-stream',
@@ -68,7 +79,7 @@ export async function uploadMedia(
 
       await uploadBytes(intent.upload_url, data, requestHeaders(intent.headers));
 
-      await api.mediaComplete(media.instance_id, {
+      await owner.complete({
         client_id: media.client_id,
         storage_key: intent.storage_key,
         duration_s: media.duration_s ?? undefined,
@@ -111,6 +122,30 @@ export function requestHeaders(headers: Record<string, string | string[]>): Reco
   }
 
   return flat;
+}
+
+/**
+ * Where a file goes: its interview's endpoints, by the id the device minted,
+ * or its field record's, by the id the server gave the record.
+ */
+function ownerEndpoints(media: UploadableMediaRow) {
+  const instanceId = media.instance_id;
+  if (instanceId) {
+    return {
+      intent: (payload: MediaIntentRequest) => api.mediaIntent(instanceId, payload),
+      complete: (payload: MediaCompleteRequest) => api.mediaComplete(instanceId, payload),
+    };
+  }
+
+  const recordId = media.record_server_id;
+  if (recordId !== null) {
+    return {
+      intent: (payload: MediaIntentRequest) => api.recordMediaIntent(recordId, payload),
+      complete: (payload: MediaCompleteRequest) => api.recordMediaComplete(recordId, payload),
+    };
+  }
+
+  return null;
 }
 
 function describe(error: unknown): string {
