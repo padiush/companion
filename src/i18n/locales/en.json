@@ -168,6 +168,8 @@
     "recordsRefused_one": "The server did not accept 1 field record. Open it from its project to see why.",
     "recordsRefused_other": "The server did not accept {{count}} field records. Open them from their project to see why.",
     "empty": "No interviews yet.",
+    "fieldRecords": "Field records",
+    "interviews": "Interviews",
     "status": {
       "draft": "Draft",
       "synced": "Sent",

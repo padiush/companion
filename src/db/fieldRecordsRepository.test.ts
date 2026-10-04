@@ -5,11 +5,13 @@ import {
   insertFieldRecord,
   listDraftFieldRecords,
   listFieldRecords,
+  listWaitingFieldRecords,
   setFieldRecordSyncResult,
   updateFieldRecord,
   type FieldRecordInsert,
 } from './fieldRecordsRepository';
 import { insertMedia } from './mediaRepository';
+import { upsertProjects } from './projectsRepository';
 
 let db: TestDatabase;
 
@@ -228,5 +230,42 @@ describe('media on a field record', () => {
     await expect(
       db.getFirstAsync('SELECT COUNT(*) AS count FROM media WHERE client_id = ?', ['m-1'])
     ).resolves.toEqual({ count: 0 });
+  });
+});
+
+describe('records waiting to be sent', () => {
+  it('lists every record the server has not accepted, with its project', async () => {
+    await upsertProjects(db, [
+      {
+        id: 1,
+        name: 'Cloud forest',
+        capabilities: {} as never,
+        updated_at: null,
+      },
+    ]);
+    await insertFieldRecord(db, record({ clientId: 'fr-draft', createdAt: AT }));
+    await insertFieldRecord(
+      db,
+      record({ clientId: 'fr-refused', createdAt: '2026-08-23T11:00:00.000Z' })
+    );
+    await insertFieldRecord(db, record({ clientId: 'fr-sent' }));
+    await setFieldRecordSyncResult(db, 'fr-refused', { status: 'rejected', error: 'unknown' });
+    await setFieldRecordSyncResult(db, 'fr-sent', { status: 'synced', serverId: 41 });
+
+    const waiting = await listWaitingFieldRecords(db);
+
+    expect(waiting.map((row) => [row.client_id, row.sync_status, row.project_name])).toEqual([
+      ['fr-refused', 'rejected', 'Cloud forest'],
+      ['fr-draft', 'draft', 'Cloud forest'],
+    ]);
+  });
+
+  /** A project dropped from the cache must not hide the unsent work recorded in it. */
+  it('still lists a record whose project is no longer cached', async () => {
+    await insertFieldRecord(db, record({ projectId: 99 }));
+
+    const [waiting] = await listWaitingFieldRecords(db);
+
+    expect(waiting).toMatchObject({ client_id: 'fr-1', project_name: null });
   });
 });

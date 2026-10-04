@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { formatDateTime } from '../capture/dateValue';
+import { recordTitle } from '../capture/fieldRecord';
 import { Chevron } from '../components/Chevron';
 import { useDrafts } from '../hooks/useDrafts';
 import { useOutbox } from '../hooks/useOutbox';
@@ -22,16 +23,22 @@ import type { RootStackParamList } from '../navigation/types';
 import type { PushSummary } from '../sync/push';
 import { border, radius, space, type, useTheme } from '../theme';
 import { Button } from '../ui/Button';
+import { SectionLabel } from '../ui/SectionLabel';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-/** The Entrevistas tab: recorded interviews with their sync status, and a Send action. */
+/**
+ * The Entrevistas tab: recorded interviews with their sync status, and a Send
+ * action. Field records the server does not have yet are listed here too —
+ * they are made in a project, but this Send is what carries them, and a count
+ * on the button with nothing below it to account for it says nothing useful.
+ */
 export function DraftsScreen() {
   const { t, i18n } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
-  const { drafts, loading, refresh } = useDrafts();
+  const { drafts, fieldRecords: waitingRecords, loading, refresh } = useDrafts();
   const {
     count,
     fieldRecords,
@@ -54,12 +61,6 @@ export function DraftsScreen() {
     } finally {
       setRefreshing(false);
     }
-  };
-
-  const statusColor = (status: string) => {
-    if (status === 'synced') return theme.primary;
-    if (status === 'rejected' || status === 'partial') return theme.danger;
-    return theme.muted;
   };
 
   const onSend = async () => {
@@ -160,59 +161,124 @@ export function DraftsScreen() {
       >
         {loading ? (
           <ActivityIndicator color={theme.primary} />
-        ) : drafts.length === 0 ? (
-          <Text style={[styles.empty, { color: theme.muted }]}>{t('drafts.empty')}</Text>
         ) : (
-          drafts.map((draft) => (
-            <TouchableOpacity
-              key={draft.id}
-              testID={`draft-${draft.id}`}
-              accessibilityRole="button"
-              onPress={() =>
-                navigation.navigate('Interview', {
-                  formId: draft.form_id,
-                  projectId: draft.project_id,
-                  formName: draft.form_name ?? '',
-                  instanceId: draft.id,
-                })
-              }
-              style={[styles.row, { backgroundColor: theme.card, borderColor: theme.border }]}
-            >
-              <View style={styles.rowMain}>
-                <View style={styles.rowHeader}>
-                  <Text
-                    style={[styles.formName, { color: theme.text }]}
-                    numberOfLines={1}
-                    // The name can be long and is rarely what distinguishes two
-                    // interviews; one line keeps every row the same height.
-                  >
-                    {draft.preview ?? draft.form_name ?? '—'}
-                  </Text>
-                  <View
-                    style={[styles.status, { borderColor: statusColor(draft.sync_status) }]}
-                  >
-                    <Text
-                      style={[styles.statusText, { color: statusColor(draft.sync_status) }]}
-                    >
-                      {t(`drafts.status.${draft.sync_status}`, {
-                        defaultValue: draft.sync_status,
-                      })}
-                    </Text>
-                  </View>
-                </View>
+          <>
+            {waitingRecords.length > 0 ? (
+              <>
+                <SectionLabel>{t('drafts.fieldRecords')}</SectionLabel>
+                {waitingRecords.map((record) => (
+                  <OutboxRow
+                    key={record.client_id}
+                    testID={`waiting-record-${record.client_id}`}
+                    title={recordTitle(record) ?? t('fieldRecord.untitled')}
+                    status={record.sync_status}
+                    // The project gets a line of its own: a long study name
+                    // would otherwise push what the record is off the row.
+                    meta={[
+                      record.project_name ?? '',
+                      [t(`fieldRecord.bases.${record.basis_of_record}`), record.collected_on]
+                        .filter(Boolean)
+                        .join('  ·  '),
+                    ].filter(Boolean)}
+                    onPress={() =>
+                      navigation.navigate('FieldRecord', {
+                        projectId: record.project_id,
+                        clientId: record.client_id,
+                      })
+                    }
+                  />
+                ))}
+                <SectionLabel>{t('drafts.interviews')}</SectionLabel>
+              </>
+            ) : null}
 
-                <Text style={[styles.meta, { color: theme.muted }]} numberOfLines={1}>
-                  {formatDateTime(new Date(draft.captured_at ?? draft.created_at), i18n.language)}
-                  {'  ·  '}
-                  {describeContents(draft)}
-                </Text>
-              </View>
-              <Chevron color={theme.muted} />
-            </TouchableOpacity>
-          ))
+            {drafts.length === 0 ? (
+              <Text style={[styles.empty, { color: theme.muted }]}>{t('drafts.empty')}</Text>
+            ) : (
+              drafts.map((draft) => (
+                <OutboxRow
+                  key={draft.id}
+                  testID={`draft-${draft.id}`}
+                  title={draft.preview ?? draft.form_name ?? '—'}
+                  status={draft.sync_status}
+                  meta={[
+                    `${formatDateTime(
+                      new Date(draft.captured_at ?? draft.created_at),
+                      i18n.language
+                    )}  ·  ${describeContents(draft)}`,
+                  ]}
+                  onPress={() =>
+                    navigation.navigate('Interview', {
+                      formId: draft.form_id,
+                      projectId: draft.project_id,
+                      formName: draft.form_name ?? '',
+                      instanceId: draft.id,
+                    })
+                  }
+                />
+              ))
+            )}
+          </>
         )}
       </ScrollView>
     </View>
+  );
+}
+
+interface OutboxRowProps {
+  testID: string;
+  title: string;
+  /** A sync status: draft, synced, partial or rejected. */
+  status: string;
+  /** Detail lines under the title, one line each. */
+  meta: string[];
+  onPress: () => void;
+}
+
+/** One thing in the outbox — an interview or a field record — with its sync status. */
+function OutboxRow({ testID, title, status, meta, onPress }: OutboxRowProps) {
+  const { t } = useTranslation();
+  const theme = useTheme();
+
+  const statusColor =
+    status === 'synced'
+      ? theme.primary
+      : status === 'rejected' || status === 'partial'
+        ? theme.danger
+        : theme.muted;
+
+  return (
+    <TouchableOpacity
+      testID={testID}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={[styles.row, { backgroundColor: theme.card, borderColor: theme.border }]}
+    >
+      <View style={styles.rowMain}>
+        <View style={styles.rowHeader}>
+          <Text
+            style={[styles.formName, { color: theme.text }]}
+            numberOfLines={1}
+            // The name can be long and is rarely what distinguishes two rows;
+            // one line keeps every row the same height.
+          >
+            {title}
+          </Text>
+          <View style={[styles.status, { borderColor: statusColor }]}>
+            <Text style={[styles.statusText, { color: statusColor }]}>
+              {t(`drafts.status.${status}`, { defaultValue: status })}
+            </Text>
+          </View>
+        </View>
+
+        {meta.map((line) => (
+          <Text key={line} style={[styles.meta, { color: theme.muted }]} numberOfLines={1}>
+            {line}
+          </Text>
+        ))}
+      </View>
+      <Chevron color={theme.muted} />
+    </TouchableOpacity>
   );
 }
 

@@ -2,23 +2,31 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 
 import { getDatabase } from '../db/database';
+import { listWaitingFieldRecords } from '../db/fieldRecordsRepository';
 import { listInstancesWithMeta } from '../db/instancesRepository';
-import type { DraftListItem } from '../db/types';
+import type { DraftListItem, WaitingFieldRecord } from '../db/types';
 
 export interface DraftsState {
   drafts: DraftListItem[];
+  /** Field records still to be sent, or refused — what Send carries besides interviews. */
+  fieldRecords: WaitingFieldRecord[];
   loading: boolean;
   refresh: () => Promise<void>;
 }
 
-/** The list of recorded interviews, refreshed whenever the screen is focused. */
+/**
+ * The outbox as a list: every recorded interview, and the field records not
+ * yet on the server. Refreshed whenever the screen is focused.
+ */
 export function useDrafts(): DraftsState {
   const [drafts, setDrafts] = useState<DraftListItem[]>([]);
+  const [fieldRecords, setFieldRecords] = useState<WaitingFieldRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     const db = await getDatabase();
     setDrafts(await listInstancesWithMeta(db));
+    setFieldRecords(await listWaitingFieldRecords(db));
     setLoading(false);
   }, []);
 
@@ -28,5 +36,5 @@ export function useDrafts(): DraftsState {
     }, [refresh])
   );
 
-  return { drafts, loading, refresh };
+  return { drafts, fieldRecords, loading, refresh };
 }

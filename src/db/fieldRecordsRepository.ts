@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import type { FieldRecordRow } from './types';
+import type { FieldRecordRow, WaitingFieldRecord } from './types';
 
 /** Where the encounter happened, as this device measured it. */
 export interface FieldRecordLocation {
@@ -154,6 +154,22 @@ export async function listFieldRecords(
   return db.getAllAsync<FieldRecordRow>(
     'SELECT * FROM field_records WHERE project_id = ? ORDER BY created_at DESC',
     [projectId]
+  );
+}
+
+/**
+ * Every record the server has not accepted, from any project, newest first —
+ * the ones still waiting to be sent and the ones it refused. This is what the
+ * Send action is about, so it is listed where that action is, beside the
+ * interviews; sent records are looked up in their own project.
+ */
+export async function listWaitingFieldRecords(db: SQLiteDatabase): Promise<WaitingFieldRecord[]> {
+  return db.getAllAsync<WaitingFieldRecord>(
+    `SELECT r.*, p.name AS project_name
+       FROM field_records r
+       LEFT JOIN projects p ON p.id = r.project_id
+      WHERE r.sync_status != 'synced'
+      ORDER BY r.created_at DESC`
   );
 }
 

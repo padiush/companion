@@ -38,7 +38,13 @@ function draft(overrides: Record<string, unknown> = {}) {
 }
 
 function mockDrafts(overrides: Record<string, unknown> = {}) {
-  mockUseDrafts.mockReturnValue({ drafts: [], loading: false, refresh: jest.fn(), ...overrides });
+  mockUseDrafts.mockReturnValue({
+    drafts: [],
+    fieldRecords: [],
+    loading: false,
+    refresh: jest.fn(),
+    ...overrides,
+  });
 }
 
 function mockOutbox(overrides: Record<string, unknown> = {}) {
@@ -146,6 +152,62 @@ describe('DraftsScreen', () => {
 
     expect(await findByTestId('records-sent')).toHaveTextContent('drafts.recordsSent');
     expect(await findByTestId('records-refused')).toHaveTextContent('drafts.recordsRefused');
+  });
+
+  describe('field records waiting to be sent', () => {
+    const waiting = (overrides: Record<string, unknown> = {}) => ({
+      client_id: 'fr-1',
+      project_id: 9,
+      project_name: 'Cloud forest',
+      basis_of_record: 'human_observation',
+      vernacular_name: 'guaba',
+      collection_number: null,
+      collected_on: '2026-10-04',
+      sync_status: 'draft',
+      ...overrides,
+    });
+
+    /** The Send count would otherwise point at nothing on this screen. */
+    it('lists them above the interviews, saying which project each is in', async () => {
+      mockDrafts({ fieldRecords: [waiting()] });
+
+      const { getByTestId, getByText } = await render(<DraftsScreen />);
+
+      expect(getByText('drafts.fieldRecords')).toBeTruthy();
+      expect(getByText('drafts.interviews')).toBeTruthy();
+      expect(getByTestId('waiting-record-fr-1')).toHaveTextContent(/guaba/);
+      expect(getByTestId('waiting-record-fr-1')).toHaveTextContent(/Cloud forest/);
+      expect(getByTestId('waiting-record-fr-1')).toHaveTextContent(/drafts\.status\.draft/);
+    });
+
+    it('opens a record in its project', async () => {
+      mockDrafts({ fieldRecords: [waiting()] });
+
+      const { getByTestId } = await render(<DraftsScreen />);
+      await fireEvent.press(getByTestId('waiting-record-fr-1'));
+
+      expect(mockNavigate).toHaveBeenCalledWith('FieldRecord', { projectId: 9, clientId: 'fr-1' });
+    });
+
+    it('marks a refused record, and names one with nothing to call it by', async () => {
+      mockDrafts({
+        fieldRecords: [waiting({ vernacular_name: null, sync_status: 'rejected' })],
+      });
+
+      const { getByTestId } = await render(<DraftsScreen />);
+
+      expect(getByTestId('waiting-record-fr-1')).toHaveTextContent(/fieldRecord\.untitled/);
+      expect(getByTestId('waiting-record-fr-1')).toHaveTextContent(/drafts\.status\.rejected/);
+    });
+
+    it('adds no headings when no record is waiting', async () => {
+      mockDrafts({ drafts: [draft()] });
+
+      const { queryByText } = await render(<DraftsScreen />);
+
+      expect(queryByText('drafts.fieldRecords')).toBeNull();
+      expect(queryByText('drafts.interviews')).toBeNull();
+    });
   });
 
   it('shows the empty state when there are no interviews', async () => {
