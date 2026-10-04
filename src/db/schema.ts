@@ -146,11 +146,139 @@ CREATE TABLE IF NOT EXISTS diagnostics (
 );
 `;
 
+/**
+ * Field records, the permits they name, and media that belongs to one.
+ *
+ * A record is captured where it happens — coordinates from this device, the
+ * collection number written on the tag at that moment
+ * (docs/decisions/0011-companion-field-records.md in the platform repo). The
+ * device authors the *recorded* stage only: there is deliberately no column for
+ * an accession number, a repository or a determination, because those are
+ * written on the web and a column here would invite the app to claim them.
+ *
+ * `server_id` is learned from the sync result. Unlike an interview, whose id
+ * this device mints, a record has no server identity until the push answers
+ * with one — and that id is what its media is later uploaded against.
+ *
+ * `collecting_permits` is a read-side cache like `projects` and `forms`. A
+ * permit is held before the fieldwork; nobody issues one in a forest, so the
+ * device only ever chooses among them.
+ *
+ * The rest of this version widens `media` to belong to an interview OR a field
+ * record, mirroring what the server did in its own `media` migration. For a
+ * record of something never collected the photograph *is* the record, since no
+ * material survives to re-examine.
+ *
+ * The rebuild is written the long way round on purpose. `instance_id` is
+ * NOT NULL and SQLite cannot relax that in place, so the table has to be
+ * recreated — but `media_blobs` cascades off `media`, and dropping `media`
+ * while it still has children silently deletes every blob, which is the
+ * unsynced informant audio. `PRAGMA foreign_keys = OFF` is the usual guard and
+ * is a no-op inside a transaction, which is where the runner puts every
+ * version. So the children are moved aside to a foreign-key-free table first,
+ * `media` is dropped only once it is childless, and the blobs are restored
+ * afterwards. Verified to preserve blob bytes exactly, and to leave both
+ * cascades working.
+ */
+const V5 = `
+CREATE TABLE IF NOT EXISTS field_records (
+  client_id            TEXT PRIMARY KEY,
+  project_id           INTEGER NOT NULL,
+  server_id            INTEGER,
+  basis_of_record      TEXT NOT NULL DEFAULT 'preserved_specimen',
+  vernacular_name      TEXT,
+  collection_number    TEXT,
+  collector            TEXT,
+  collected_on         TEXT,
+  locality             TEXT,
+  location_lat         REAL,
+  location_lng         REAL,
+  notes                TEXT,
+  collecting_permit_id INTEGER,
+  permit_exemption     TEXT,
+  answer_client_id     TEXT,
+  edited_at            TEXT,
+  sync_status          TEXT NOT NULL DEFAULT 'draft',
+  sync_error           TEXT,
+  created_at           TEXT NOT NULL,
+  updated_at           TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS collecting_permits (
+  id         INTEGER PRIMARY KEY,
+  project_id INTEGER NOT NULL,
+  authority  TEXT,
+  reference  TEXT,
+  issued_on  TEXT,
+  expires_on TEXT,
+  cached_at  TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_field_records_project ON field_records(project_id);
+CREATE INDEX IF NOT EXISTS idx_field_records_sync_status ON field_records(sync_status);
+CREATE INDEX IF NOT EXISTS idx_collecting_permits_project ON collecting_permits(project_id);
+
+CREATE TABLE media_blobs_tmp (
+  client_id TEXT NOT NULL,
+  seq       INTEGER NOT NULL,
+  data      BLOB NOT NULL,
+  PRIMARY KEY (client_id, seq)
+);
+INSERT INTO media_blobs_tmp (client_id, seq, data)
+  SELECT client_id, seq, data FROM media_blobs;
+DROP TABLE media_blobs;
+
+CREATE TABLE media_new (
+  client_id            TEXT PRIMARY KEY,
+  instance_id          TEXT,
+  field_record_id      TEXT,
+  kind                 TEXT NOT NULL,
+  local_uri            TEXT,
+  storage_key          TEXT,
+  content_type         TEXT,
+  byte_size            INTEGER,
+  duration_s           INTEGER,
+  upload_status        TEXT NOT NULL DEFAULT 'pending',
+  upload_attempts      INTEGER NOT NULL DEFAULT 0,
+  upload_error         TEXT,
+  transcription_status TEXT,
+  captured_at          TEXT,
+  FOREIGN KEY (instance_id) REFERENCES instances(id) ON DELETE CASCADE,
+  FOREIGN KEY (field_record_id) REFERENCES field_records(client_id) ON DELETE CASCADE
+);
+INSERT INTO media_new (
+  client_id, instance_id, field_record_id, kind, local_uri, storage_key,
+  content_type, byte_size, duration_s, upload_status, upload_attempts,
+  upload_error, transcription_status, captured_at
+) SELECT
+  client_id, instance_id, NULL, kind, local_uri, storage_key,
+  content_type, byte_size, duration_s, upload_status, upload_attempts,
+  upload_error, transcription_status, captured_at
+FROM media;
+DROP TABLE media;
+ALTER TABLE media_new RENAME TO media;
+
+CREATE TABLE media_blobs (
+  client_id TEXT NOT NULL,
+  seq       INTEGER NOT NULL,
+  data      BLOB NOT NULL,
+  PRIMARY KEY (client_id, seq),
+  FOREIGN KEY (client_id) REFERENCES media(client_id) ON DELETE CASCADE
+);
+INSERT INTO media_blobs (client_id, seq, data)
+  SELECT client_id, seq, data FROM media_blobs_tmp;
+DROP TABLE media_blobs_tmp;
+
+CREATE INDEX IF NOT EXISTS idx_media_instance ON media(instance_id);
+CREATE INDEX IF NOT EXISTS idx_media_field_record ON media(field_record_id);
+`;
+
 export const MIGRATIONS: readonly { version: number; sql: string }[] = [
   { version: 1, sql: V1 },
   { version: 2, sql: V2 },
   { version: 3, sql: V3 },
   { version: 4, sql: V4 },
+  { version: 5, sql: V5 },
 ];
 
 /** The version a fully-migrated store reports. */
