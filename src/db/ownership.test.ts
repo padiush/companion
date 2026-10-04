@@ -1,5 +1,6 @@
 import { createTestDatabase, type TestDatabase } from '../../test-utils/sqliteDatabase';
 import { insertInstance, setSyncStatus } from './instancesRepository';
+import { insertFieldRecord, setFieldRecordSyncResult } from './fieldRecordsRepository';
 import { claimOwner, countPendingWork, hasPendingWork, readOwner } from './ownership';
 
 let db: TestDatabase;
@@ -29,7 +30,7 @@ const seedInstance = (id: string) =>
 const seedMedia = (clientId: string, instanceId: string, status: string) =>
   db.runAsync(
     `INSERT INTO media (client_id, instance_id, kind, upload_status) VALUES (?, ?, 'photo', ?)`,
-    [clientId, instanceId, status],
+    [clientId, instanceId, status]
   );
 
 describe('ownership', () => {
@@ -59,7 +60,11 @@ describe('ownership', () => {
 
 describe('countPendingWork', () => {
   it('counts nothing in an empty store', async () => {
-    await expect(countPendingWork(db)).resolves.toEqual({ interviews: 0, media: 0 });
+    await expect(countPendingWork(db)).resolves.toEqual({
+      interviews: 0,
+      media: 0,
+      fieldRecords: 0,
+    });
   });
 
   it('counts interviews the server has not accepted', async () => {
@@ -84,15 +89,39 @@ describe('countPendingWork', () => {
     await seedMedia('m-1', 'sent', 'pending');
     await seedMedia('m-2', 'sent', 'uploaded');
 
-    await expect(countPendingWork(db)).resolves.toEqual({ interviews: 0, media: 1 });
+    await expect(countPendingWork(db)).resolves.toEqual({
+      interviews: 0,
+      media: 1,
+      fieldRecords: 0,
+    });
+  });
+
+  /** A record made in the field exists only here until it is sent, refused or not. */
+  it('counts field records the server has not accepted', async () => {
+    const AT = '2026-10-04T10:00:00.000Z';
+    for (const clientId of ['fr-draft', 'fr-refused', 'fr-sent']) {
+      await insertFieldRecord(db, {
+        clientId,
+        projectId: 1,
+        basisOfRecord: 'human_observation',
+        editedAt: AT,
+        createdAt: AT,
+        updatedAt: AT,
+      });
+    }
+    await setFieldRecordSyncResult(db, 'fr-refused', { status: 'rejected', error: 'unknown' });
+    await setFieldRecordSyncResult(db, 'fr-sent', { status: 'synced', serverId: 41 });
+
+    await expect(countPendingWork(db)).resolves.toMatchObject({ fieldRecords: 2 });
   });
 });
 
 describe('hasPendingWork', () => {
   it.each([
-    [{ interviews: 0, media: 0 }, false],
-    [{ interviews: 1, media: 0 }, true],
-    [{ interviews: 0, media: 1 }, true],
+    [{ interviews: 0, media: 0, fieldRecords: 0 }, false],
+    [{ interviews: 1, media: 0, fieldRecords: 0 }, true],
+    [{ interviews: 0, media: 1, fieldRecords: 0 }, true],
+    [{ interviews: 0, media: 0, fieldRecords: 1 }, true],
   ])('%j -> %s', (work, expected) => {
     expect(hasPendingWork(work)).toBe(expected);
   });
