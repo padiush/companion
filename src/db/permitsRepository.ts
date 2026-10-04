@@ -1,15 +1,10 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+import type { Permit } from '../api/types';
 import type { CollectingPermitRow } from './types';
 
 /** A permit as the bundle sends it. */
-export interface PermitFromApi {
-  id: number;
-  authority: string | null;
-  reference: string | null;
-  issued_on: string | null;
-  expires_on: string | null;
-}
+export type PermitFromApi = Permit;
 
 /**
  * Replace a project's cached permits with what the bundle just sent.

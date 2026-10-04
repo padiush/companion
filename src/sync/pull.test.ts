@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import type { Bundle, Capabilities, Form, ProjectSummary } from '../api/types';
 import { saveSession } from '../auth/session';
 import { pruneForms, upsertForms } from '../db/formsRepository';
+import { replacePermits } from '../db/permitsRepository';
 import { pruneProjects, upsertProjects } from '../db/projectsRepository';
 import { getMeta, setMeta } from '../db/syncMetaRepository';
 import { pull, pullForms, pullProjects } from './pull';
@@ -14,6 +15,7 @@ jest.mock('../db/projectsRepository', () => ({
   pruneProjects: jest.fn(),
 }));
 jest.mock('../db/formsRepository', () => ({ upsertForms: jest.fn(), pruneForms: jest.fn() }));
+jest.mock('../db/permitsRepository', () => ({ replacePermits: jest.fn() }));
 jest.mock('../db/syncMetaRepository', () => ({ getMeta: jest.fn(), setMeta: jest.fn() }));
 jest.mock('../auth/session', () => ({ saveSession: jest.fn() }));
 
@@ -188,5 +190,44 @@ describe('retiring forms the server no longer lists', () => {
 
     expect(pruneForms).not.toHaveBeenCalled();
     expect(upsertForms).toHaveBeenCalled();
+  });
+});
+
+describe('caching the project’s permits', () => {
+  const permit = {
+    id: 5,
+    authority: 'MARN',
+    reference: 'AIMA-2026-014',
+    issued_on: '2026-01-10',
+    expires_on: null,
+  };
+
+  it('replaces the cached permits with the full set the bundle sends', async () => {
+    mockGetMeta.mockResolvedValue(null);
+    mockApi.bundle.mockResolvedValue({ ...bundle(null), collecting_permits: [permit] });
+
+    await pullForms(db, 9);
+
+    expect(replacePermits).toHaveBeenCalledWith(db, 9, [permit]);
+  });
+
+  /** A project whose last permit was revoked sends an empty set, which must clear the cache. */
+  it('clears the cache when the project holds no permits any more', async () => {
+    mockGetMeta.mockResolvedValue(null);
+    mockApi.bundle.mockResolvedValue({ ...bundle(null), collecting_permits: [] });
+
+    await pullForms(db, 9);
+
+    expect(replacePermits).toHaveBeenCalledWith(db, 9, []);
+  });
+
+  /** Against a server predating the field, silence about permits must not wipe them. */
+  it('leaves the cache alone when the server does not send permits', async () => {
+    mockGetMeta.mockResolvedValue(null);
+    mockApi.bundle.mockResolvedValue(bundle(null));
+
+    await pullForms(db, 9);
+
+    expect(replacePermits).not.toHaveBeenCalled();
   });
 });
