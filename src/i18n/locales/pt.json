@@ -17,6 +17,8 @@
     "replaceStoreTitle": "Este dispositivo tem trabalho de outra conta",
     "replaceStoreInterviews_one": "Há 1 entrevista não enviada de outra conta. Ao entrar, ela será apagada e não poderá ser recuperada.",
     "replaceStoreInterviews_other": "Há {{count}} entrevistas não enviadas de outra conta. Ao entrar, elas serão apagadas e não poderão ser recuperadas.",
+    "replaceStoreFieldRecords_one": "Há 1 registro de campo não enviado de outra conta. Ao entrar, ele será apagado e não poderá ser recuperado.",
+    "replaceStoreFieldRecords_other": "Há {{count}} registros de campo não enviados de outra conta. Ao entrar, eles serão apagados e não poderão ser recuperados.",
     "replaceStoreMedia_one": "Há 1 arquivo não enviado de outra conta. Ao entrar, ele será apagado e não poderá ser recuperado.",
     "replaceStoreMedia_other": "Há {{count}} arquivos não enviados de outra conta. Ao entrar, eles serão apagados e não poderão ser recuperados.",
     "replaceStoreConfirm": "Apagar e entrar"
@@ -47,7 +49,10 @@
   "project": {
     "forms": "Formulários",
     "newInterview": "Nova entrevista",
-    "empty": "Este projeto não tem formulários ativos."
+    "empty": "Este projeto não tem formulários ativos.",
+    "fieldRecords": "Registros de campo",
+    "newFieldRecord": "Adicionar um registro",
+    "noFieldRecords": "Ainda não há registros neste dispositivo. Anote aqui o que você documenta em campo, coletando ou não; a identificação e o depósito são feitos depois, na web."
   },
   "interview": {
     "preparing": "Preparando a entrevista…",
@@ -89,6 +94,67 @@
       "min": "Deve ser {{limit}} ou mais.",
       "max": "Deve ser {{limit}} ou menos.",
       "step": "Deve ir de {{limit}} em {{limit}}."
+    }
+  },
+  "fieldRecord": {
+    "title": "Registro de campo",
+    "newTitle": "Novo registro",
+    "untitled": "Registro sem nome",
+    "sections": {
+      "record": "O registro",
+      "place": "Quando e onde",
+      "permit": "Licença",
+      "notes": "Notas"
+    },
+    "basis": "Foi coletado?",
+    "bases": {
+      "preserved_specimen": "Sim — exemplar coletado",
+      "human_observation": "Não — apenas observado",
+      "living_specimen": "Planta viva (horta, viveiro)",
+      "material_sample": "Amostra parcial"
+    },
+    "basisHint": {
+      "preserved_specimen": "Será prensado e depositado, e pode receber número de herbário.",
+      "human_observation": "Documentado com fotos e descrição. Não terá voucher.",
+      "living_specimen": "Planta em pé, identificável onde cresce.",
+      "material_sample": "Foi retirada uma parte, não a planta inteira."
+    },
+    "vernacularName": "Nome local",
+    "vernacularNameHint": "Como a pessoa que acompanhava você a chamou. É salvo criptografado.",
+    "collectionNumber": "Número de coleta",
+    "collectionNumberHint": "O número que você escreveu na etiqueta.",
+    "collector": "Coletor",
+    "collectedOn": "Data de coleta",
+    "locality": "Localidade",
+    "coordinates": "Coordenadas",
+    "locating": "Obtendo sinal de GPS…",
+    "locationFailed": "Não foi possível obter a localização. Verifique a permissão de localização ou tente ao ar livre.",
+    "noCoordinates": "Sem coordenadas",
+    "locate": "Usar minha localização",
+    "relocate": "Atualizar com minha localização",
+    "permit": "Licença",
+    "permitUnnamed": "Licença sem referência",
+    "permitUnlisted": "Uma licença que o projeto não tem mais",
+    "noPermits": "Este projeto não tem licenças neste dispositivo. Elas são cadastradas na web e chegam na próxima sincronização.",
+    "exemption": "Motivo de isenção",
+    "exemptionHint": "Só se a coleta não precisava de licença.",
+    "exemptions": {
+      "private_land": "Terreno privado, com acordo do proprietário",
+      "cultivated": "Material cultivado",
+      "market": "Comprado em mercado",
+      "other": "Outro motivo (ver notas)"
+    },
+    "notes": "Notas",
+    "saving": "Salvando…",
+    "savedLocally": "Salvo neste dispositivo",
+    "notSavedYet": "É salvo assim que você anotar algo.",
+    "done": "Concluir",
+    "sentReadOnly": "Este registro já foi enviado. As correções são feitas na web.",
+    "refusedTitle": "O servidor não aceitou este registro",
+    "status": {
+      "notSent": "Não enviado",
+      "sent": "Enviado",
+      "refused": "Recusado"
     }
   },
   "drafts": {
@@ -146,6 +212,12 @@
       "api.sync.form_mismatch": "Uma entrevista não pode mudar de formulário.",
       "api.sync.not_owner": "Outra conta registrou esta entrevista.",
       "unknown": "O servidor não aceitou esta entrevista."
+    },
+    "recordErrors": {
+      "api.sync.client_id_conflict": "Este registro já existe em outro projeto.",
+      "api.sync.permit_not_in_project": "A licença escolhida não pertence mais a este projeto. Escolha outra ou um motivo de isenção.",
+      "api.sync.answer_not_found": "A resposta de onde saiu este registro ainda não está no servidor. Envie a entrevista primeiro.",
+      "unknown": "O servidor não aceitou este registro."
     }
   },
   "licences": {

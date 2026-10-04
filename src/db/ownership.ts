@@ -18,10 +18,12 @@ export interface PendingWork {
   interviews: number;
   /** Media captured on this device that has not been uploaded. */
   media: number;
+  /** Field records made on this device that the server has not accepted. */
+  fieldRecords: number;
 }
 
 export const hasPendingWork = (work: PendingWork): boolean =>
-  work.interviews > 0 || work.media > 0;
+  work.interviews > 0 || work.media > 0 || work.fieldRecords > 0;
 
 export async function readOwner(db: SQLiteDatabase): Promise<number | null> {
   const value = await getMeta(db, OWNER_KEY);
@@ -53,5 +55,13 @@ export async function countPendingWork(db: SQLiteDatabase): Promise<PendingWork>
     "SELECT COUNT(*) AS count FROM media WHERE upload_status != 'uploaded'",
   );
 
-  return { interviews: interviews?.count ?? 0, media: media?.count ?? 0 };
+  const fieldRecords = await db.getFirstAsync<{ count: number }>(
+    "SELECT COUNT(*) AS count FROM field_records WHERE sync_status != 'synced'",
+  );
+
+  return {
+    interviews: interviews?.count ?? 0,
+    media: media?.count ?? 0,
+    fieldRecords: fieldRecords?.count ?? 0,
+  };
 }

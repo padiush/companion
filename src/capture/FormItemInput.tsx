@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TextInput } from 'react-native';
 
 import type { Item } from '../api/types';
-import { selectionTick } from '../haptics';
-import { border, radius, space, touch, type, useTheme } from '../theme';
+import { border, radius, space, type, useTheme } from '../theme';
 import { Button } from '../ui/Button';
+import { Chip, ChipGroup } from '../ui/Chip';
 import { Field } from '../ui/Field';
 import { DateField } from './DateField';
 import type { ValidationIssue } from './validate';
@@ -69,7 +69,6 @@ export function FormItemInput({ item, value, onChange, error, issue, onDiscard }
       item.type === 'multi' ? Array.isArray(value) && value.includes(option) : value === option;
 
     const toggle = (option: string) => {
-      selectionTick();
       if (item.type === 'multi') {
         const current = Array.isArray(value) ? value : [];
         onChange(
@@ -81,36 +80,17 @@ export function FormItemInput({ item, value, onChange, error, issue, onDiscard }
     };
 
     return field(
-      <View style={styles.options}>
-        {options.map((option) => {
-          const selected = isSelected(option);
-          return (
-            <TouchableOpacity
-              key={option}
-              testID={`option-${item.id}-${option}`}
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              onPress={() => toggle(option)}
-              style={[
-                styles.chip,
-                {
-                  // An unselected chip is a surface with a readable edge, not a
-                  // hairline on the page. Choosing these is the main thing this
-                  // screen is for, and it is done outdoors.
-                  borderColor: selected ? theme.primary : theme.chipBorder,
-                  backgroundColor: selected ? theme.primary : theme.chip,
-                },
-              ]}
-            >
-              <Text
-                style={[styles.chipLabel, { color: selected ? theme.onPrimary : theme.text }]}
-              >
-                {option}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      <ChipGroup>
+        {options.map((option) => (
+          <Chip
+            key={option}
+            testID={`option-${item.id}-${option}`}
+            label={option}
+            selected={isSelected(option)}
+            onPress={() => toggle(option)}
+          />
+        ))}
+      </ChipGroup>
     );
   }
 
@@ -152,17 +132,4 @@ const styles = StyleSheet.create({
     paddingVertical: space.md,
     ...type.body,
   },
-  options: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space.sm,
-  },
-  chip: {
-    borderWidth: border.width,
-    borderRadius: radius.pill,
-    paddingHorizontal: space.lg,
-    minHeight: touch.min,
-    justifyContent: 'center',
-  },
-  chipLabel: type.body,
 });
