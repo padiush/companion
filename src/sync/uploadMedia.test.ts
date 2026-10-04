@@ -9,7 +9,7 @@ import {
   setMediaUploaded,
 } from '../db/mediaRepository';
 import type { MediaRow } from '../db/types';
-import { uploadMedia } from './uploadMedia';
+import { requestHeaders, uploadMedia } from './uploadMedia';
 
 jest.mock('expo/fetch', () => ({ fetch: jest.fn() }));
 jest.mock('../api/client', () => ({
@@ -165,5 +165,41 @@ describe('uploads that fail', () => {
     await uploadMedia(db, jest.fn());
 
     expect(recordUploadFailure).not.toHaveBeenCalled();
+  });
+});
+
+describe('the headers an upload is sent with', () => {
+  /**
+   * What a server passing the storage SDK's signed headers through actually
+   * returned. The native fetch rejects a list value, so every upload failed
+   * before a byte was sent.
+   */
+  it('sends one string per header and leaves Host to the HTTP client', () => {
+    expect(
+      requestHeaders({
+        'Content-Type': 'image/jpeg',
+        Host: ['media.example.org'],
+        'x-amz-meta-a': ['one', 'two'],
+      })
+    ).toEqual({ 'Content-Type': 'image/jpeg', 'x-amz-meta-a': 'one, two' });
+  });
+
+  it('passes the signed headers to the upload in that form', async () => {
+    mockList.mockResolvedValue([media()]);
+    mockRead.mockResolvedValue(Uint8Array.from([1]));
+    mockIntent.mockResolvedValue({
+      upload_url: 'https://storage/p.jpg',
+      headers: { 'Content-Type': 'image/jpeg', Host: ['storage'] },
+      storage_key: 'k',
+      expires_at: 'x',
+    });
+    mockComplete.mockResolvedValue({ id: 1, status: 'stored' });
+    const uploadBytes = jest.fn().mockResolvedValue(undefined);
+
+    await uploadMedia(db, uploadBytes);
+
+    expect(uploadBytes).toHaveBeenCalledWith('https://storage/p.jpg', expect.anything(), {
+      'Content-Type': 'image/jpeg',
+    });
   });
 });

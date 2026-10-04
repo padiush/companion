@@ -66,7 +66,7 @@ export async function uploadMedia(
         byte_size: data.byteLength,
       });
 
-      await uploadBytes(intent.upload_url, data, intent.headers);
+      await uploadBytes(intent.upload_url, data, requestHeaders(intent.headers));
 
       await api.mediaComplete(media.instance_id, {
         client_id: media.client_id,
@@ -87,6 +87,30 @@ export async function uploadMedia(
   }
 
   return summary;
+}
+
+/**
+ * The headers the PUT is actually sent with: one string per header, and no
+ * `Host`.
+ *
+ * A server that hands back a storage SDK's signed headers unconverted gives
+ * every value as a list. The native fetch takes strings and nothing else, so a
+ * single list value made every upload fail before a byte left the phone.
+ * `Host` is dropped because the HTTP client sets it from the URL, which is the
+ * host the signature covers; an explicit one adds nothing but a way to
+ * disagree with it.
+ */
+export function requestHeaders(headers: Record<string, string | string[]>): Record<string, string> {
+  const flat: Record<string, string> = {};
+
+  for (const [name, value] of Object.entries(headers ?? {})) {
+    if (name.toLowerCase() === 'host') {
+      continue;
+    }
+    flat[name] = Array.isArray(value) ? value.join(', ') : String(value);
+  }
+
+  return flat;
 }
 
 function describe(error: unknown): string {
