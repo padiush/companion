@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Build a development copy of the app into an APK inside a container, and put
+# it on a phone with the host's adb. Nothing but Docker and adb on the host.
+#
+#   scripts/android image      build the toolchain image (once, and after it changes)
+#   scripts/android apk        build dist/padiush-companion-dev.apk from this working tree
+#   scripts/android install    install that APK on the connected phone
+#
+# `apk` needs EXPO_PUBLIC_API_BASE_URL: the JS is bundled into the APK, so the
+# server it talks to is fixed at build time, exactly as with an EAS build. There
+# is deliberately no default — a development copy pointed at production by
+# accident would record test data into real studies.
+#
+# The copy is a separate app (com.padiushbio.companion.dev, "Padiush Dev"),
+# signed with the template's debug key, so it installs beside a store build
+# rather than failing on the signature or replacing it and its unsent work.
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+
+image=padiush-companion-android:dev
+apk=dist/padiush-companion-dev.apk
+app_id=com.padiushbio.companion
+
+mkdir -p .cache/gradle .cache/npm .cache/android dist
+
+run() {
+  docker run --rm \
+    --user "$(id -u):$(id -g)" \
+    -e HOME=/home/android \
+    -e CI=1 \
+    -e EXPO_PUBLIC_API_BASE_URL="${EXPO_PUBLIC_API_BASE_URL:-}" \
+    -v "$root:/workspace" \
+    -v "$root/.cache/gradle:/home/android/.gradle" \
+    -v "$root/.cache/npm:/home/android/.npm" \
+    -v "$root/.cache/android:/home/android/.android" \
+    "$image" "$@"
+}
+
+case "${1:-help}" in
+  image)
+    docker build -t "$image" -f docker/android/Dockerfile docker/android
+    ;;
+  apk)
+    if [[ -z "${EXPO_PUBLIC_API_BASE_URL:-}" ]]; then
+      echo 'Set EXPO_PUBLIC_API_BASE_URL to the /api/v1 the build should talk to.' >&2
+      exit 1
+    fi
+    # prebuild regenerates android/ from app.json each time (--clean), so the
+    # dev identity is applied to the generated files afterwards rather than
+    # kept anywhere a release build could pick it up.
+    run bash -euo pipefail -c "
+      npm ci --no-audit --no-fund --loglevel=error
+      npx expo prebuild --platform android --clean --no-install
+      sed -i \"s/applicationId '$app_id'/applicationId '$app_id.dev'/\" android/app/build.gradle
+      grep -q \"applicationId '$app_id.dev'\" android/app/build.gradle
+      sed -i 's|<string name=\"app_name\">[^<]*</string>|<string name=\"app_name\">Padiush Dev</string>|' \
+        android/app/src/main/res/values/strings.xml
+      cd android && ./gradlew --no-daemon assembleRelease
+    "
+    cp android/app/build/outputs/apk/release/app-release.apk "$apk"
+    echo "Built $apk against $EXPO_PUBLIC_API_BASE_URL"
+    ;;
+  install)
+    adb install -r "$apk"
+    ;;
+  *)
+    echo 'Usage: scripts/android {image|apk|install}' >&2
+    exit 1
+    ;;
+esac
