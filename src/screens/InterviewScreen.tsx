@@ -1,4 +1,5 @@
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -12,12 +13,14 @@ import {
 } from 'react-native';
 
 import type { Item } from '../api/types';
+import { AnswerRecords } from '../capture/AnswerRecords';
 import { AudioRecorder } from '../capture/AudioRecorder';
 import { FormItemInput } from '../capture/FormItemInput';
 import { MediaSection } from '../capture/MediaSection';
 import { useInterview } from '../capture/useInterview';
 import { validateInstance } from '../capture/validate';
 import { answerKey, emptyValueFor, isAnswered } from '../capture/values';
+import { useAnswerRecords } from '../hooks/useAnswerRecords';
 import type { RootStackParamList } from '../navigation/types';
 import { border, radius, space, type, useTheme } from '../theme';
 import { Button } from '../ui/Button';
@@ -26,7 +29,7 @@ import { Button } from '../ui/Button';
 export function InterviewScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Interview'>>();
   const { params } = useRoute<RouteProp<RootStackParamList, 'Interview'>>();
   const {
     form,
@@ -46,6 +49,7 @@ export function InterviewScreen() {
     retry,
     discardAnswer,
   } = useInterview(params.formId, params.projectId, params.instanceId);
+  const answerRecords = useAnswerRecords(instanceId);
 
   // Constraints are only shown once completion has been attempted: flagging a
   // required field the moment the screen opens would mark the whole interview
@@ -74,21 +78,51 @@ export function InterviewScreen() {
 
   const renderItem = (item: Item, sectionId: number, repeatableIndex: number | null) => {
     const key = answerKey(item.id, repeatableIndex);
+    const value = answers[key] ?? emptyValueFor(item.type);
 
-    return (
+    const input = (
       <FormItemInput
         key={key}
         item={item}
-        value={answers[key] ?? emptyValueFor(item.type)}
+        value={value}
         error={answerErrors[key]}
         issue={checked ? issues[key] : undefined}
-        onChange={(value) => setAnswer(sectionId, item.id, repeatableIndex, value)}
+        onChange={(next) => setAnswer(sectionId, item.id, repeatableIndex, next)}
         onDiscard={
-          answerErrors[key]
-            ? () => confirmDiscard(answerClientIds[key], item.label)
-            : undefined
+          answerErrors[key] ? () => confirmDiscard(answerClientIds[key], item.label) : undefined
         }
       />
+    );
+
+    // An answer that names a plant can become a field record — once it is
+    // stored, since the record links to it by the id it was stored under.
+    const answerClientId = answerClientIds[key];
+    const records = (answerClientId && answerRecords[answerClientId]) || [];
+    if (!item.link_to_species || !answerClientId || (!isAnswered(value) && records.length === 0)) {
+      return input;
+    }
+
+    const name = typeof value === 'string' ? value : undefined;
+
+    return (
+      <View key={key}>
+        {input}
+        <AnswerRecords
+          slot={key}
+          records={records}
+          canRecord={isAnswered(value)}
+          onOpen={(clientId) =>
+            navigation.navigate('FieldRecord', { projectId: params.projectId, clientId })
+          }
+          onRecord={() =>
+            navigation.navigate('FieldRecord', {
+              projectId: params.projectId,
+              answerClientId,
+              vernacularName: name,
+            })
+          }
+        />
+      </View>
     );
   };
 

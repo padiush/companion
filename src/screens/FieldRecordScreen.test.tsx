@@ -9,9 +9,10 @@ jest.mock('react-i18next', () => ({
 }));
 
 const mockGoBack = jest.fn();
+let mockParams: Record<string, unknown> = { projectId: 9 };
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ goBack: mockGoBack }),
-  useRoute: () => ({ params: { projectId: 9 } }),
+  useRoute: () => ({ params: mockParams }),
 }));
 jest.mock('../capture/useFieldRecord', () => ({ useFieldRecord: jest.fn() }));
 
@@ -49,6 +50,7 @@ function state(
     saving: false,
     stored: false,
     clientId: null,
+    fromAnswer: false,
     readOnly: false,
     syncStatus: 'draft',
     syncError: null,
@@ -249,5 +251,33 @@ describe('FieldRecordScreen', () => {
     expect(getByTestId('record-refused')).toHaveTextContent(
       /sync\.recordErrors\.api\.sync\.permit_not_in_project/
     );
+  });
+});
+
+describe('a record made from an interview answer', () => {
+  afterEach(() => {
+    mockParams = { projectId: 9 };
+  });
+
+  it('starts from the answer the interview passed', async () => {
+    mockParams = { projectId: 9, answerClientId: 'ans-1', vernacularName: 'manzanilla' };
+    mockUseFieldRecord.mockReturnValue(state({}, { fromAnswer: true }));
+
+    const { getByTestId } = await render(<FieldRecordScreen />);
+
+    expect(mockUseFieldRecord).toHaveBeenCalledWith(9, undefined, {
+      answerClientId: 'ans-1',
+      vernacularName: 'manzanilla',
+    });
+    expect(getByTestId('record-from-answer')).toBeTruthy();
+  });
+
+  it('says nothing of an interview for a record made on its own', async () => {
+    mockUseFieldRecord.mockReturnValue(state());
+
+    const { queryByTestId } = await render(<FieldRecordScreen />);
+
+    expect(mockUseFieldRecord).toHaveBeenCalledWith(9, undefined, undefined);
+    expect(queryByTestId('record-from-answer')).toBeNull();
   });
 });

@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
+import { unlinkFieldRecordsFromAnswers } from './fieldRecordsRepository';
 import type { AnswerRow } from './types';
 
 export interface AnswerInsert {
@@ -86,10 +87,7 @@ export async function setAnswerSyncError(
  * applied — otherwise an answer fixed on one attempt would keep the error from
  * the last one.
  */
-export async function clearAnswerSyncErrors(
-  db: SQLiteDatabase,
-  instanceId: string
-): Promise<void> {
+export async function clearAnswerSyncErrors(db: SQLiteDatabase, instanceId: string): Promise<void> {
   await db.runAsync('UPDATE answers SET sync_error = NULL WHERE instance_id = ?', [instanceId]);
 }
 
@@ -104,8 +102,15 @@ export async function getRejectedAnswers(
   );
 }
 
+/**
+ * Delete one answer. A field record made from it and not yet sent lets go of
+ * it first (see `unlinkFieldRecordsFromAnswers`).
+ */
 export async function deleteAnswer(db: SQLiteDatabase, clientId: string): Promise<void> {
-  await db.runAsync('DELETE FROM answers WHERE client_id = ?', [clientId]);
+  await db.withTransactionAsync(async () => {
+    await unlinkFieldRecordsFromAnswers(db, [clientId]);
+    await db.runAsync('DELETE FROM answers WHERE client_id = ?', [clientId]);
+  });
 }
 
 /** Delete all answers for one repeatable set (e.g. when a set is removed). */
@@ -115,8 +120,18 @@ export async function deleteAnswersForSet(
   sectionId: number,
   repeatableIndex: number
 ): Promise<void> {
-  await db.runAsync(
-    'DELETE FROM answers WHERE instance_id = ? AND section_id = ? AND repeatable_index = ?',
-    [instanceId, sectionId, repeatableIndex]
-  );
+  await db.withTransactionAsync(async () => {
+    const doomed = await db.getAllAsync<{ client_id: string }>(
+      'SELECT client_id FROM answers WHERE instance_id = ? AND section_id = ? AND repeatable_index = ?',
+      [instanceId, sectionId, repeatableIndex]
+    );
+    await unlinkFieldRecordsFromAnswers(
+      db,
+      doomed.map((row) => row.client_id)
+    );
+    await db.runAsync(
+      'DELETE FROM answers WHERE instance_id = ? AND section_id = ? AND repeatable_index = ?',
+      [instanceId, sectionId, repeatableIndex]
+    );
+  });
 }

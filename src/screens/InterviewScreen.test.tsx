@@ -3,6 +3,8 @@ import { Alert } from 'react-native';
 
 import type { Item } from '../api/types';
 import { useInterview } from '../capture/useInterview';
+import type { FieldRecordRow } from '../db/types';
+import { useAnswerRecords } from '../hooks/useAnswerRecords';
 import { InterviewScreen } from './InterviewScreen';
 
 type AlertButton = { text?: string; style?: string; onPress?: () => void };
@@ -20,15 +22,18 @@ jest.mock('react-i18next', () => ({
   }),
 }));
 const mockGoBack = jest.fn();
+const mockNavigate = jest.fn();
 jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: { formId: 27, projectId: 9, formName: 'Plant uses' } }),
-  useNavigation: () => ({ goBack: mockGoBack }),
+  useNavigation: () => ({ goBack: mockGoBack, navigate: mockNavigate }),
 }));
+jest.mock('../hooks/useAnswerRecords', () => ({ useAnswerRecords: jest.fn(() => ({})) }));
 jest.mock('../capture/useInterview', () => ({ useInterview: jest.fn() }));
 jest.mock('../capture/MediaSection', () => ({ MediaSection: () => null }));
 jest.mock('../capture/AudioRecorder', () => ({ AudioRecorder: () => null }));
 
 const mockUseInterview = useInterview as jest.Mock;
+const mockUseAnswerRecords = useAnswerRecords as jest.Mock;
 
 const textItem: Item = {
   id: 10,
@@ -46,7 +51,13 @@ const textItem: Item = {
 };
 
 /** A second required field, so "started but incomplete" is expressible. */
-const noteItem: Item = { ...textItem, id: 11, label: 'Notas', name: 'notes' };
+const noteItem: Item = {
+  ...textItem,
+  id: 11,
+  label: 'Notas',
+  name: 'notes',
+  link_to_species: false,
+};
 
 function form(repeatable: boolean) {
   return {
@@ -87,6 +98,7 @@ function mockInterview(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  mockUseAnswerRecords.mockReturnValue({});
 });
 
 describe('InterviewScreen', () => {
@@ -327,5 +339,105 @@ describe('constraints the form declares', () => {
     buttons?.find((button) => button.style !== 'cancel')?.onPress?.();
 
     expect(mockGoBack).toHaveBeenCalled();
+  });
+});
+
+describe('recording a plant an informant named', () => {
+  /** A record made from the folk-name answer, as the store lists it. */
+  function recordRow(overrides: Partial<FieldRecordRow> = {}): FieldRecordRow {
+    return {
+      client_id: 'fr-1',
+      project_id: 9,
+      server_id: null,
+      basis_of_record: 'preserved_specimen',
+      vernacular_name: 'manzanilla',
+      collection_number: null,
+      collector: null,
+      collected_on: null,
+      locality: null,
+      location_lat: null,
+      location_lng: null,
+      notes: null,
+      collecting_permit_id: null,
+      permit_exemption: null,
+      answer_client_id: 'ans-1',
+      edited_at: null,
+      sync_status: 'draft',
+      sync_error: null,
+      created_at: '2026-10-04T12:00:00.000Z',
+      updated_at: '2026-10-04T12:00:00.000Z',
+      ...overrides,
+    };
+  }
+
+  it('starts a record from an answer that names a plant, carrying the name', async () => {
+    mockInterview({
+      instanceId: 'inst-1',
+      answers: { '10:x': 'manzanilla' },
+      answerClientIds: { '10:x': 'ans-1' },
+    });
+
+    const { getByTestId } = await render(<InterviewScreen />);
+    await fireEvent.press(getByTestId('record-plant-10:x'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('FieldRecord', {
+      projectId: 9,
+      answerClientId: 'ans-1',
+      vernacularName: 'manzanilla',
+    });
+  });
+
+  it('offers nothing on a question that does not name a plant', async () => {
+    mockInterview({
+      instanceId: 'inst-1',
+      answers: { '11:x': 'grows by the river' },
+      answerClientIds: { '11:x': 'ans-2' },
+    });
+
+    const { queryByTestId } = await render(<InterviewScreen />);
+
+    expect(queryByTestId('record-plant-11:x')).toBeNull();
+  });
+
+  /** The record links to the answer by the id it was stored under. */
+  it('waits until the answer is stored', async () => {
+    mockInterview({ instanceId: 'inst-1', answers: { '10:x': 'manzanilla' } });
+
+    const { queryByTestId } = await render(<InterviewScreen />);
+
+    expect(queryByTestId('record-plant-10:x')).toBeNull();
+  });
+
+  it('lists what was already recorded from the answer, and opens it', async () => {
+    mockInterview({
+      instanceId: 'inst-1',
+      answers: { '10:x': 'manzanilla' },
+      answerClientIds: { '10:x': 'ans-1' },
+    });
+    mockUseAnswerRecords.mockReturnValue({ 'ans-1': [recordRow()] });
+
+    const { getByTestId, getByText } = await render(<InterviewScreen />);
+
+    expect(mockUseAnswerRecords).toHaveBeenCalledWith('inst-1');
+    // A second record of the same plant is possible, but asked for as such.
+    expect(getByText('interview.recordPlantAgain')).toBeTruthy();
+    expect(getByText('fieldRecord.status.notSent')).toBeTruthy();
+
+    await fireEvent.press(getByTestId('answer-record-fr-1'));
+    expect(mockNavigate).toHaveBeenCalledWith('FieldRecord', { projectId: 9, clientId: 'fr-1' });
+  });
+
+  it('keeps listing records after the answer is cleared, without offering a new one', async () => {
+    mockInterview({
+      instanceId: 'inst-1',
+      answers: { '10:x': '' },
+      answerClientIds: { '10:x': 'ans-1' },
+    });
+    mockUseAnswerRecords.mockReturnValue({ 'ans-1': [recordRow({ sync_status: 'synced' })] });
+
+    const { getByTestId, queryByTestId } = await render(<InterviewScreen />);
+
+    expect(getByTestId('answer-record-fr-1')).toBeTruthy();
+    expect(queryByTestId('record-plant-10:x')).toBeNull();
   });
 });

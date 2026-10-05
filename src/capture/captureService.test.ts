@@ -52,8 +52,9 @@ describe('saveAnswer', () => {
   it('inserts a new answer with a client id when none exists', async () => {
     mockFindAnswer.mockResolvedValue(null);
 
-    await saveAnswer(db, params);
+    const clientId = await saveAnswer(db, params);
 
+    expect(clientId).toBe('uuid-1');
     expect(insertAnswer).toHaveBeenCalledWith(
       db,
       expect.objectContaining({ clientId: 'uuid-1', itemId: 10, value: 'guaba' })
@@ -65,7 +66,9 @@ describe('saveAnswer', () => {
   it('updates the existing answer instead of inserting a duplicate', async () => {
     mockFindAnswer.mockResolvedValue({ client_id: 'existing' } as AnswerRow);
 
-    await saveAnswer(db, { ...params, value: 'guaba colorada' });
+    const clientId = await saveAnswer(db, { ...params, value: 'guaba colorada' });
+
+    expect(clientId).toBe('existing');
 
     expect(updateAnswerValue).toHaveBeenCalledWith(
       db,

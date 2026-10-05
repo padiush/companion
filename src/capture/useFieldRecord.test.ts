@@ -246,3 +246,62 @@ describe('storing on demand, for a photograph', () => {
     expect(resolved).toBeNull();
   });
 });
+
+describe('a record made from an interview answer', () => {
+  async function openFromAnswer(vernacularName?: string) {
+    const hook = await renderHook(() =>
+      useFieldRecord(9, undefined, { answerClientId: 'ans-1', vernacularName })
+    );
+    await waitFor(() => expect(hook.result.current.loading).toBe(false));
+    return hook;
+  }
+
+  it('starts from the name the informant gave, without storing anything yet', async () => {
+    const { result } = await openFromAnswer('  manzanilla ');
+
+    expect(result.current.draft?.vernacularName).toBe('manzanilla');
+    expect(result.current.fromAnswer).toBe(true);
+    expect(result.current.stored).toBe(false);
+    expect(await listFieldRecords(db, 9)).toHaveLength(0);
+  });
+
+  it('keeps the name within what the server accepts', async () => {
+    const { result } = await openFromAnswer('m'.repeat(300));
+
+    expect(result.current.draft?.vernacularName).toHaveLength(255);
+  });
+
+  it('is stored linked to the answer it came out of', async () => {
+    const { result } = await openFromAnswer('manzanilla');
+
+    await act(async () => result.current.update({ basis: 'human_observation' }));
+    await waitFor(() => expect(result.current.saving).toBe(false));
+
+    const [stored] = await listFieldRecords(db, 9);
+    expect(stored).toMatchObject({
+      answer_client_id: 'ans-1',
+      vernacular_name: 'manzanilla',
+      basis_of_record: 'human_observation',
+    });
+  });
+
+  it('says so when reopened', async () => {
+    const clientId = await createFieldRecord(
+      db,
+      9,
+      emptyDraft({ collector: 'M. Menéndez', today: '2026-10-04' }),
+      'ans-1'
+    );
+
+    const hook = await renderHook(() => useFieldRecord(9, clientId));
+    await waitFor(() => expect(hook.result.current.loading).toBe(false));
+
+    expect(hook.result.current.fromAnswer).toBe(true);
+  });
+
+  it('a record made on its own says nothing of the kind', async () => {
+    const { result } = await openNew();
+
+    expect(result.current.fromAnswer).toBe(false);
+  });
+});

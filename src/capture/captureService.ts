@@ -50,18 +50,21 @@ export interface SaveAnswerParams {
  * set) mints a client_id and inserts; later saves update the same row and bump
  * its edit-time (the last-writer-wins key on sync). Either way the interview
  * returns to the outbox, so edits made after a sync are actually sent.
+ *
+ * Returns the answer's client_id — what a field record made from it links to.
  */
-export async function saveAnswer(db: SQLiteDatabase, params: SaveAnswerParams): Promise<void> {
+export async function saveAnswer(db: SQLiteDatabase, params: SaveAnswerParams): Promise<string> {
   const now = new Date().toISOString();
   const encoded = encodeAnswerValue(params.value);
 
   const existing = await findAnswer(db, params.instanceId, params.itemId, params.repeatableIndex);
+  const clientId = existing?.client_id ?? uuid();
 
   if (existing) {
     await updateAnswerValue(db, existing.client_id, encoded, now);
   } else {
     await insertAnswer(db, {
-      clientId: uuid(),
+      clientId,
       instanceId: params.instanceId,
       sectionId: params.sectionId,
       itemId: params.itemId,
@@ -72,6 +75,7 @@ export async function saveAnswer(db: SQLiteDatabase, params: SaveAnswerParams): 
   }
 
   await recordLocalEdit(db, params.instanceId, now);
+  return clientId;
 }
 
 export function getDraftAnswers(db: SQLiteDatabase, instanceId: string): Promise<AnswerRow[]> {

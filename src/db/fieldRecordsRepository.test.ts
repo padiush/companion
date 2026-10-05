@@ -1,15 +1,19 @@
 import { createTestDatabase, type TestDatabase } from '../../test-utils/sqliteDatabase';
+import { deleteAnswer, deleteAnswersForSet, insertAnswer } from './answersRepository';
 import {
+  ANSWER_NOT_FOUND,
   countDraftFieldRecords,
   getFieldRecord,
   insertFieldRecord,
   listDraftFieldRecords,
   listFieldRecords,
+  listFieldRecordsForInstance,
   listWaitingFieldRecords,
   setFieldRecordSyncResult,
   updateFieldRecord,
   type FieldRecordInsert,
 } from './fieldRecordsRepository';
+import { insertInstance } from './instancesRepository';
 import { insertMedia } from './mediaRepository';
 import { upsertProjects } from './projectsRepository';
 
@@ -267,5 +271,122 @@ describe('records waiting to be sent', () => {
     const [waiting] = await listWaitingFieldRecords(db);
 
     expect(waiting).toMatchObject({ client_id: 'fr-1', project_name: null });
+  });
+});
+
+describe('records made from an interview answer', () => {
+  /** An interview with one answer naming a plant, in a repeatable set. */
+  async function interviewWithAnswer(instanceId = 'i-1', answerId = 'a-1', set = 0) {
+    await insertInstance(db, {
+      id: instanceId,
+      formId: 10,
+      projectId: 1,
+      capturedAt: AT,
+      location: null,
+      formVersionCursor: null,
+      createdAt: AT,
+      updatedAt: AT,
+    }).catch(() => {
+      // Already there: a second answer in the same interview.
+    });
+    await insertAnswer(db, {
+      clientId: answerId,
+      instanceId,
+      sectionId: 2,
+      itemId: 4,
+      repeatableIndex: set,
+      value: 'manzanilla',
+      editedAt: AT,
+    });
+  }
+
+  it('lists the records made from an interview, by its answers', async () => {
+    await interviewWithAnswer('i-1', 'a-1');
+    await interviewWithAnswer('i-2', 'a-2');
+    await insertFieldRecord(db, record({ clientId: 'fr-1', answerClientId: 'a-1' }));
+    await insertFieldRecord(db, record({ clientId: 'fr-2', answerClientId: 'a-2' }));
+    await insertFieldRecord(db, record({ clientId: 'fr-3' }));
+
+    const rows = await listFieldRecordsForInstance(db, 'i-1');
+
+    expect(rows.map((row) => row.client_id)).toEqual(['fr-1']);
+    expect(rows[0].answer_client_id).toBe('a-1');
+  });
+
+  /**
+   * Refused only because the answer had not reached the server: nothing about
+   * the record needs changing, so the next send tries it again on its own.
+   */
+  it('sends again a record refused only for want of its answer', async () => {
+    await insertFieldRecord(db, record({ clientId: 'fr-1', answerClientId: 'a-1' }));
+    await insertFieldRecord(db, record({ clientId: 'fr-2' }));
+    await setFieldRecordSyncResult(db, 'fr-1', { status: 'rejected', error: ANSWER_NOT_FOUND });
+    await setFieldRecordSyncResult(db, 'fr-2', {
+      status: 'rejected',
+      error: 'api.sync.permit_not_in_project',
+    });
+
+    const drafts = await listDraftFieldRecords(db);
+
+    // A refusal the device has to fix still waits for an edit.
+    expect(drafts.map((row) => row.client_id)).toEqual(['fr-1']);
+  });
+
+  it('lets go of an answer deleted on the device, putting the record back in the outbox', async () => {
+    await interviewWithAnswer('i-1', 'a-1');
+    await insertFieldRecord(db, record({ clientId: 'fr-1', answerClientId: 'a-1' }));
+    await setFieldRecordSyncResult(db, 'fr-1', { status: 'rejected', error: ANSWER_NOT_FOUND });
+
+    await deleteAnswer(db, 'a-1');
+
+    const stored = await getFieldRecord(db, 'fr-1');
+    expect(stored).toMatchObject({
+      answer_client_id: null,
+      sync_status: 'draft',
+      sync_error: null,
+    });
+  });
+
+  it('lets go of the answers in a removed set, and only those', async () => {
+    await interviewWithAnswer('i-1', 'a-1', 0);
+    await interviewWithAnswer('i-1', 'a-2', 1);
+    await insertFieldRecord(db, record({ clientId: 'fr-1', answerClientId: 'a-1' }));
+    await insertFieldRecord(db, record({ clientId: 'fr-2', answerClientId: 'a-2' }));
+
+    await deleteAnswersForSet(db, 'i-1', 2, 1);
+
+    expect((await getFieldRecord(db, 'fr-1'))?.answer_client_id).toBe('a-1');
+    expect((await getFieldRecord(db, 'fr-2'))?.answer_client_id).toBeNull();
+  });
+
+  /** The server holds its own copy of the answer, and never clears the link. */
+  it('keeps the link on a record the server already holds', async () => {
+    await interviewWithAnswer('i-1', 'a-1');
+    await insertFieldRecord(db, record({ clientId: 'fr-1', answerClientId: 'a-1' }));
+    await setFieldRecordSyncResult(db, 'fr-1', { status: 'synced', serverId: 12 });
+
+    await deleteAnswer(db, 'a-1');
+
+    expect(await getFieldRecord(db, 'fr-1')).toMatchObject({
+      answer_client_id: 'a-1',
+      sync_status: 'synced',
+    });
+  });
+
+  it('leaves a refusal the device must fix as it was', async () => {
+    await interviewWithAnswer('i-1', 'a-1');
+    await insertFieldRecord(db, record({ clientId: 'fr-1', answerClientId: 'a-1' }));
+    await setFieldRecordSyncResult(db, 'fr-1', {
+      status: 'rejected',
+      error: 'api.sync.permit_not_in_project',
+    });
+
+    await deleteAnswer(db, 'a-1');
+
+    expect(await getFieldRecord(db, 'fr-1')).toMatchObject({
+      answer_client_id: null,
+      sync_status: 'rejected',
+      sync_error: 'api.sync.permit_not_in_project',
+    });
   });
 });

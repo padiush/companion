@@ -173,6 +173,12 @@ export function useInterview(
         setSaving(true);
         void getDatabase()
           .then((db) => saveAnswer(db, { instanceId, sectionId, itemId, repeatableIndex, value }))
+          // A slot's first save is when its answer gets an id; anything that
+          // links to the answer, a field record among them, needs it then
+          // rather than the next time the interview is opened.
+          .then((clientId) =>
+            setClientIds((prev) => (prev[key] === clientId ? prev : { ...prev, [key]: clientId }))
+          )
           .finally(() => {
             pendingSaves.current -= 1;
             if (pendingSaves.current === 0) {
