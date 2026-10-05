@@ -43,7 +43,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Padiush records interview audio so it can be transcribed later.",
+          "microphonePermission": "Padiush records interview audio and voice notes on field records.",
           "enableBackgroundPlayback": false,
           "enableBackgroundRecording": true
         }

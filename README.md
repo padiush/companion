@@ -46,9 +46,9 @@ the authoritative contract is that repo's `docs/api/openapi.yaml`.
 - `expo-sqlite` (SQLCipher) — the offline local store for captured records,
   encrypted at rest with a device-generated key held in the secure store
 - `expo-location` — GPS for interview location
-- `expo-audio` — interview audio recording, continuing while the app is
-  backgrounded (a recording foreground service on Android, the `audio`
-  background mode on iOS)
+- `expo-audio` — interview audio and voice notes on field records, recording
+  on while the app is backgrounded (a recording foreground service on Android,
+  the `audio` background mode on iOS)
 - `expo-file-system` — reading captures for ingest into the encrypted store
 - `expo-crypto` — client-generated UUIDs (the sync idempotency keys)
 

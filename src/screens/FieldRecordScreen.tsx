@@ -10,6 +10,7 @@ import {
   type TextInputProps,
 } from 'react-native';
 
+import { AudioRecorder } from '../capture/AudioRecorder';
 import { DateField } from '../capture/DateField';
 import { MediaSection } from '../capture/MediaSection';
 import { BASES, EXEMPTIONS, permitLabel, type FieldRecordDraft } from '../capture/fieldRecord';
@@ -160,10 +161,17 @@ export function FieldRecordScreen() {
 
         {/*
           Right after what the record is: for an observation the photograph is
-          the evidence itself, and it is often the first thing captured. Taking
-          one stores the record if nothing else has yet.
+          the evidence itself, and it is often the first thing captured. Then a
+          voice note, for the name as it was said or what was told about the
+          plant. Keeping either stores the record if nothing else has yet.
         */}
         <MediaSection
+          fieldRecordId={clientId}
+          ensureFieldRecord={ensureStored}
+          readOnly={readOnly}
+        />
+
+        <AudioRecorder
           fieldRecordId={clientId}
           ensureFieldRecord={ensureStored}
           readOnly={readOnly}

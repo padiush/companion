@@ -19,6 +19,10 @@ const mockMediaSection = jest.fn((_props: Record<string, unknown>) => null);
 jest.mock('../capture/MediaSection', () => ({
   MediaSection: (props: Record<string, unknown>) => mockMediaSection(props),
 }));
+const mockAudioRecorder = jest.fn((_props: Record<string, unknown>) => null);
+jest.mock('../capture/AudioRecorder', () => ({
+  AudioRecorder: (props: Record<string, unknown>) => mockAudioRecorder(props),
+}));
 
 const mockUseFieldRecord = useFieldRecord as jest.Mock;
 const update = jest.fn();
@@ -210,6 +214,29 @@ describe('FieldRecordScreen', () => {
     await render(<FieldRecordScreen />);
 
     expect(mockMediaSection).toHaveBeenLastCalledWith(expect.objectContaining({ readOnly: true }));
+  });
+
+  /** A voice note belongs to the record the way a photograph does. */
+  it('offers a voice note, storing the record on demand', async () => {
+    mockUseFieldRecord.mockReturnValue(state({}, { clientId: 'fr-1' }));
+
+    await render(<FieldRecordScreen />);
+
+    expect(mockAudioRecorder).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        fieldRecordId: 'fr-1',
+        ensureFieldRecord: ensureStored,
+        readOnly: false,
+      })
+    );
+  });
+
+  it('takes no new recordings for a sent record', async () => {
+    mockUseFieldRecord.mockReturnValue(state({}, { readOnly: true, clientId: 'fr-1' }));
+
+    await render(<FieldRecordScreen />);
+
+    expect(mockAudioRecorder).toHaveBeenLastCalledWith(expect.objectContaining({ readOnly: true }));
   });
 
   it('explains why the server refused a record', async () => {

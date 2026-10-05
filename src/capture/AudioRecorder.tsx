@@ -20,12 +20,19 @@ import {
 import Svg, { Path } from 'react-native-svg';
 
 import { getDatabase } from '../db/database';
-import { listMediaForInstance } from '../db/mediaRepository';
 import type { MediaRow } from '../db/types';
 import { impact } from '../haptics';
 import { border, radius, space, touch, type, useTheme } from '../theme';
 import { SectionLabel } from '../ui/SectionLabel';
 import { formatClock, meteringToLevel } from './audioLevels';
+import {
+  currentOwner,
+  isReadOnly,
+  listOwnedMedia,
+  resolveOwner,
+  type MediaOwner,
+  type MediaOwnerProps,
+} from './mediaOwner';
 import { attachMedia } from './mediaService';
 
 /** Bars kept in the rolling waveform, and how often the recorder is sampled. */
@@ -59,14 +66,32 @@ async function askToShowRecordingNotification() {
 }
 
 /**
- * Records interview audio into the encrypted store. Sits at the top of the
- * interview so a researcher can start recording before touching the form.
- * Supports pause/resume (to take material off the record) and shows a live
- * waveform, a running clock, and a recording indicator.
+ * Records audio into the encrypted store, for an interview or a field record.
+ * On an interview it sits at the top so a researcher can start recording
+ * before touching the form; on a record it takes a voice note — the name as
+ * it was said, or what was told about the plant. Supports pause/resume (to
+ * take material off the record) and shows a live waveform, a running clock,
+ * and a recording indicator.
+ *
+ * A new field record is stored only once a take has been kept, as with a
+ * photograph: starting and abandoning a recording leaves nothing behind.
  */
-export function AudioRecorder({ instanceId }: { instanceId: string }) {
+export function AudioRecorder(props: MediaOwnerProps) {
   const { t } = useTranslation();
   const theme = useTheme();
+
+  const { instanceId, fieldRecordId } = currentOwner(props);
+  const readOnly = isReadOnly(props);
+  const forRecord = !('instanceId' in props);
+
+  // Who a finished take belongs to is settled when it is kept, which can be
+  // long after the take began — a record may have been stored in between. The
+  // ingest path reads the owner through a ref, so it always sees the current
+  // one without being rebuilt, and resubscribed, on every render.
+  const ownerPropsRef = useRef(props);
+  useEffect(() => {
+    ownerPropsRef.current = props;
+  });
 
   // Native emits a finish event whenever a take ends, including when it is
   // ended from the notification. The listener has to be handed over at
@@ -105,39 +130,43 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
    */
   const settlingRef = useRef(false);
 
-  const refresh = useCallback(async () => {
-    const db = await getDatabase();
-    const rows = await listMediaForInstance(db, instanceId);
-    setRecordings(rows.filter((row) => row.kind === 'audio'));
-  }, [instanceId]);
+  const refresh = useCallback(async (owner: MediaOwner) => {
+    setRecordings(await listOwnedMedia(owner, 'audio'));
+  }, []);
 
-  /** Move a finished take into the encrypted store and re-list it. */
+  /**
+   * Move a finished take into the encrypted store and re-list it — storing a
+   * new field record first, now that there is something to keep.
+   */
   const ingest = useCallback(
     async (uri: string, durationS: number) => {
+      const owner = await resolveOwner(ownerPropsRef.current);
+      if (!owner) {
+        throw new Error('nothing to attach the recording to');
+      }
+
       const db = await getDatabase();
       await attachMedia(db, {
-        instanceId,
+        ...owner,
         kind: 'audio',
         localUri: uri,
         contentType: 'audio/mp4',
         durationS,
       });
-      await refresh();
+      await refresh(owner);
     },
-    [instanceId, refresh]
+    [refresh]
   );
 
   useEffect(() => {
     let active = true;
-    getDatabase()
-      .then((db) => listMediaForInstance(db, instanceId))
-      .then((rows) => {
-        if (active) setRecordings(rows.filter((row) => row.kind === 'audio'));
-      });
+    listOwnedMedia({ instanceId, fieldRecordId }, 'audio').then((rows) => {
+      if (active) setRecordings(rows);
+    });
     return () => {
       active = false;
     };
-  }, [instanceId]);
+  }, [instanceId, fieldRecordId]);
 
   // While recording, sample the recorder to drive the clock and waveform. A
   // pause tears the interval down, freezing both — the visible "off the record"
@@ -342,91 +371,102 @@ export function AudioRecorder({ instanceId }: { instanceId: string }) {
   return (
     <View style={styles.container}>
       <SectionLabel>{t('interview.audioTitle')}</SectionLabel>
-      <Text style={[styles.hint, { color: theme.muted }]}>{t('interview.recordHint')}</Text>
 
-      <View
-        style={[
-          styles.stage,
-          { backgroundColor: theme.card, borderColor: active ? theme.danger : theme.border },
-        ]}
-      >
-        <View style={styles.stageHeader}>
-          <View style={styles.statusRow}>
-            {active ? (
-              <View
-                testID="recording-dot"
-                style={[styles.dot, { backgroundColor: recording ? theme.danger : theme.muted }]}
-              />
-            ) : (
-              <MicIcon color={theme.primary} />
-            )}
-            <Text
-              style={[styles.status, { color: active ? theme.danger : theme.muted }]}
-              testID="recording-status"
-            >
-              {statusLabel}
-            </Text>
-          </View>
-          <Text style={[styles.clock, { color: theme.text }]} testID="recording-clock">
-            {formatClock(active ? durationMillis : 0)}
+      {/* A sent record keeps the recordings it has and takes no more. */}
+      {readOnly ? null : (
+        <>
+          <Text style={[styles.hint, { color: theme.muted }]}>
+            {t(forRecord ? 'fieldRecord.audioHint' : 'interview.recordHint')}
           </Text>
-        </View>
 
-        <Waveform
-          levels={levels}
-          color={recording ? theme.danger : theme.muted}
-          track={theme.border}
-        />
-
-        <View style={styles.controls}>
-          {active ? (
-            <>
-              <TouchableOpacity
-                testID={recording ? 'pause-recording' : 'resume-recording'}
-                onPress={recording ? pause : resume}
-                disabled={busy}
-                accessibilityRole="button"
-                style={[styles.secondaryButton, { borderColor: theme.border }]}
-              >
-                <Text style={[styles.secondaryText, { color: theme.text }]}>
-                  {recording ? t('interview.pauseRecording') : t('interview.resumeRecording')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                testID="stop-recording"
-                onPress={stop}
-                disabled={busy}
-                accessibilityRole="button"
-                style={[styles.primaryButton, { backgroundColor: theme.danger }]}
-              >
-                {busy ? (
-                  <ActivityIndicator color={theme.onPrimary} />
+          <View
+            style={[
+              styles.stage,
+              { backgroundColor: theme.card, borderColor: active ? theme.danger : theme.border },
+            ]}
+          >
+            <View style={styles.stageHeader}>
+              <View style={styles.statusRow}>
+                {active ? (
+                  <View
+                    testID="recording-dot"
+                    style={[
+                      styles.dot,
+                      { backgroundColor: recording ? theme.danger : theme.muted },
+                    ]}
+                  />
                 ) : (
-                  <Text style={[styles.primaryText, { color: theme.onPrimary }]}>
-                    {t('interview.stopRecording')}
-                  </Text>
+                  <MicIcon color={theme.primary} />
                 )}
-              </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity
-              testID="record-audio"
-              onPress={start}
-              disabled={busy}
-              accessibilityRole="button"
-              style={[styles.primaryButton, { backgroundColor: theme.primary }]}
-            >
-              {busy ? (
-                <ActivityIndicator color={theme.onPrimary} />
-              ) : (
-                <Text style={[styles.primaryText, { color: theme.onPrimary }]}>
-                  {t('interview.recordAudio')}
+                <Text
+                  style={[styles.status, { color: active ? theme.danger : theme.muted }]}
+                  testID="recording-status"
+                >
+                  {statusLabel}
                 </Text>
+              </View>
+              <Text style={[styles.clock, { color: theme.text }]} testID="recording-clock">
+                {formatClock(active ? durationMillis : 0)}
+              </Text>
+            </View>
+
+            <Waveform
+              levels={levels}
+              color={recording ? theme.danger : theme.muted}
+              track={theme.border}
+            />
+
+            <View style={styles.controls}>
+              {active ? (
+                <>
+                  <TouchableOpacity
+                    testID={recording ? 'pause-recording' : 'resume-recording'}
+                    onPress={recording ? pause : resume}
+                    disabled={busy}
+                    accessibilityRole="button"
+                    style={[styles.secondaryButton, { borderColor: theme.border }]}
+                  >
+                    <Text style={[styles.secondaryText, { color: theme.text }]}>
+                      {recording ? t('interview.pauseRecording') : t('interview.resumeRecording')}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    testID="stop-recording"
+                    onPress={stop}
+                    disabled={busy}
+                    accessibilityRole="button"
+                    style={[styles.primaryButton, { backgroundColor: theme.danger }]}
+                  >
+                    {busy ? (
+                      <ActivityIndicator color={theme.onPrimary} />
+                    ) : (
+                      <Text style={[styles.primaryText, { color: theme.onPrimary }]}>
+                        {t('interview.stopRecording')}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <TouchableOpacity
+                  testID="record-audio"
+                  onPress={start}
+                  disabled={busy}
+                  accessibilityRole="button"
+                  style={[styles.primaryButton, { backgroundColor: theme.primary }]}
+                >
+                  {busy ? (
+                    <ActivityIndicator color={theme.onPrimary} />
+                  ) : (
+                    <Text style={[styles.primaryText, { color: theme.onPrimary }]}>
+                      {t('interview.recordAudio')}
+                    </Text>
+                  )}
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+            </View>
+          </View>
+        </>
+      )}
 
       {error ? <Text style={[styles.error, { color: theme.danger }]}>{error}</Text> : null}
 

@@ -123,6 +123,7 @@
     "vernacularNameHint": "Como lo llamó quien te acompañaba. Se guarda cifrado.",
     "collectionNumber": "Número de colecta",
     "collectionNumberHint": "El número que escribiste en la etiqueta.",
+    "audioHint": "Una nota de voz: el nombre tal como se dijo, o lo que te contaron de la planta.",
     "collector": "Colector",
     "collectedOn": "Fecha de colecta",
     "locality": "Localidad",
