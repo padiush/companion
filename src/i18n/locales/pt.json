@@ -310,7 +310,7 @@
     "releases": [
       {
         "version": "1.1.0",
-        "date": null,
+        "date": "2026-10-05",
         "items": [
           "O app tem um visual novo, como o da web, pensado para ser usado com uma mão em campo, e mostra as fotos de cada registro.",
           "O app se organiza em três abas: Entrevistas, Registros e Para enviar.",
