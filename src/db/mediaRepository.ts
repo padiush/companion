@@ -95,6 +95,65 @@ export async function readMediaBytes(
   return bytes;
 }
 
+/**
+ * How many bytes are stored for the media, counted without reading them. Zero
+ * when none are.
+ */
+export async function mediaByteSize(db: SQLiteDatabase, clientId: string): Promise<number> {
+  const row = await db.getFirstAsync<{ size: number | null }>(
+    'SELECT SUM(length(data)) AS size FROM media_blobs WHERE client_id = ?',
+    [clientId]
+  );
+
+  return row?.size ?? 0;
+}
+
+/**
+ * `length` bytes of the media starting at `offset`, read from only the chunks
+ * that hold them — one part of a resumable upload, without reassembling the
+ * whole file. Shorter than asked when the range runs past the end.
+ */
+export async function readMediaRange(
+  db: SQLiteDatabase,
+  clientId: string,
+  offset: number,
+  length: number
+): Promise<Uint8Array<ArrayBuffer>> {
+  // Chunk sizes first, so only the chunks inside the range are read.
+  const chunks = await db.getAllAsync<{ seq: number; size: number }>(
+    'SELECT seq, length(data) AS size FROM media_blobs WHERE client_id = ? ORDER BY seq',
+    [clientId]
+  );
+
+  const end = offset + length;
+  const wanted: { seq: number; start: number }[] = [];
+  let start = 0;
+  for (const chunk of chunks) {
+    if (start + chunk.size > offset && start < end) {
+      wanted.push({ seq: chunk.seq, start });
+    }
+    start += chunk.size;
+  }
+
+  const bytes = new Uint8Array(Math.max(0, Math.min(end, start) - offset));
+
+  for (const { seq, start: chunkStart } of wanted) {
+    const row = await db.getFirstAsync<{ data: Uint8Array }>(
+      'SELECT data FROM media_blobs WHERE client_id = ? AND seq = ?',
+      [clientId, seq]
+    );
+    if (!row) {
+      throw new Error('media bytes changed while being read');
+    }
+
+    const from = Math.max(offset - chunkStart, 0);
+    const to = Math.min(end - chunkStart, row.data.byteLength);
+    bytes.set(row.data.subarray(from, to), chunkStart + from - offset);
+  }
+
+  return bytes;
+}
+
 export async function deleteMediaBytes(db: SQLiteDatabase, clientId: string): Promise<void> {
   await db.runAsync('DELETE FROM media_blobs WHERE client_id = ?', [clientId]);
 }

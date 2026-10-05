@@ -238,9 +238,16 @@ export interface MediaIntentRequest {
   kind: MediaKind;
   content_type: string;
   byte_size: number;
+  /**
+   * Ask for a multipart upload when the file is larger than one part, so a
+   * dropped connection resumes instead of restarting. A server without
+   * resumable uploads ignores it and answers with a single PUT.
+   */
+  resumable?: boolean;
 }
 
-export interface MediaIntentResponse {
+/** The whole file in one presigned PUT. */
+export interface SingleUploadIntent {
   upload_url: string;
   /**
    * Headers to send with the PUT. The contract says strings, but servers have
@@ -251,6 +258,34 @@ export interface MediaIntentResponse {
   headers: Record<string, string | string[]>;
   storage_key: string;
   expires_at: string;
+  /** Present only when the intent asked to resume. */
+  upload?: { mode: 'single' };
+}
+
+/** A multipart upload the server holds; its parts come from `media/parts`. */
+export interface MultipartUploadIntent {
+  storage_key: string;
+  upload: { mode: 'multipart'; part_size: number; part_count: number };
+}
+
+export type MediaIntentResponse = SingleUploadIntent | MultipartUploadIntent;
+
+export interface MediaPartsRequest {
+  client_id: string;
+  storage_key: string;
+}
+
+/** One part still to send: PUT its bytes to `url`. */
+export interface MediaPart {
+  number: number;
+  url: string;
+  headers: Record<string, string | string[]>;
+}
+
+export interface MediaPartsResponse {
+  /** Only the parts storage does not hold yet; empty means complete. */
+  parts: MediaPart[];
+  expires_at: string | null;
 }
 
 export interface MediaCompleteRequest {

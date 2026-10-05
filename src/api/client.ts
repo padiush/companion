@@ -11,6 +11,8 @@ import type {
   MediaCompleteResponse,
   MediaIntentRequest,
   MediaIntentResponse,
+  MediaPartsRequest,
+  MediaPartsResponse,
   MeResponse,
   SyncRequest,
   SyncResponse,
@@ -117,6 +119,13 @@ export const api = {
       body: payload,
     }),
 
+  /** The parts of a multipart upload still to send, with a URL for each. */
+  mediaParts: (instanceId: string, payload: MediaPartsRequest) =>
+    request<MediaPartsResponse>(`/instances/${instanceId}/media/parts`, {
+      method: 'POST',
+      body: payload,
+    }),
+
   mediaComplete: (instanceId: string, payload: MediaCompleteRequest) =>
     request<MediaCompleteResponse>(`/instances/${instanceId}/media/complete`, {
       method: 'POST',
@@ -129,6 +138,12 @@ export const api = {
    */
   recordMediaIntent: (recordId: number, payload: MediaIntentRequest) =>
     request<MediaIntentResponse>(`/records/${recordId}/media/intent`, {
+      method: 'POST',
+      body: payload,
+    }),
+
+  recordMediaParts: (recordId: number, payload: MediaPartsRequest) =>
+    request<MediaPartsResponse>(`/records/${recordId}/media/parts`, {
       method: 'POST',
       body: payload,
     }),
