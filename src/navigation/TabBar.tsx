@@ -71,8 +71,15 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               {focused ? (
                 <Text style={[styles.label, { color: theme.onPrimary }]} numberOfLines={1}>
                   {label}
-                  {badge !== undefined ? ` · ${badge}` : ''}
                 </Text>
+              ) : null}
+              {focused && badge !== undefined ? (
+                <View
+                  testID={`tab-badge-${route.name}`}
+                  style={[styles.count, { backgroundColor: theme.onPrimary }]}
+                >
+                  <Text style={[styles.countText, { color: theme.primary }]}>{badge}</Text>
+                </View>
               ) : null}
             </TouchableOpacity>
           );
@@ -109,13 +116,27 @@ const styles = StyleSheet.create({
     gap: space.sm,
   },
   active: {
-    flex: 1.6,
+    // Wide enough for the longest tab name, "Por enviar", and its count.
+    flex: 2.2,
     paddingHorizontal: space.md,
   },
   label: {
     ...type.label,
     fontWeight: '800',
     flexShrink: 1,
+  },
+  count: {
+    minWidth: 22,
+    height: 22,
+    paddingHorizontal: 6,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countText: {
+    ...type.caption,
+    fontSize: 12,
+    fontWeight: '800',
   },
   badge: {
     position: 'absolute',

@@ -46,4 +46,12 @@ describe('TabBar', () => {
     expect(getByTestId('tab-badge-Outbox')).toHaveTextContent('3');
     expect(getByTestId('tab-Outbox').props.accessibilityLabel).toBe('Por enviar, 3');
   });
+
+  /** On the open tab the count sits beside the name rather than in it, so neither is cut. */
+  it('keeps the count beside the name on the open tab', async () => {
+    const { getByText, getByTestId } = await render(<TabBar {...props(2, 12)} />);
+
+    expect(getByText('Por enviar')).toBeTruthy();
+    expect(getByTestId('tab-badge-Outbox')).toHaveTextContent('12');
+  });
 });
