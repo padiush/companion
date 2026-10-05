@@ -169,13 +169,14 @@ the production profile increments it, so commit the bump.
 
 ## Forking this app
 
-Everything needed to build your own is here, but four values belong to this
+Everything needed to build your own is here, but five values belong to this
 deployment and have to become yours before a build will work:
 
 | Where | What | Why |
 |---|---|---|
 | [app.json](app.json) | `expo.owner`, `expo.extra.eas.projectId` | These name our EAS project. Run `eas init` to create your own, or a build will aim at ours and fail on permissions. |
 | [app.json](app.json) | `android.package`, `ios.bundleIdentifier` | Reverse a domain you own; an app id cannot be shared. |
+| [app.json](app.json) | `ios.appleTeamId` | Your Apple Developer team. iOS builds are signed for it, and you can only sign for a team you belong to. |
 | [eas.json](eas.json) | `EXPO_PUBLIC_API_BASE_URL` in `preview` and `production` | Point them at your own Padiush server. |
 | [eas.json](eas.json) | the `submit` profiles | Your store track and your own service-account key, which is gitignored and never committed. |
 
