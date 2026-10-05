@@ -11,6 +11,11 @@ in [docs/releasing.md](docs/releasing.md).
 
 ## [Unreleased]
 
+### Added
+
+- The `production` submit profile sends iOS builds to the app's App Store
+  Connect record.
+
 ## [1.1.0] — 2026-10-05
 
 ### Changed
