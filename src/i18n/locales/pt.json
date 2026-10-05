@@ -153,6 +153,9 @@
     "notSavedYet": "É salvo assim que você anotar algo.",
     "fromAnswer": "Feito a partir de uma resposta da entrevista. É enviado depois dela.",
     "done": "Concluir",
+    "discard": "Descartar registro",
+    "discardTitle": "Descartar este registro?",
+    "discardMessage": "Ele é apagado deste dispositivo com suas fotos e áudio. Como não foi enviado, não resta cópia em nenhum outro lugar.",
     "sentReadOnly": "Este registro já foi enviado. As correções são feitas na web.",
     "refusedTitle": "O servidor não aceitou este registro",
     "status": {

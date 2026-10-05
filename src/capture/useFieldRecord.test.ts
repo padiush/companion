@@ -305,3 +305,68 @@ describe('a record made from an interview answer', () => {
     expect(result.current.fromAnswer).toBe(false);
   });
 });
+
+describe('discarding', () => {
+  it('cannot discard what was never stored', async () => {
+    const { result } = await openNew();
+
+    expect(result.current.discardable).toBe(false);
+  });
+
+  it('deletes a record stored in this visit, and writes nothing after', async () => {
+    const { result } = await openNew();
+    await act(async () => result.current.update({ vernacularName: 'guaba' }));
+    expect(result.current.discardable).toBe(true);
+
+    let deleted = false;
+    await act(async () => {
+      // An edit still queued must not put the record back once it is gone.
+      result.current.update({ vernacularName: 'guaba colorada' });
+      deleted = await result.current.discard();
+    });
+
+    expect(deleted).toBe(true);
+    expect(await listFieldRecords(db, 9)).toHaveLength(0);
+
+    await act(async () => result.current.update({ notes: 'after' }));
+    await waitFor(() => expect(result.current.saving).toBe(false));
+    expect(await listFieldRecords(db, 9)).toHaveLength(0);
+  });
+
+  it('deletes a stored record reopened from the list', async () => {
+    const clientId = await createFieldRecord(
+      db,
+      9,
+      emptyDraft({ collector: 'M. Menéndez', today: '2026-10-04' })
+    );
+    const hook = await renderHook(() => useFieldRecord(9, clientId));
+    await waitFor(() => expect(hook.result.current.loading).toBe(false));
+
+    let deleted = false;
+    await act(async () => {
+      deleted = await hook.result.current.discard();
+    });
+
+    expect(deleted).toBe(true);
+    expect(await getFieldRecord(db, clientId)).toBeNull();
+  });
+
+  it('offers nothing for a sent record, and keeps it', async () => {
+    const clientId = await createFieldRecord(
+      db,
+      9,
+      emptyDraft({ collector: 'M. Menéndez', today: '2026-10-04' })
+    );
+    await setFieldRecordSyncResult(db, clientId, { status: 'synced', serverId: 12 });
+    const hook = await renderHook(() => useFieldRecord(9, clientId));
+    await waitFor(() => expect(hook.result.current.loading).toBe(false));
+
+    expect(hook.result.current.discardable).toBe(false);
+    let deleted = true;
+    await act(async () => {
+      deleted = await hook.result.current.discard();
+    });
+    expect(deleted).toBe(false);
+    expect(await getFieldRecord(db, clientId)).not.toBeNull();
+  });
+});

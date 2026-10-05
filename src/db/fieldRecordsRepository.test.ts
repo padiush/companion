@@ -3,6 +3,7 @@ import { deleteAnswer, deleteAnswersForSet, insertAnswer } from './answersReposi
 import {
   ANSWER_NOT_FOUND,
   countDraftFieldRecords,
+  deleteUnsentFieldRecord,
   getFieldRecord,
   insertFieldRecord,
   listDraftFieldRecords,
@@ -14,7 +15,7 @@ import {
   type FieldRecordInsert,
 } from './fieldRecordsRepository';
 import { insertInstance } from './instancesRepository';
-import { insertMedia } from './mediaRepository';
+import { insertMedia, insertMediaChunk } from './mediaRepository';
 import { upsertProjects } from './projectsRepository';
 
 let db: TestDatabase;
@@ -388,5 +389,59 @@ describe('records made from an interview answer', () => {
       sync_status: 'rejected',
       sync_error: 'api.sync.permit_not_in_project',
     });
+  });
+});
+
+describe('discarding a record', () => {
+  async function withPhotograph(clientId: string, mediaId: string) {
+    await insertMedia(db, {
+      clientId: mediaId,
+      fieldRecordId: clientId,
+      kind: 'photo',
+      contentType: 'image/jpeg',
+      byteSize: 3,
+      capturedAt: AT,
+    });
+    await insertMediaChunk(db, mediaId, 0, new Uint8Array([1, 2, 3]));
+  }
+
+  async function count(table: string) {
+    const row = await db.getFirstAsync<{ n: number }>(`SELECT COUNT(*) AS n FROM ${table}`);
+    return row?.n ?? 0;
+  }
+
+  /** Informant media lives only in the store; discarding has to take it too. */
+  it('deletes an unsent record with its photographs and their bytes', async () => {
+    await insertFieldRecord(db, record({ clientId: 'fr-1' }));
+    await insertFieldRecord(db, record({ clientId: 'fr-2' }));
+    await withPhotograph('fr-1', 'm-1');
+    await withPhotograph('fr-2', 'm-2');
+
+    expect(await deleteUnsentFieldRecord(db, 'fr-1')).toBe(true);
+
+    expect(await getFieldRecord(db, 'fr-1')).toBeNull();
+    expect(await count('media')).toBe(1);
+    expect(await count('media_blobs')).toBe(1);
+    expect(await getFieldRecord(db, 'fr-2')).not.toBeNull();
+  });
+
+  it('deletes a refused record the server never created', async () => {
+    await insertFieldRecord(db, record({ clientId: 'fr-1' }));
+    await setFieldRecordSyncResult(db, 'fr-1', {
+      status: 'rejected',
+      error: 'api.sync.permit_not_in_project',
+    });
+
+    expect(await deleteUnsentFieldRecord(db, 'fr-1')).toBe(true);
+    expect(await getFieldRecord(db, 'fr-1')).toBeNull();
+  });
+
+  /** Sync is push-only: the server's copy would stay, out of the device's sight. */
+  it('keeps a record the server holds', async () => {
+    await insertFieldRecord(db, record({ clientId: 'fr-1' }));
+    await setFieldRecordSyncResult(db, 'fr-1', { status: 'synced', serverId: 12 });
+
+    expect(await deleteUnsentFieldRecord(db, 'fr-1')).toBe(false);
+    expect(await getFieldRecord(db, 'fr-1')).not.toBeNull();
   });
 });

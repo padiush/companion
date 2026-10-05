@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { readSession } from '../auth/session';
 import { getDatabase } from '../db/database';
 import type { FieldRecordLocation } from '../db/fieldRecordsRepository';
-import { getFieldRecord } from '../db/fieldRecordsRepository';
+import { deleteUnsentFieldRecord, getFieldRecord } from '../db/fieldRecordsRepository';
 import { listPermits } from '../db/permitsRepository';
 import type { CollectingPermitRow } from '../db/types';
 import { formatDate } from './dateValue';
@@ -39,6 +39,11 @@ export interface FieldRecordState {
   /** Whether the record came out of an interview answer. */
   fromAnswer: boolean;
   /**
+   * Whether the record can be discarded: it is stored, and the server has
+   * never seen it. Once sent, it belongs to the web.
+   */
+  discardable: boolean;
+  /**
    * A record the server has accepted belongs to the web from then on: the web
    * identifies and deposits it while this copy would go on claiming to be the
    * truth (ADR 0011 in the platform repository). Corrections are made there.
@@ -64,6 +69,12 @@ export interface FieldRecordState {
    * to belong to.
    */
   ensureStored: () => Promise<string | null>;
+  /**
+   * Delete the record from the device, with its photographs and recordings.
+   * Resolves whether it was deleted; a record the server has meanwhile
+   * accepted is kept.
+   */
+  discard: () => Promise<boolean>;
 }
 
 /**
@@ -97,6 +108,7 @@ export function useFieldRecord(
   const [locating, setLocating] = useState(false);
   const [locationFailed, setLocationFailed] = useState(false);
   const [linkedAnswer, setLinkedAnswer] = useState<string | null>(null);
+  const [serverId, setServerId] = useState<number | null>(null);
 
   // Primitives, so a caller passing a fresh object each render does not
   // reload the record.
@@ -110,6 +122,8 @@ export function useFieldRecord(
   const writes = useRef<Promise<void>>(Promise.resolve());
   const pendingWrites = useRef(0);
   const mounted = useRef(true);
+  /** Discarded: nothing more is written, so an edit cannot bring it back. */
+  const discarded = useRef(false);
 
   const readOnly = syncStatus === 'synced';
 
@@ -123,7 +137,7 @@ export function useFieldRecord(
     writes.current = writes.current
       .then(async () => {
         const current = draftRef.current;
-        if (!current) {
+        if (!current || discarded.current) {
           return;
         }
 
@@ -212,6 +226,7 @@ export function useFieldRecord(
         setSyncStatus(row.sync_status);
         setSyncError(row.sync_error);
         setLinkedAnswer(row.answer_client_id);
+        setServerId(row.server_id);
       } else {
         // Asked for a record that is not here any more: start a new one
         // rather than save edits against a row that no longer exists.
@@ -286,6 +301,29 @@ export function useFieldRecord(
     return clientIdRef.current;
   }, [persist, readOnly]);
 
+  const discard = useCallback(async () => {
+    if (readOnly || serverId !== null) {
+      return false;
+    }
+
+    // Let every queued write land first, the insert among them, so none of
+    // them runs after the delete and puts the record back.
+    discarded.current = true;
+    await writes.current;
+
+    if (!clientIdRef.current) {
+      return true;
+    }
+
+    const db = await getDatabase();
+    const deleted = await deleteUnsentFieldRecord(db, clientIdRef.current);
+    if (!deleted) {
+      // Accepted by the server in the meantime: it is the web's now, and kept.
+      discarded.current = false;
+    }
+    return deleted;
+  }, [readOnly, serverId]);
+
   return {
     draft,
     permits,
@@ -294,6 +332,7 @@ export function useFieldRecord(
     stored,
     clientId,
     fromAnswer: linkedAnswer !== null,
+    discardable: stored && !readOnly && serverId === null,
     readOnly,
     syncStatus,
     syncError,
@@ -302,5 +341,6 @@ export function useFieldRecord(
     update,
     locate,
     ensureStored,
+    discard,
   };
 }

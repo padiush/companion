@@ -146,6 +146,27 @@ export async function getFieldRecord(
   ]);
 }
 
+/**
+ * Delete a record the server has never seen, with its photographs and
+ * recordings: their rows and their encrypted bytes go with it, by the
+ * schema's cascades. Returns whether there was such a record.
+ *
+ * Only a record without a server id. One the server holds belongs to the web
+ * from then on, and sync is push-only: deleting the device's copy would not
+ * delete the server's, it would only lose sight of it.
+ */
+export async function deleteUnsentFieldRecord(
+  db: SQLiteDatabase,
+  clientId: string
+): Promise<boolean> {
+  const result = await db.runAsync(
+    'DELETE FROM field_records WHERE client_id = ? AND server_id IS NULL',
+    [clientId]
+  );
+
+  return result.changes > 0;
+}
+
 /** Every record captured for a project, newest first. */
 export async function listFieldRecords(
   db: SQLiteDatabase,

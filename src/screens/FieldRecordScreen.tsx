@@ -2,6 +2,7 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -49,6 +50,7 @@ export function FieldRecordScreen() {
     stored,
     clientId,
     fromAnswer,
+    discardable,
     readOnly,
     syncStatus,
     syncError,
@@ -57,6 +59,7 @@ export function FieldRecordScreen() {
     update,
     locate,
     ensureStored,
+    discard,
   } = useFieldRecord(
     params.projectId,
     params.clientId,
@@ -98,6 +101,25 @@ export function FieldRecordScreen() {
    */
   const unlistedPermit =
     draft.permitId !== null && !permits.some((permit) => permit.id === draft.permitId);
+
+  /**
+   * Discarding is final: nothing of the record was sent, so nothing of it is
+   * left anywhere once it goes. Asked, never assumed.
+   */
+  const confirmDiscard = () => {
+    Alert.alert(t('fieldRecord.discardTitle'), t('fieldRecord.discardMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('fieldRecord.discard'),
+        style: 'destructive',
+        onPress: async () => {
+          if (await discard()) {
+            navigation.goBack();
+          }
+        },
+      },
+    ]);
+  };
 
   /** The banner speaks only when something needs saying; a draft says nothing. */
   const refused = syncStatus === 'rejected';
@@ -312,6 +334,16 @@ export function FieldRecordScreen() {
         onPress={() => navigation.goBack()}
         style={styles.done}
       />
+
+      {discardable ? (
+        <Button
+          testID="record-discard"
+          variant="destructive"
+          label={t('fieldRecord.discard')}
+          onPress={confirmDiscard}
+          style={styles.discard}
+        />
+      ) : null}
     </ScrollView>
   );
 }
@@ -364,5 +396,9 @@ const styles = StyleSheet.create({
   },
   done: {
     marginTop: space.lg,
+  },
+  discard: {
+    marginTop: space.md,
+    alignSelf: 'center',
   },
 });
