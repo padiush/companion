@@ -6,6 +6,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import './src/i18n';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { sweepCaptureCache } from './src/capture/sweepCaptureCache';
+import { IntroSheet } from './src/intro/IntroSheet';
+import { useIntro } from './src/intro/useIntro';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { useTheme } from './src/theme';
@@ -13,9 +15,14 @@ import { WhatsNewSheet } from './src/whatsNew/WhatsNewSheet';
 import { useUnseenRelease } from './src/whatsNew/useUnseenRelease';
 
 function AuthGate() {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
   const theme = useTheme();
   const whatsNew = useUnseenRelease(status);
+  // The walkthrough waits for the release notes, so the two never stack.
+  const intro = useIntro(
+    status === 'signedIn' ? (user?.id ?? null) : null,
+    !whatsNew.decided || whatsNew.since !== null
+  );
 
   if (status === 'loading') {
     return (
@@ -35,6 +42,7 @@ function AuthGate() {
       {whatsNew.since ? (
         <WhatsNewSheet since={whatsNew.since} onDismiss={whatsNew.dismiss} />
       ) : null}
+      <IntroSheet visible={intro.open} onDone={intro.finish} />
     </>
   );
 }

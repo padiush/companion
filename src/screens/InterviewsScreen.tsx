@@ -32,6 +32,7 @@ import { Icon } from '../ui/Icon';
 import { SectionLabel } from '../ui/SectionLabel';
 import { Sheet } from '../ui/Sheet';
 import { StatusRow } from '../ui/StatusRow';
+import { IntroSheet } from '../intro/IntroSheet';
 import { currentVersion } from '../whatsNew/releases';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -58,6 +59,7 @@ export function InterviewsScreen() {
   const [signingOut, setSigningOut] = useState(false);
   const [syncedOk, setSyncedOk] = useState(false);
   const [choosingProject, setChoosingProject] = useState(false);
+  const [replayingIntro, setReplayingIntro] = useState(false);
 
   // Opening the app online — signed in just now, or a session the server
   // confirmed at launch — brings the projects and their forms up to date
@@ -267,12 +269,21 @@ export function InterviewsScreen() {
           </View>
 
           {/*
-            The version running and what each release brought; then attribution
+            The walkthrough again, for whoever skipped it; the version running and
+            what each release brought; then attribution
             for the packages this app is built from. Shipping a binary is
             distribution, and the licences require their notice to travel with
             it.
           */}
           <View style={styles.footer}>
+            <TouchableOpacity
+              testID="intro-link"
+              onPress={() => setReplayingIntro(true)}
+              accessibilityRole="button"
+              style={styles.footerLink}
+            >
+              <Text style={[styles.footerText, { color: theme.muted }]}>{t('intro.replay')}</Text>
+            </TouchableOpacity>
             <TouchableOpacity
               testID="whats-new-link"
               onPress={() => navigation.navigate('WhatsNew')}
@@ -313,6 +324,8 @@ export function InterviewsScreen() {
           />
         ))}
       </Sheet>
+
+      <IntroSheet visible={replayingIntro} onDone={() => setReplayingIntro(false)} />
     </View>
   );
 }

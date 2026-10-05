@@ -26,6 +26,10 @@ in [docs/releasing.md](docs/releasing.md).
   interview's photos as a strip.
 - The Entrevistas tab says when the device last synced and how much is waiting
   to be sent; Por enviar says when the device is offline.
+- A short first-run walkthrough: what the app is for and its three tabs, a
+  step at a time, the first time each account signs in on a device. It can be
+  skipped, waits until any release notes are closed, and can be seen again
+  from the foot of Entrevistas.
 
 - Field records on the device: observed or collected, with coordinates,
   photographs, a voice note and the collecting permit. They are sent with

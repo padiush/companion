@@ -58,6 +58,29 @@
     "unsent_other": "{{count}} to send",
     "chooseProject": "Which project?"
   },
+  "intro": {
+    "skip": "Skip",
+    "next": "Next",
+    "start": "Get started",
+    "progress": "Step {{current}} of {{total}}",
+    "replay": "See the introduction",
+    "welcome": {
+      "title": "Padiush in the field",
+      "body": "This app records interviews and plants wherever you are, even without signal. Forms are designed and data is analysed on the web."
+    },
+    "interviews": {
+      "title": "Interviews",
+      "body": "Start an interview from one of your project's forms. Its answers, audio and location are kept on this device, encrypted."
+    },
+    "records": {
+      "title": "Field records",
+      "body": "Record each plant you collect or only observe, with photographs, voice notes and where it was."
+    },
+    "outbox": {
+      "title": "To send",
+      "body": "What you record waits here until you send it. When you have a connection, tap Send now and you will see it on the web. Pull down on Interviews to bring in new forms."
+    }
+  },
   "project": {
     "forms": "Forms",
     "newInterview": "New interview",
@@ -291,6 +314,7 @@
         "items": [
           "The app has a new look, like the web’s, made to be used with one hand in the field, and shows each record’s photographs.",
           "The app is organised in three tabs: Interviews, Records and To send.",
+          "The first time you sign in, a short introduction shows you what the app is for and its three tabs. You can skip it and see it again from Interviews.",
           "Record what you observe or collect in the field, with coordinates, photographs, a voice note and the collecting permit.",
           "During an interview, record the plant the interviewee names without leaving the interview.",
           "Discard a record you have not sent yet.",
