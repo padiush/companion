@@ -15,6 +15,8 @@ in [docs/releasing.md](docs/releasing.md).
 
 - The `production` submit profile sends iOS builds to the app's App Store
   Connect record.
+- iOS builds declare that the app uses only exempt encryption (HTTPS and the
+  encrypted on-device store), so App Store Connect does not ask on each build.
 
 ## [1.1.0] — 2026-10-05
 
