@@ -1,4 +1,5 @@
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 
 import { emptyDraft, type FieldRecordDraft } from '../capture/fieldRecord';
 import { useFieldRecord, type FieldRecordState } from '../capture/useFieldRecord';
@@ -29,6 +30,7 @@ const mockUseFieldRecord = useFieldRecord as jest.Mock;
 const update = jest.fn();
 const locate = jest.fn();
 const ensureStored = jest.fn();
+const discard = jest.fn();
 
 const PERMIT = {
   id: 5,
@@ -51,6 +53,7 @@ function state(
     stored: false,
     clientId: null,
     fromAnswer: false,
+    discardable: false,
     readOnly: false,
     syncStatus: 'draft',
     syncError: null,
@@ -59,6 +62,7 @@ function state(
     update,
     locate,
     ensureStored,
+    discard,
     ...overrides,
   };
 }
@@ -279,5 +283,66 @@ describe('a record made from an interview answer', () => {
 
     expect(mockUseFieldRecord).toHaveBeenCalledWith(9, undefined, undefined);
     expect(queryByTestId('record-from-answer')).toBeNull();
+  });
+});
+
+describe('discarding a record', () => {
+  type AlertButton = { style?: string; onPress?: () => void };
+  const press = (style: string) => {
+    const buttons = (Alert.alert as jest.Mock).mock.calls.at(-1)?.[2] as AlertButton[];
+    buttons.find((button) => button.style === style)?.onPress?.();
+  };
+
+  beforeEach(() => {
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('discards an unsent record once confirmed, and leaves', async () => {
+    discard.mockResolvedValue(true);
+    mockUseFieldRecord.mockReturnValue(state({}, { discardable: true, stored: true }));
+
+    const { getByTestId } = await render(<FieldRecordScreen />);
+    await fireEvent.press(getByTestId('record-discard'));
+
+    expect(discard).not.toHaveBeenCalled();
+    press('destructive');
+
+    await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
+    expect(discard).toHaveBeenCalled();
+  });
+
+  it('keeps the record when the discard is cancelled', async () => {
+    mockUseFieldRecord.mockReturnValue(state({}, { discardable: true, stored: true }));
+
+    const { getByTestId } = await render(<FieldRecordScreen />);
+    await fireEvent.press(getByTestId('record-discard'));
+    press('cancel');
+
+    expect(discard).not.toHaveBeenCalled();
+    expect(mockGoBack).not.toHaveBeenCalled();
+  });
+
+  it('stays on the record if it could not be discarded', async () => {
+    discard.mockResolvedValue(false);
+    mockUseFieldRecord.mockReturnValue(state({}, { discardable: true, stored: true }));
+
+    const { getByTestId } = await render(<FieldRecordScreen />);
+    await fireEvent.press(getByTestId('record-discard'));
+    press('destructive');
+
+    await waitFor(() => expect(discard).toHaveBeenCalled());
+    expect(mockGoBack).not.toHaveBeenCalled();
+  });
+
+  it('offers nothing when there is nothing to discard', async () => {
+    mockUseFieldRecord.mockReturnValue(state());
+
+    const { queryByTestId } = await render(<FieldRecordScreen />);
+
+    expect(queryByTestId('record-discard')).toBeNull();
   });
 });
