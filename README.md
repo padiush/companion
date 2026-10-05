@@ -106,7 +106,10 @@ sync is push-dominant:
    retries are safe.
 5. **Media** — audio/photos are ingested into the encrypted store at capture
    (the plaintext original is deleted), then uploaded via presigned URLs out of
-   band and cleared from the device once stored server-side.
+   band and cleared from the device once stored server-side. A file larger than
+   8 MiB goes up in parts, read one at a time from the store, and a send cut
+   off by a dropped connection resumes with the parts the server does not have
+   yet rather than starting over.
 
 Conflicts on the same answer resolve by last-writer-wins on the device edit-time.
 The local store is encrypted at rest with SQLCipher (it holds informant responses

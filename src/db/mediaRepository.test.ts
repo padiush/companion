@@ -4,7 +4,10 @@ import { insertInstance, setSyncStatus } from './instancesRepository';
 import {
   countFailedMedia,
   countPendingMedia,
+  insertMediaChunk,
   listPendingMedia,
+  mediaByteSize,
+  readMediaRange,
   recordUploadFailure,
   setMediaUploaded,
 } from './mediaRepository';
@@ -199,5 +202,42 @@ describe('recordUploadFailure', () => {
 
   it('counts nothing as failed before anything has been tried', async () => {
     await expect(countFailedMedia(db)).resolves.toBe(0);
+  });
+});
+
+describe('reading media in parts', () => {
+  /** Ten bytes in chunks of 4, 4 and 2: the store's layout, shrunk. */
+  async function seedChunks() {
+    await seedInstance('i-1');
+    await seedMedia('m-1', 'i-1');
+    await insertMediaChunk(db, 'm-1', 0, Uint8Array.from([0, 1, 2, 3]));
+    await insertMediaChunk(db, 'm-1', 1, Uint8Array.from([4, 5, 6, 7]));
+    await insertMediaChunk(db, 'm-1', 2, Uint8Array.from([8, 9]));
+  }
+
+  it('counts the stored bytes', async () => {
+    await seedChunks();
+
+    await expect(mediaByteSize(db, 'm-1')).resolves.toBe(10);
+    await expect(mediaByteSize(db, 'nothing')).resolves.toBe(0);
+  });
+
+  it('reads a range that lines up with the chunks', async () => {
+    await seedChunks();
+
+    expect(Array.from(await readMediaRange(db, 'm-1', 0, 8))).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it('reads a range that starts and ends inside chunks', async () => {
+    await seedChunks();
+
+    expect(Array.from(await readMediaRange(db, 'm-1', 3, 6))).toEqual([3, 4, 5, 6, 7, 8]);
+  });
+
+  it('stops at the end of the file', async () => {
+    await seedChunks();
+
+    expect(Array.from(await readMediaRange(db, 'm-1', 8, 8))).toEqual([8, 9]);
+    expect(Array.from(await readMediaRange(db, 'm-1', 12, 8))).toEqual([]);
   });
 });
