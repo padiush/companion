@@ -78,7 +78,7 @@
     },
     "outbox": {
       "title": "To send",
-      "body": "What you record waits here until you send it. When you have a connection, tap Send now and you will see it on the web. Pull down on Interviews to bring in new forms."
+      "body": "What you record waits here until you send it. When you have a connection, tap Send now and you will see it on the web. Pull down on Interviews to download new forms."
     }
   },
   "project": {
@@ -154,7 +154,7 @@
       "material_sample": "A part was taken, not the whole plant."
     },
     "vernacularName": "Local name",
-    "vernacularNameHint": "What the person with you called it. Stored encrypted.",
+    "vernacularNameHint": "The name the person with you gave it. Stored encrypted.",
     "collectionNumber": "Collection number",
     "collectionNumberHint": "The number you wrote on the tag.",
     "audioHint": "A voice note: the name as it was said, or what you were told about the plant.",
@@ -170,7 +170,7 @@
     "permit": "Permit",
     "permitUnnamed": "Permit without a reference",
     "permitUnlisted": "A permit the project no longer holds",
-    "noPermits": "This project has no permits on this device. They are recorded on the web and arrive with the next sync.",
+    "noPermits": "This project has no permits on this device yet. Permits are added on the web and arrive with the next sync.",
     "exemption": "Exemption reason",
     "exemptionHint": "Only if the collection needed no permit.",
     "exemptions": {
@@ -183,7 +183,7 @@
     "saving": "Saving…",
     "savedLocally": "Saved on this device",
     "notSavedYet": "Saved as soon as you enter something.",
-    "fromAnswer": "Made from an interview answer. It is sent after the interview.",
+    "fromAnswer": "Created from an interview answer. It is sent after the interview.",
     "done": "Done",
     "discard": "Discard record",
     "discardTitle": "Discard this record?",
@@ -244,9 +244,9 @@
   "outbox": {
     "title": "To send",
     "empty": "Everything has been sent.",
-    "onlyMedia_one": "1 file is still to upload, for something already sent.",
-    "onlyMedia_other": "{{count}} files are still to upload, for things already sent.",
-    "offline": "Offline right now. Send when you have signal again.",
+    "onlyMedia_one": "1 file is still to upload, from an interview or record already sent.",
+    "onlyMedia_other": "{{count}} files are still to upload, from interviews or records already sent.",
+    "offline": "No connection. You can send once you have signal again.",
     "ready": "Ready to send",
     "sendNow": "Send now",
     "interviews_one": "1 interview",

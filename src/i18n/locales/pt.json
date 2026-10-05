@@ -78,7 +78,7 @@
     },
     "outbox": {
       "title": "Para enviar",
-      "body": "O que você registra espera aqui até ser enviado. Quando tiver conexão, toque em Enviar agora e verá tudo na web. Deslize para baixo em Entrevistas para trazer formulários novos."
+      "body": "O que você registrar fica aqui até ser enviado. Quando tiver conexão, toque em Enviar agora e verá tudo na web. Deslize para baixo em Entrevistas para baixar formulários novos."
     }
   },
   "project": {
@@ -154,7 +154,7 @@
       "material_sample": "Foi retirada uma parte, não a planta inteira."
     },
     "vernacularName": "Nome local",
-    "vernacularNameHint": "Como a pessoa que acompanhava você a chamou. É salvo criptografado.",
+    "vernacularNameHint": "O nome que a pessoa que acompanhava você deu. É salvo criptografado.",
     "collectionNumber": "Número de coleta",
     "collectionNumberHint": "O número que você escreveu na etiqueta.",
     "audioHint": "Uma nota de voz: o nome como foi dito, ou o que contaram a você sobre a planta.",
@@ -170,7 +170,7 @@
     "permit": "Licença",
     "permitUnnamed": "Licença sem referência",
     "permitUnlisted": "Uma licença que o projeto não tem mais",
-    "noPermits": "Este projeto não tem licenças neste dispositivo. Elas são cadastradas na web e chegam na próxima sincronização.",
+    "noPermits": "Este projeto ainda não tem licenças neste dispositivo. As licenças são cadastradas na web e chegam na próxima sincronização.",
     "exemption": "Motivo de isenção",
     "exemptionHint": "Só se a coleta não precisava de licença.",
     "exemptions": {
@@ -183,7 +183,7 @@
     "saving": "Salvando…",
     "savedLocally": "Salvo neste dispositivo",
     "notSavedYet": "É salvo assim que você anotar algo.",
-    "fromAnswer": "Feito a partir de uma resposta da entrevista. É enviado depois dela.",
+    "fromAnswer": "Criado a partir de uma resposta da entrevista. É enviado depois da entrevista.",
     "done": "Concluir",
     "discard": "Descartar registro",
     "discardTitle": "Descartar este registro?",
@@ -244,9 +244,9 @@
   "outbox": {
     "title": "Para enviar",
     "empty": "Tudo foi enviado.",
-    "onlyMedia_one": "Falta enviar 1 arquivo de algo que já foi enviado.",
-    "onlyMedia_other": "Faltam enviar {{count}} arquivos de coisas que já foram enviadas.",
-    "offline": "Sem conexão agora. Envie quando tiver sinal de novo.",
+    "onlyMedia_one": "Falta enviar 1 arquivo de uma entrevista ou registro já enviado.",
+    "onlyMedia_other": "Faltam enviar {{count}} arquivos de entrevistas ou registros já enviados.",
+    "offline": "Sem conexão. Você poderá enviar quando tiver sinal de novo.",
     "ready": "Pronto para enviar",
     "sendNow": "Enviar agora",
     "interviews_one": "1 entrevista",
