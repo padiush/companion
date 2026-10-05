@@ -21,6 +21,8 @@ export interface MediaInsert {
   byteSize: number;
   durationS?: number | null;
   capturedAt: string;
+  /** A photograph's small preview (see schema V6). */
+  thumbnail?: Uint8Array | null;
 }
 
 /**
@@ -43,8 +45,9 @@ export async function insertMedia(db: SQLiteDatabase, media: MediaInsert): Promi
   await db.runAsync(
     `INSERT INTO media (
        client_id, instance_id, field_record_id, kind, local_uri, storage_key,
-       content_type, byte_size, duration_s, upload_status, transcription_status, captured_at
-     ) VALUES (?, ?, ?, ?, NULL, NULL, ?, ?, ?, 'pending', NULL, ?)`,
+       content_type, byte_size, duration_s, upload_status, transcription_status, captured_at,
+       thumbnail
+     ) VALUES (?, ?, ?, ?, NULL, NULL, ?, ?, ?, 'pending', NULL, ?, ?)`,
     [
       media.clientId,
       instanceId,
@@ -54,6 +57,7 @@ export async function insertMedia(db: SQLiteDatabase, media: MediaInsert): Promi
       media.byteSize,
       media.durationS ?? null,
       media.capturedAt,
+      media.thumbnail ?? null,
     ]
   );
 }
@@ -154,8 +158,45 @@ export async function readMediaRange(
   return bytes;
 }
 
+/**
+ * Remove a photo's or recording's bytes from the device — and a photo's
+ * preview with them, so nothing of it is left once the server has it.
+ */
 export async function deleteMediaBytes(db: SQLiteDatabase, clientId: string): Promise<void> {
   await db.runAsync('DELETE FROM media_blobs WHERE client_id = ?', [clientId]);
+  await db.runAsync('UPDATE media SET thumbnail = NULL WHERE client_id = ?', [clientId]);
+}
+
+/** A photograph's preview, or null when it has none (sent, or made before previews). */
+export async function getThumbnail(
+  db: SQLiteDatabase,
+  clientId: string
+): Promise<Uint8Array | null> {
+  const row = await db.getFirstAsync<{ thumbnail: Uint8Array | null }>(
+    'SELECT thumbnail FROM media WHERE client_id = ?',
+    [clientId]
+  );
+
+  return row?.thumbnail ?? null;
+}
+
+/**
+ * For each field record, the photograph a list shows it by: the first one
+ * taken that still has a preview. Keyed by the record's client_id.
+ */
+export async function recordCoverPhotos(db: SQLiteDatabase): Promise<Record<string, string>> {
+  const rows = await db.getAllAsync<{ field_record_id: string; client_id: string }>(
+    `SELECT field_record_id, client_id FROM media
+      WHERE kind = 'photo' AND field_record_id IS NOT NULL AND thumbnail IS NOT NULL
+      ORDER BY captured_at DESC`
+  );
+
+  const covers: Record<string, string> = {};
+  for (const row of rows) {
+    // Ordered newest first, so the oldest photo of each record wins.
+    covers[row.field_record_id] = row.client_id;
+  }
+  return covers;
 }
 
 export async function listMediaForInstance(

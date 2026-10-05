@@ -4,6 +4,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { insertMedia, insertMediaChunk } from '../db/mediaRepository';
 import { recordDiagnostic } from '../diagnostics';
 import { uuid } from '../ids';
+import { makeThumbnail } from './thumbnail';
 
 /** Blob rows are capped so a long recording never has to sit in memory whole. */
 const CHUNK_BYTES = 4 * 1024 * 1024;
@@ -29,6 +30,8 @@ export interface AttachMediaParams {
  */
 export async function attachMedia(db: SQLiteDatabase, params: AttachMediaParams): Promise<string> {
   const clientId = uuid();
+  // Made first, while the camera's file is still there to read.
+  const thumbnail = params.kind === 'photo' ? await makeThumbnail(params.localUri) : null;
   const source = new File(params.localUri);
   const byteSize = source.size ?? 0;
   const handle = source.open(FileMode.ReadOnly);
@@ -44,6 +47,7 @@ export async function attachMedia(db: SQLiteDatabase, params: AttachMediaParams)
         byteSize,
         durationS: params.durationS ?? null,
         capturedAt: new Date().toISOString(),
+        thumbnail,
       });
 
       let seq = 0;

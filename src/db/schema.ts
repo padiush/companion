@@ -273,12 +273,24 @@ CREATE INDEX IF NOT EXISTS idx_media_instance ON media(instance_id);
 CREATE INDEX IF NOT EXISTS idx_media_field_record ON media(field_record_id);
 `;
 
+/**
+ * A small preview of each photograph, so a list of records can show what was
+ * recorded rather than a name alone. Made at capture, while the camera's file
+ * still exists, and kept encrypted here like the photo itself. It lives as
+ * long as the photo's bytes do: when the photo is sent and deleted from the
+ * device, so is its preview.
+ */
+const V6 = `
+ALTER TABLE media ADD COLUMN thumbnail BLOB;
+`;
+
 export const MIGRATIONS: readonly { version: number; sql: string }[] = [
   { version: 1, sql: V1 },
   { version: 2, sql: V2 },
   { version: 3, sql: V3 },
   { version: 4, sql: V4 },
   { version: 5, sql: V5 },
+  { version: 6, sql: V6 },
 ];
 
 /** The version a fully-migrated store reports. */
