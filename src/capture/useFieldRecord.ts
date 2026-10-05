@@ -11,6 +11,19 @@ import { draftFromRow, emptyDraft, type FieldRecordDraft } from './fieldRecord';
 import { createFieldRecord, saveFieldRecord } from './fieldRecordService';
 import { captureLocation } from './location';
 
+/**
+ * The interview answer a new record is made from: an informant named a plant,
+ * and the researcher records it there and then (ADR 0011 in the platform
+ * repository). The name they gave starts the record's local name.
+ */
+export interface AnswerOrigin {
+  answerClientId: string;
+  vernacularName?: string;
+}
+
+/** What the server accepts for the local name (`max:255`). */
+const NAME_LIMIT = 255;
+
 export interface FieldRecordState {
   /** Null until the record, or a new one's defaults, has loaded. */
   draft: FieldRecordDraft | null;
@@ -23,6 +36,8 @@ export interface FieldRecordState {
   stored: boolean;
   /** The stored record's client_id — what its photographs belong to. */
   clientId: string | null;
+  /** Whether the record came out of an interview answer. */
+  fromAnswer: boolean;
   /**
    * A record the server has accepted belongs to the web from then on: the web
    * identifies and deposits it while this copy would go on claiming to be the
@@ -66,7 +81,11 @@ export interface FieldRecordState {
  * row and mints its id, and every later one needs that id, so a quick second
  * keystroke must not overtake it.
  */
-export function useFieldRecord(projectId: number, existingClientId?: string): FieldRecordState {
+export function useFieldRecord(
+  projectId: number,
+  existingClientId?: string,
+  origin?: AnswerOrigin
+): FieldRecordState {
   const [draft, setDraft] = useState<FieldRecordDraft | null>(null);
   const [permits, setPermits] = useState<CollectingPermitRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +96,12 @@ export function useFieldRecord(projectId: number, existingClientId?: string): Fi
   const [syncError, setSyncError] = useState<string | null>(null);
   const [locating, setLocating] = useState(false);
   const [locationFailed, setLocationFailed] = useState(false);
+  const [linkedAnswer, setLinkedAnswer] = useState<string | null>(null);
+
+  // Primitives, so a caller passing a fresh object each render does not
+  // reload the record.
+  const originAnswer = origin?.answerClientId ?? null;
+  const originName = origin?.vernacularName ?? '';
 
   const draftRef = useRef<FieldRecordDraft | null>(null);
   const clientIdRef = useRef<string | null>(existingClientId ?? null);
@@ -106,7 +131,7 @@ export function useFieldRecord(projectId: number, existingClientId?: string): Fi
         if (clientIdRef.current) {
           await saveFieldRecord(db, clientIdRef.current, current);
         } else {
-          clientIdRef.current = await createFieldRecord(db, projectId, current);
+          clientIdRef.current = await createFieldRecord(db, projectId, current, originAnswer);
           if (mounted.current) {
             setClientId(clientIdRef.current);
           }
@@ -122,7 +147,7 @@ export function useFieldRecord(projectId: number, existingClientId?: string): Fi
           setSaving(false);
         }
       });
-  }, [projectId]);
+  }, [projectId, originAnswer]);
 
   const apply = useCallback(
     (changes: Partial<FieldRecordDraft>, save: boolean) => {
@@ -186,6 +211,7 @@ export function useFieldRecord(projectId: number, existingClientId?: string): Fi
         initial = draftFromRow(row);
         setSyncStatus(row.sync_status);
         setSyncError(row.sync_error);
+        setLinkedAnswer(row.answer_client_id);
       } else {
         // Asked for a record that is not here any more: start a new one
         // rather than save edits against a row that no longer exists.
@@ -194,11 +220,17 @@ export function useFieldRecord(projectId: number, existingClientId?: string): Fi
         setStored(false);
         setClientId(null);
         const session = await readSession();
-        initial = emptyDraft({
-          collector: session?.user.name ?? '',
-          today: formatDate(new Date()),
-        });
+        initial = {
+          ...emptyDraft({
+            collector: session?.user.name ?? '',
+            today: formatDate(new Date()),
+          }),
+          // A default like the date and the collector: the record is still
+          // not stored until something is entered.
+          vernacularName: originName.trim().slice(0, NAME_LIMIT),
+        };
         setSyncStatus('draft');
+        setLinkedAnswer(originAnswer);
       }
 
       if (!mounted.current) {
@@ -221,7 +253,7 @@ export function useFieldRecord(projectId: number, existingClientId?: string): Fi
     return () => {
       mounted.current = false;
     };
-  }, [projectId, existingClientId, chaseLocation]);
+  }, [projectId, existingClientId, chaseLocation, originAnswer, originName]);
 
   const update = useCallback(
     (changes: Partial<FieldRecordDraft>) => {
@@ -261,6 +293,7 @@ export function useFieldRecord(projectId: number, existingClientId?: string): Fi
     saving,
     stored,
     clientId,
+    fromAnswer: linkedAnswer !== null,
     readOnly,
     syncStatus,
     syncError,

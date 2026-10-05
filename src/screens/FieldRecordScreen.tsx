@@ -48,6 +48,7 @@ export function FieldRecordScreen() {
     saving,
     stored,
     clientId,
+    fromAnswer,
     readOnly,
     syncStatus,
     syncError,
@@ -56,7 +57,13 @@ export function FieldRecordScreen() {
     update,
     locate,
     ensureStored,
-  } = useFieldRecord(params.projectId, params.clientId);
+  } = useFieldRecord(
+    params.projectId,
+    params.clientId,
+    params.answerClientId
+      ? { answerClientId: params.answerClientId, vernacularName: params.vernacularName }
+      : undefined
+  );
 
   if (loading || !draft) {
     return (
@@ -132,6 +139,12 @@ export function FieldRecordScreen() {
 
       <View pointerEvents={readOnly ? 'none' : 'auto'}>
         <SectionLabel>{t('fieldRecord.sections.record')}</SectionLabel>
+
+        {fromAnswer ? (
+          <Text testID="record-from-answer" style={[styles.origin, { color: theme.muted }]}>
+            {t('fieldRecord.fromAnswer')}
+          </Text>
+        ) : null}
 
         <Field label={t('fieldRecord.basis')} hint={t(`fieldRecord.basisHint.${draft.basis}`)}>
           <ChipGroup>
@@ -340,6 +353,10 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   value: type.body,
+  origin: {
+    ...type.caption,
+    marginBottom: space.md,
+  },
   saved: {
     ...type.caption,
     textAlign: 'center',
