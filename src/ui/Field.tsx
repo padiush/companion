@@ -59,7 +59,10 @@ const styles = StyleSheet.create({
     marginBottom: space.lg,
     gap: space.sm,
   },
-  label: type.label,
+  label: {
+    ...type.label,
+    fontWeight: '800',
+  },
   hint: type.caption,
   error: {
     gap: space.xs,

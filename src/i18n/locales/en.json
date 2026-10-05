@@ -46,7 +46,17 @@
     "synced": "Projects updated",
     "drafts": "My interviews",
     "offline": "Offline. You are using the session saved on this device; sync when you have signal again.",
-    "onDevice": "Interviews on this device"
+    "onDevice": "Interviews on this device",
+    "neverSynced": "Not synced yet",
+    "syncedJustNow": "Synced just now",
+    "syncedMinutes_one": "Synced 1 min ago",
+    "syncedMinutes_other": "Synced {{count}} min ago",
+    "syncedHours_one": "Synced 1 h ago",
+    "syncedHours_other": "Synced {{count}} h ago",
+    "syncedOn": "Synced on {{date}}",
+    "unsent_one": "1 to send",
+    "unsent_other": "{{count}} to send",
+    "chooseProject": "Which project?"
   },
   "project": {
     "forms": "Forms",
@@ -79,7 +89,6 @@
     "recordingLost": "The recording stopped and couldn't be recovered.",
     "photos": "Photos",
     "addPhoto": "Add photo",
-    "photo": "Photo",
     "recordPlant": "Record this plant",
     "recordPlantAgain": "Another record of this plant",
     "mediaPermission": "Camera or microphone permission is needed.",
@@ -95,7 +104,8 @@
       "min": "Must be {{limit}} or more.",
       "max": "Must be {{limit}} or less.",
       "step": "Must go in steps of {{limit}}."
-    }
+    },
+    "photo": "Photo"
   },
   "fieldRecord": {
     "title": "Field record",
@@ -170,7 +180,8 @@
     "changeProject": "Change project",
     "noProjects": "Sync your projects in Interviews to start recording.",
     "onDevice": "On this device",
-    "empty": "No records on this device yet. Note here what you document in the field, whether or not you collect it; identifying and depositing it happen later, on the web."
+    "empty": "No records on this device yet. Note here what you document in the field, whether or not you collect it; identifying and depositing it happen later, on the web.",
+    "chooseProject": "Which project are you recording for?"
   },
   "drafts": {
     "send": "Send",
@@ -211,7 +222,16 @@
     "title": "To send",
     "empty": "Everything has been sent.",
     "onlyMedia_one": "1 file is still to upload, for something already sent.",
-    "onlyMedia_other": "{{count}} files are still to upload, for things already sent."
+    "onlyMedia_other": "{{count}} files are still to upload, for things already sent.",
+    "offline": "Offline right now. Send when you have signal again.",
+    "ready": "Ready to send",
+    "sendNow": "Send now",
+    "interviews_one": "1 interview",
+    "interviews_other": "{{count}} interviews",
+    "records_one": "1 record",
+    "records_other": "{{count}} records",
+    "files_one": "1 file",
+    "files_other": "{{count}} files"
   },
   "sync": {
     "rejectedTitle": "The server did not accept this interview",
@@ -269,6 +289,7 @@
         "version": "1.1.0",
         "date": null,
         "items": [
+          "The app has a new look, like the web’s, made to be used with one hand in the field, and shows each record’s photographs.",
           "The app is organised in three tabs: Interviews, Records and To send.",
           "Record what you observe or collect in the field, with coordinates, photographs, a voice note and the collecting permit.",
           "During an interview, record the plant the interviewee names without leaving the interview.",

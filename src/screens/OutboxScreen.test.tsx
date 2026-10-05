@@ -16,6 +16,8 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 jest.mock('../hooks/useDrafts', () => ({ useDrafts: jest.fn() }));
 jest.mock('../hooks/useOutbox', () => ({ useOutbox: jest.fn() }));
+let mockOnline = true;
+jest.mock('../hooks/useOnline', () => ({ useOnline: () => mockOnline }));
 
 const mockUseDrafts = useDrafts as jest.Mock;
 const mockUseOutbox = useOutbox as jest.Mock;
@@ -69,6 +71,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockDrafts();
   mockOutbox();
+  mockOnline = true;
 });
 
 describe('OutboxScreen', () => {
@@ -118,21 +121,24 @@ describe('OutboxScreen', () => {
     expect(getByText('drafts.sendMedia')).toBeTruthy();
   });
 
-  it('counts interviews on the send action when there are any', async () => {
+  it('counts interviews in what the send will carry', async () => {
     mockOutbox({ count: 2, pendingMedia: 3 });
 
     const { getByText } = await render(<OutboxScreen />);
 
-    expect(getByText('drafts.send · 2')).toBeTruthy();
+    expect(getByText('outbox.sendNow')).toBeTruthy();
+    expect(getByText('2')).toBeTruthy();
+    expect(getByText('outbox.interviews  ·  outbox.files')).toBeTruthy();
   });
 
   /** Records are made in a project, but this is the Send that carries them. */
-  it('counts field records on the send action alongside interviews', async () => {
+  it('counts field records alongside interviews', async () => {
     mockOutbox({ count: 2, fieldRecords: 3 });
 
     const { getByText } = await render(<OutboxScreen />);
 
-    expect(getByText('drafts.send · 5')).toBeTruthy();
+    expect(getByText('5')).toBeTruthy();
+    expect(getByText('outbox.interviews  ·  outbox.records')).toBeTruthy();
   });
 
   it('offers to send when only field records are waiting', async () => {
@@ -140,7 +146,27 @@ describe('OutboxScreen', () => {
 
     const { getByText } = await render(<OutboxScreen />);
 
-    expect(getByText('drafts.send · 1')).toBeTruthy();
+    expect(getByText('outbox.sendNow')).toBeTruthy();
+    expect(getByText('1')).toBeTruthy();
+  });
+
+  /** A researcher in the field should know the send will wait for signal. */
+  it('says so when the device is offline and something is waiting', async () => {
+    mockOnline = false;
+    mockOutbox({ count: 1 });
+
+    const { getByTestId } = await render(<OutboxScreen />);
+
+    expect(getByTestId('outbox-offline')).toBeTruthy();
+  });
+
+  it('does not warn about being offline with nothing to send', async () => {
+    mockOnline = false;
+    mockOutbox({ count: 0 });
+
+    const { queryByTestId } = await render(<OutboxScreen />);
+
+    expect(queryByTestId('outbox-offline')).toBeNull();
   });
 
   it('says how many field records went, and how many the server refused', async () => {

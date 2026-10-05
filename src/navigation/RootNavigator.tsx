@@ -8,6 +8,7 @@ import { InterviewScreen } from '../screens/InterviewScreen';
 import { LicencesScreen } from '../screens/LicencesScreen';
 import { ProjectScreen } from '../screens/ProjectScreen';
 import { WhatsNewScreen } from '../screens/WhatsNewScreen';
+import { font, useTheme } from '../theme';
 import { MainTabs } from './MainTabs';
 import type { RootStackParamList } from './types';
 
@@ -20,11 +21,22 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
  */
 export function RootNavigator() {
   const scheme = useColorScheme();
+  const theme = useTheme();
   const { t } = useTranslation();
 
   return (
     <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack.Navigator screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
+      <Stack.Navigator
+        screenOptions={{
+          headerBackButtonDisplayMode: 'minimal',
+          // The pushed screens carry the tabs' green header down with them.
+          headerStyle: { backgroundColor: theme.primary },
+          headerTintColor: theme.onPrimary,
+          headerTitleStyle: { fontFamily: font.family, fontWeight: '800' },
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: theme.bg },
+        }}
+      >
         <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
         <Stack.Screen
           name="Project"

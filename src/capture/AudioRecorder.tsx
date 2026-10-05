@@ -17,12 +17,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
 import { getDatabase } from '../db/database';
 import type { MediaRow } from '../db/types';
 import { impact } from '../haptics';
 import { border, radius, space, touch, type, useTheme } from '../theme';
+import { Icon } from '../ui/Icon';
 import { SectionLabel } from '../ui/SectionLabel';
 import { formatClock, meteringToLevel } from './audioLevels';
 import {
@@ -396,7 +396,7 @@ export function AudioRecorder(props: MediaOwnerProps) {
                     ]}
                   />
                 ) : (
-                  <MicIcon color={theme.primary} />
+                  <Icon name="interview" color={theme.primaryText} size={20} />
                 )}
                 <Text
                   style={[styles.status, { color: active ? theme.danger : theme.muted }]}
@@ -413,7 +413,7 @@ export function AudioRecorder(props: MediaOwnerProps) {
             <Waveform
               levels={levels}
               color={recording ? theme.danger : theme.muted}
-              track={theme.border}
+              track={theme.track}
             />
 
             <View style={styles.controls}>
@@ -426,6 +426,7 @@ export function AudioRecorder(props: MediaOwnerProps) {
                     accessibilityRole="button"
                     style={[styles.secondaryButton, { borderColor: theme.border }]}
                   >
+                    <Icon name={recording ? 'pause' : 'play'} color={theme.text} size={16} />
                     <Text style={[styles.secondaryText, { color: theme.text }]}>
                       {recording ? t('interview.pauseRecording') : t('interview.resumeRecording')}
                     </Text>
@@ -440,9 +441,12 @@ export function AudioRecorder(props: MediaOwnerProps) {
                     {busy ? (
                       <ActivityIndicator color={theme.onPrimary} />
                     ) : (
-                      <Text style={[styles.primaryText, { color: theme.onPrimary }]}>
-                        {t('interview.stopRecording')}
-                      </Text>
+                      <>
+                        <Icon name="stop" color={theme.onPrimary} size={18} />
+                        <Text style={[styles.primaryText, { color: theme.onPrimary }]}>
+                          {t('interview.stopRecording')}
+                        </Text>
+                      </>
                     )}
                   </TouchableOpacity>
                 </>
@@ -457,9 +461,12 @@ export function AudioRecorder(props: MediaOwnerProps) {
                   {busy ? (
                     <ActivityIndicator color={theme.onPrimary} />
                   ) : (
-                    <Text style={[styles.primaryText, { color: theme.onPrimary }]}>
-                      {t('interview.recordAudio')}
-                    </Text>
+                    <>
+                      <Icon name="interview" color={theme.onPrimary} size={20} />
+                      <Text style={[styles.primaryText, { color: theme.onPrimary }]}>
+                        {t('interview.recordAudio')}
+                      </Text>
+                    </>
                   )}
                 </TouchableOpacity>
               )}
@@ -471,9 +478,15 @@ export function AudioRecorder(props: MediaOwnerProps) {
       {error ? <Text style={[styles.error, { color: theme.danger }]}>{error}</Text> : null}
 
       {recordings.map((item, index) => (
-        <View key={item.client_id} testID={`recording-${item.client_id}`} style={styles.item}>
-          <MicIcon color={theme.muted} size={14} />
-          <Text style={[styles.itemText, { color: theme.muted }]}>
+        <View
+          key={item.client_id}
+          testID={`recording-${item.client_id}`}
+          style={[styles.item, { backgroundColor: theme.card, borderColor: theme.border }]}
+        >
+          <View style={[styles.itemIcon, { backgroundColor: theme.primarySoft }]}>
+            <Icon name="interview" color={theme.primaryText} size={18} />
+          </View>
+          <Text style={[styles.itemText, { color: theme.text }]}>
             {t('interview.recordingLabel', { number: index + 1 })}
             {item.duration_s ? ` · ${formatClock(item.duration_s * 1000)}` : ''}
           </Text>
@@ -506,19 +519,6 @@ function Waveform({ levels, color, track }: { levels: number[]; color: string; t
   );
 }
 
-/** A simple microphone glyph. */
-function MicIcon({ color, size = 18 }: { color: string; size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" testID="mic-icon">
-      <Path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" fill={color} />
-      <Path
-        d="M17 12a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2Z"
-        fill={color}
-      />
-    </Svg>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     marginBottom: space.xl,
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
   },
   stage: {
     borderWidth: border.width,
-    borderRadius: radius.control,
+    borderRadius: radius.card,
     padding: space.lg,
     gap: space.lg,
   },
@@ -576,28 +576,32 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     flex: 1,
+    flexDirection: 'row',
+    gap: space.sm,
     borderRadius: radius.control,
     paddingVertical: space.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: touch.min + 8,
+    minHeight: touch.min + 12,
   },
   primaryText: {
     ...type.body,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   secondaryButton: {
     flex: 1,
+    flexDirection: 'row',
+    gap: space.sm,
     borderWidth: border.width,
     borderRadius: radius.control,
     paddingVertical: space.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: touch.min + 8,
+    minHeight: touch.min + 12,
   },
   secondaryText: {
     ...type.body,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   error: {
     ...type.label,
@@ -606,10 +610,21 @@ const styles = StyleSheet.create({
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space.sm,
-    paddingVertical: space.xs,
+    gap: space.md,
+    padding: space.sm + 2,
+    marginTop: space.sm,
+    borderWidth: border.width,
+    borderRadius: radius.control,
+  },
+  itemIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   itemText: {
     ...type.body,
+    fontWeight: '600',
   },
 });

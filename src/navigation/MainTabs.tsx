@@ -5,8 +5,7 @@ import { useOutbox } from '../hooks/useOutbox';
 import { InterviewsScreen } from '../screens/InterviewsScreen';
 import { OutboxScreen } from '../screens/OutboxScreen';
 import { RecordsScreen } from '../screens/RecordsScreen';
-import { useTheme } from '../theme';
-import { InterviewsIcon, OutboxIcon, RecordsIcon } from './TabIcons';
+import { TabBar } from './TabBar';
 import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -19,25 +18,16 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
  */
 export function MainTabs() {
   const { t } = useTranslation();
-  const theme = useTheme();
   const { count, fieldRecords } = useOutbox();
   const unsent = count + fieldRecords;
 
   return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.muted,
-        tabBarStyle: { backgroundColor: theme.card, borderTopColor: theme.border },
-      }}
-    >
+    <Tab.Navigator tabBar={(props) => <TabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tab.Screen
         name="Interviews"
         component={InterviewsScreen}
         options={{
           tabBarLabel: t('tabs.interviews'),
-          tabBarIcon: ({ color, size }) => <InterviewsIcon color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -45,7 +35,6 @@ export function MainTabs() {
         component={RecordsScreen}
         options={{
           tabBarLabel: t('tabs.records'),
-          tabBarIcon: ({ color, size }) => <RecordsIcon color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -54,7 +43,6 @@ export function MainTabs() {
         options={{
           tabBarLabel: t('tabs.outbox'),
           tabBarBadge: unsent > 0 ? unsent : undefined,
-          tabBarIcon: ({ color, size }) => <OutboxIcon color={color} size={size} />,
         }}
       />
     </Tab.Navigator>
