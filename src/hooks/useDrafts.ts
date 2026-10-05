@@ -24,10 +24,17 @@ export function useDrafts(): DraftsState {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const db = await getDatabase();
-    setDrafts(await listInstancesWithMeta(db));
-    setFieldRecords(await listWaitingFieldRecords(db));
-    setLoading(false);
+    try {
+      const db = await getDatabase();
+      setDrafts(await listInstancesWithMeta(db));
+      setFieldRecords(await listWaitingFieldRecords(db));
+    } catch {
+      // A read that fails keeps what is shown; the next focus or pull reads
+      // again. Whatever happens, the list stops loading — a spinner left
+      // turning would hide the outbox until the tab was opened anew.
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useFocusEffect(
