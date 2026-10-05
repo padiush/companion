@@ -2,7 +2,8 @@ import DateTimePicker, { type DateTimePickerEvent } from '@react-native-communit
 import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import { radius, useTheme, type } from '../theme';
+import { border, radius, space, touch, useTheme, type } from '../theme';
+import { Icon } from '../ui/Icon';
 import { formatDate, parseDate } from './dateValue';
 
 const CLEAR_HIT_SLOP = { top: 10, bottom: 10, left: 10, right: 10 };
@@ -34,8 +35,9 @@ export function DateField({ itemId, value, placeholder, onChange }: Props) {
         testID={`date-${itemId}`}
         onPress={() => setShow(true)}
         accessibilityRole="button"
-        style={[styles.field, { borderColor: theme.border, backgroundColor: theme.inputBg }]}
+        style={[styles.field, { borderColor: theme.chipBorder, backgroundColor: theme.inputBg }]}
       >
+        <Icon name="date" color={theme.primaryText} size={20} />
         <Text style={[styles.value, { color: value ? theme.text : theme.muted }]}>
           {value || placeholder}
         </Text>
@@ -46,7 +48,9 @@ export function DateField({ itemId, value, placeholder, onChange }: Props) {
             accessibilityRole="button"
             hitSlop={CLEAR_HIT_SLOP}
           >
-            <Text style={[styles.clear, { color: theme.muted }]}>✕</Text>
+            <Text style={[styles.clear, { color: theme.muted }]} accessibilityLabel="✕">
+              ✕
+            </Text>
           </TouchableOpacity>
         ) : null}
       </TouchableOpacity>
@@ -67,14 +71,16 @@ const styles = StyleSheet.create({
   field: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
+    gap: space.md,
+    minHeight: touch.min + 12,
+    borderWidth: border.width + 0.5,
     borderRadius: radius.control,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
+    paddingHorizontal: space.lg,
   },
   value: {
     flex: 1,
     ...type.body,
+    fontWeight: '600',
   },
   clear: {
     ...type.body,

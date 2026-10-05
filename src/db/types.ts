@@ -119,6 +119,8 @@ export interface MediaRow {
   upload_status: string;
   transcription_status: string | null;
   captured_at: string | null;
+  /** A small JPEG preview of a photograph, while its bytes are on the device. */
+  thumbnail?: Uint8Array | null;
 }
 
 /**

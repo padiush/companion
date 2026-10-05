@@ -9,21 +9,26 @@ import {
 } from 'react-native';
 
 import { border, radius, space, touch, type, useTheme } from '../theme';
+import { Icon, type IconName } from './Icon';
 
 /**
  * `solid` is the one action a screen is about; `ghost` is a secondary action
  * that still needs to look like a control; `text` is an inline action inside
  * other content. `destructive` is a text action that removes something.
+ * `inverse` is the solid action when it sits on the green header or a green
+ * card, where a green button would disappear.
  *
  * The web's rule carries over unchanged because it is not a web rule: one
  * solid action per screen, so what to press is never ambiguous.
  */
-export type ButtonVariant = 'solid' | 'ghost' | 'text' | 'destructive';
+export type ButtonVariant = 'solid' | 'ghost' | 'text' | 'destructive' | 'inverse';
 
 interface Props {
   label: string;
   onPress: () => void;
   variant?: ButtonVariant;
+  /** Drawn before the label, to make the action recognisable at a glance. */
+  icon?: IconName;
   disabled?: boolean;
   busy?: boolean;
   testID?: string;
@@ -34,6 +39,7 @@ export function Button({
   label,
   onPress,
   variant = 'solid',
+  icon,
   disabled = false,
   busy = false,
   testID,
@@ -43,13 +49,14 @@ export function Button({
 
   const palette: Record<ButtonVariant, { bg: string; fg: string; border?: string }> = {
     solid: { bg: theme.primary, fg: theme.onPrimary },
-    ghost: { bg: 'transparent', fg: theme.primary, border: theme.border },
-    text: { bg: 'transparent', fg: theme.primary },
+    ghost: { bg: theme.card, fg: theme.primaryText, border: theme.chipBorder },
+    text: { bg: 'transparent', fg: theme.primaryText },
     destructive: { bg: 'transparent', fg: theme.danger },
+    inverse: { bg: theme.card, fg: theme.primaryText },
   };
 
   const { bg, fg, border: edge } = palette[variant];
-  const framed = variant === 'solid' || variant === 'ghost';
+  const framed = variant === 'solid' || variant === 'ghost' || variant === 'inverse';
 
   return (
     <TouchableOpacity
@@ -68,7 +75,10 @@ export function Button({
       {busy ? (
         <ActivityIndicator color={fg} />
       ) : (
-        <Text style={[styles.label, { color: fg }]}>{label}</Text>
+        <View style={styles.content}>
+          {icon ? <Icon name={icon} color={fg} size={20} strokeWidth={2.4} /> : null}
+          <Text style={[framed ? styles.label : styles.inlineLabel, { color: fg }]}>{label}</Text>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -85,7 +95,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
     // Comfortably past the 44pt minimum: these are pressed one-handed, often
     // standing up, sometimes in the rain.
-    minHeight: touch.min + 8,
+    minHeight: touch.min + 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -93,9 +103,18 @@ const styles = StyleSheet.create({
     minHeight: touch.min,
     justifyContent: 'center',
   },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+  },
   label: {
     ...type.body,
-    fontWeight: '600',
+    fontWeight: '800',
+  },
+  inlineLabel: {
+    ...type.body,
+    fontWeight: '700',
   },
   row: {
     flexDirection: 'row',

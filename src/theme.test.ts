@@ -54,6 +54,33 @@ describe.each(Object.entries(themes))('the %s palette', (_name, theme: Theme) =>
     expect(contrast(theme.chipBorder, theme.bg)).toBeGreaterThanOrEqual(3);
   });
 
+  /**
+   * Every state a capture can be in is shown as a soft pill with coloured
+   * text: sent, waiting, refused. Each has to read on its own fill, and on
+   * the card it sits in when it is text alone.
+   */
+  it('reads each status colour on its soft fill and on a card', () => {
+    const pairs: [string, string][] = [
+      [theme.success, theme.successSoft],
+      [theme.warn, theme.warnSoft],
+      [theme.info, theme.infoSoft],
+      [theme.danger, theme.dangerSoft],
+      [theme.muted, theme.neutralSoft],
+      [theme.primaryText, theme.primarySoft],
+    ];
+    for (const [fg, bg] of pairs) {
+      expect(contrast(fg, bg)).toBeGreaterThanOrEqual(4.5);
+    }
+    for (const fg of [theme.success, theme.warn, theme.info, theme.primaryText]) {
+      expect(contrast(fg, theme.card)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('reads both lines of the green header', () => {
+    expect(contrast(theme.onPrimary, theme.primary)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(theme.heroMuted, theme.primary)).toBeGreaterThanOrEqual(4.5);
+  });
+
   it('separates a chip’s surface from the page behind it', () => {
     expect(contrast(theme.chip, theme.bg)).toBeGreaterThan(1.1);
   });
@@ -64,8 +91,10 @@ describe.each(Object.entries(themes))('the %s palette', (_name, theme: Theme) =>
 });
 
 describe('the shape and rhythm tokens', () => {
-  it('offers one control radius, so nothing invents its own', () => {
-    expect(radius.control).toBe(10);
+  /** Controls, the cards they sit among, and the header: rounder as they grow. */
+  it('rounds larger surfaces more, so nothing invents its own', () => {
+    expect(radius.control).toBeLessThan(radius.card);
+    expect(radius.card).toBeLessThan(radius.hero);
   });
 
   it('keeps spacing on a 4pt rhythm', () => {

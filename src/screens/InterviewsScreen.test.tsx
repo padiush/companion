@@ -20,6 +20,13 @@ jest.mock('../auth/AuthContext', () => ({ useAuth: jest.fn() }));
 jest.mock('../hooks/useProjects', () => ({ useProjects: jest.fn() }));
 jest.mock('../hooks/useOutbox', () => ({ useOutbox: jest.fn() }));
 jest.mock('../hooks/useDrafts', () => ({ useDrafts: jest.fn() }));
+jest.mock('../hooks/useFieldRecords', () => ({
+  useFieldRecords: () => ({ records: [], lastProjectId: null, loading: false, refresh: jest.fn() }),
+}));
+const mockReloadLastSync = jest.fn().mockResolvedValue(undefined);
+jest.mock('../hooks/useLastSync', () => ({
+  useLastSync: () => ({ at: null, reload: mockReloadLastSync }),
+}));
 
 const mockNavigate = jest.fn();
 jest.mock('@react-navigation/native', () => ({
@@ -299,5 +306,56 @@ describe('InterviewsScreen', () => {
 
     const { getByText } = await render(<InterviewsScreen />);
     expect(getByText('home.syncError')).toBeTruthy();
+  });
+
+  describe('the two things a researcher comes to do', () => {
+    it('starts an interview in the only project directly', async () => {
+      mockProjects({ projects: [{ id: 3, name: 'Herbs' }] });
+
+      const { getByTestId } = await render(<InterviewsScreen />);
+      await fireEvent.press(getByTestId('new-interview'));
+
+      expect(mockNavigate).toHaveBeenCalledWith('Project', { projectId: 3, projectName: 'Herbs' });
+    });
+
+    it('asks which project when there are several', async () => {
+      mockProjects({
+        projects: [
+          { id: 3, name: 'Herbs' },
+          { id: 4, name: 'Trees' },
+        ],
+      });
+
+      const { getByTestId } = await render(<InterviewsScreen />);
+      await fireEvent.press(getByTestId('new-interview'));
+      await fireEvent.press(getByTestId('interview-project-4'));
+
+      expect(mockNavigate).toHaveBeenCalledWith('Project', { projectId: 4, projectName: 'Trees' });
+    });
+
+    it('starts a field record in a project', async () => {
+      mockProjects({ projects: [{ id: 3, name: 'Herbs' }] });
+
+      const { getByTestId } = await render(<InterviewsScreen />);
+      await fireEvent.press(getByTestId('new-record'));
+
+      expect(mockNavigate).toHaveBeenCalledWith('FieldRecord', { projectId: 3 });
+    });
+
+    it('offers neither until there is a project to work in', async () => {
+      mockProjects({ projects: [] });
+
+      const { getByTestId } = await render(<InterviewsScreen />);
+
+      expect(getByTestId('new-interview').props.accessibilityState).toEqual({ disabled: true });
+      expect(getByTestId('new-record').props.accessibilityState).toEqual({ disabled: true });
+    });
+  });
+
+  /** Whether what is on the phone is current, before anything else. */
+  it('says when the device last synced', async () => {
+    const { getByTestId } = await render(<InterviewsScreen />);
+
+    expect(getByTestId('last-sync')).toHaveTextContent('home.neverSynced');
   });
 });

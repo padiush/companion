@@ -11,7 +11,21 @@ in [docs/releasing.md](docs/releasing.md).
 
 ## [Unreleased]
 
+### Changed
+
+- A new look, matching the web's: its palette and its typeface, Montserrat,
+  a green header on each tab with the two main actions as large tiles,
+  larger rows and controls with icons, and a floating tab bar. Choosing what a
+  field record is now uses four large tiles.
+
 ### Added
+
+- Photo previews: each photograph gets a small preview at capture, kept
+  encrypted with it and deleted with it once sent (store schema v6). Records
+  are listed as cards showing their first photograph, and a record's or an
+  interview's photos as a strip.
+- The Entrevistas tab says when the device last synced and how much is waiting
+  to be sent; Por enviar says when the device is offline.
 
 - Field records on the device: observed or collected, with coordinates,
   photographs, a voice note and the collecting permit. They are sent with

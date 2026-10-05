@@ -14,11 +14,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fieldRecordRow, interviewRow } from '../capture/listing';
 import { useDrafts } from '../hooks/useDrafts';
+import { useOnline } from '../hooks/useOnline';
 import { useOutbox } from '../hooks/useOutbox';
 import type { RootStackParamList } from '../navigation/types';
 import type { PushSummary } from '../sync/push';
-import { space, type, useTheme } from '../theme';
+import { radius, space, type, useTheme } from '../theme';
+import { Banner } from '../ui/Banner';
 import { Button } from '../ui/Button';
+import { Icon } from '../ui/Icon';
 import { SectionLabel } from '../ui/SectionLabel';
 import { StatusRow } from '../ui/StatusRow';
 
@@ -35,6 +38,7 @@ export function OutboxScreen() {
   const theme = useTheme();
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
+  const online = useOnline();
   const { drafts, fieldRecords: waitingRecords, loading, refresh } = useDrafts();
   const {
     count,
@@ -51,8 +55,6 @@ export function OutboxScreen() {
   const [sent, setSent] = useState<PushSummary | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // What the server does not hold in full: never sent, refused, or sent with
-  // answers it refused — each needs the researcher, so each stays here.
   const waitingInterviews = drafts.filter((draft) => draft.sync_status !== 'synced');
 
   const onRefresh = async () => {
@@ -77,116 +79,154 @@ export function OutboxScreen() {
   const nothingWaiting =
     waitingInterviews.length === 0 && waitingRecords.length === 0 && pendingMedia === 0;
 
+  /** What a send will carry, in words: "1 entrevista · 2 registros · 4 archivos". */
+  const contents = [
+    count > 0 ? t('outbox.interviews', { count }) : null,
+    fieldRecords > 0 ? t('outbox.records', { count: fieldRecords }) : null,
+    pendingMedia > 0 ? t('outbox.files', { count: pendingMedia }) : null,
+  ]
+    .filter(Boolean)
+    .join('  ·  ');
+
   return (
     <View style={[styles.container, { backgroundColor: theme.bg, paddingTop: insets.top + 12 }]}>
-      <Text style={[styles.title, { color: theme.text }]}>{t('outbox.title')}</Text>
-
-      {hasWork ? (
-        <Button
-          testID="send"
-          label={
-            unsent > 0
-              ? `${t('drafts.send')} · ${unsent}`
-              : t('drafts.sendMedia', { count: pendingMedia })
-          }
-          onPress={onSend}
-          busy={sending}
-          style={styles.send}
-        />
-      ) : null}
-
-      {error ? (
-        <Text style={[styles.error, { color: theme.danger }]}>{t('drafts.sendError')}</Text>
-      ) : (
-        <>
-          {sent && sent.synced > 0 ? (
-            <Text style={[styles.sent, { color: theme.primary }]}>
-              {t('drafts.sent', { count: sent.synced })}
-            </Text>
-          ) : null}
-          {unresolved > 0 ? (
-            <Text testID="send-unresolved" style={[styles.error, { color: theme.danger }]}>
-              {t('drafts.sendUnresolved', { count: unresolved })}
-            </Text>
-          ) : null}
-          {sent && lastRecordResult && lastRecordResult.synced > 0 ? (
-            <Text testID="records-sent" style={[styles.sent, { color: theme.primary }]}>
-              {t('drafts.recordsSent', { count: lastRecordResult.synced })}
-            </Text>
-          ) : null}
-          {sent && lastRecordResult && lastRecordResult.rejected > 0 ? (
-            <Text testID="records-refused" style={[styles.error, { color: theme.danger }]}>
-              {t('drafts.recordsRefused', { count: lastRecordResult.rejected })}
-            </Text>
-          ) : null}
-          {lastMediaResult && lastMediaResult.failed > 0 ? (
-            <Text testID="media-failed" style={[styles.error, { color: theme.danger }]}>
-              {t('drafts.mediaFailed', { count: lastMediaResult.failed })}
-            </Text>
-          ) : null}
-        </>
-      )}
-
       <ScrollView
         testID="outbox-scroll"
-        contentContainerStyle={styles.list}
+        contentContainerStyle={styles.scroll}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
       >
+        <Text style={[styles.title, { color: theme.text }]} accessibilityRole="header">
+          {t('outbox.title')}
+        </Text>
+
+        {hasWork ? (
+          <View style={[styles.summary, { backgroundColor: theme.primary }]}>
+            <View style={styles.summaryTop}>
+              <View style={styles.count}>
+                <Text style={[styles.countText, { color: theme.onPrimary }]}>
+                  {unsent > 0 ? unsent : pendingMedia}
+                </Text>
+              </View>
+              <View style={styles.summaryText}>
+                <Text style={[styles.ready, { color: theme.onPrimary }]}>{t('outbox.ready')}</Text>
+                <Text style={[styles.contents, { color: theme.heroMuted }]}>{contents}</Text>
+              </View>
+            </View>
+            <Button
+              testID="send"
+              variant="inverse"
+              icon="send"
+              label={
+                unsent > 0 ? t('outbox.sendNow') : t('drafts.sendMedia', { count: pendingMedia })
+              }
+              onPress={onSend}
+              busy={sending}
+            />
+          </View>
+        ) : null}
+
+        {!online && hasWork ? (
+          <Banner testID="outbox-offline" tone="warn" icon="offline">
+            {t('outbox.offline')}
+          </Banner>
+        ) : null}
+
+        {error ? (
+          <Banner tone="danger" icon="alert">
+            {t('drafts.sendError')}
+          </Banner>
+        ) : (
+          <>
+            {sent && sent.synced > 0 ? (
+              <Banner tone="success" icon="check">
+                {t('drafts.sent', { count: sent.synced })}
+              </Banner>
+            ) : null}
+            {unresolved > 0 ? (
+              <Banner testID="send-unresolved" tone="danger" icon="alert">
+                {t('drafts.sendUnresolved', { count: unresolved })}
+              </Banner>
+            ) : null}
+            {sent && lastRecordResult && lastRecordResult.synced > 0 ? (
+              <Banner testID="records-sent" tone="success" icon="check">
+                {t('drafts.recordsSent', { count: lastRecordResult.synced })}
+              </Banner>
+            ) : null}
+            {sent && lastRecordResult && lastRecordResult.rejected > 0 ? (
+              <Banner testID="records-refused" tone="danger" icon="alert">
+                {t('drafts.recordsRefused', { count: lastRecordResult.rejected })}
+              </Banner>
+            ) : null}
+            {lastMediaResult && lastMediaResult.failed > 0 ? (
+              <Banner testID="media-failed" tone="danger" icon="alert">
+                {t('drafts.mediaFailed', { count: lastMediaResult.failed })}
+              </Banner>
+            ) : null}
+          </>
+        )}
+
         {loading ? (
           <ActivityIndicator color={theme.primary} />
         ) : nothingWaiting ? (
-          <Text testID="outbox-empty" style={[styles.empty, { color: theme.muted }]}>
-            {t('outbox.empty')}
-          </Text>
+          <View testID="outbox-empty" style={styles.done}>
+            <View style={[styles.doneIcon, { backgroundColor: theme.successSoft }]}>
+              <Icon name="synced" color={theme.success} size={30} />
+            </View>
+            <Text style={[styles.doneText, { color: theme.muted }]}>{t('outbox.empty')}</Text>
+          </View>
         ) : (
           <>
             {waitingInterviews.length > 0 ? (
-              <>
+              <View>
                 <SectionLabel>{t('drafts.interviews')}</SectionLabel>
-                {waitingInterviews.map((draft) => (
-                  <StatusRow
-                    key={draft.id}
-                    testID={`draft-${draft.id}`}
-                    status={draft.sync_status}
-                    {...interviewRow(draft, t, i18n.language)}
-                    onPress={() =>
-                      navigation.navigate('Interview', {
-                        formId: draft.form_id,
-                        projectId: draft.project_id,
-                        formName: draft.form_name ?? '',
-                        instanceId: draft.id,
-                      })
-                    }
-                  />
-                ))}
-              </>
+                <View style={styles.list}>
+                  {waitingInterviews.map((draft) => (
+                    <StatusRow
+                      key={draft.id}
+                      testID={`draft-${draft.id}`}
+                      status={draft.sync_status}
+                      icon="interview"
+                      {...interviewRow(draft, t, i18n.language)}
+                      onPress={() =>
+                        navigation.navigate('Interview', {
+                          formId: draft.form_id,
+                          projectId: draft.project_id,
+                          formName: draft.form_name ?? '',
+                          instanceId: draft.id,
+                        })
+                      }
+                    />
+                  ))}
+                </View>
+              </View>
             ) : null}
 
             {waitingRecords.length > 0 ? (
-              <>
+              <View>
                 <SectionLabel>{t('drafts.fieldRecords')}</SectionLabel>
-                {waitingRecords.map((record) => (
-                  <StatusRow
-                    key={record.client_id}
-                    testID={`waiting-record-${record.client_id}`}
-                    status={record.sync_status}
-                    {...fieldRecordRow(record, t)}
-                    onPress={() =>
-                      navigation.navigate('FieldRecord', {
-                        projectId: record.project_id,
-                        clientId: record.client_id,
-                      })
-                    }
-                  />
-                ))}
-              </>
+                <View style={styles.list}>
+                  {waitingRecords.map((record) => (
+                    <StatusRow
+                      key={record.client_id}
+                      testID={`waiting-record-${record.client_id}`}
+                      status={record.sync_status}
+                      icon="record"
+                      {...fieldRecordRow(record, t)}
+                      onPress={() =>
+                        navigation.navigate('FieldRecord', {
+                          projectId: record.project_id,
+                          clientId: record.client_id,
+                        })
+                      }
+                    />
+                  ))}
+                </View>
+              </View>
             ) : null}
 
             {waitingInterviews.length === 0 && waitingRecords.length === 0 ? (
-              // Only files left: their interview or record is already on the
-              // server, and the button above uploads them.
               <Text style={[styles.empty, { color: theme.muted }]}>
                 {t('outbox.onlyMedia', { count: pendingMedia })}
               </Text>
@@ -201,27 +241,66 @@ export function OutboxScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: space.xl,
+  },
+  scroll: {
+    paddingHorizontal: space.lg,
+    paddingBottom: space.xl,
+    gap: space.md + 2,
   },
   title: {
     ...type.title,
-    marginBottom: space.xl,
+    paddingHorizontal: space.xs,
+    marginBottom: space.xs,
   },
-  send: {
-    marginBottom: space.lg,
+  summary: {
+    borderRadius: radius.hero - 6,
+    padding: space.lg + 2,
+    gap: space.lg,
   },
-  error: {
+  summaryTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md + 2,
+  },
+  count: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countText: {
+    ...type.title,
+    fontSize: 24,
+  },
+  summaryText: {
+    flex: 1,
+    gap: 2,
+  },
+  ready: {
+    ...type.heading,
+  },
+  contents: {
     ...type.label,
-    marginBottom: space.md,
-  },
-  sent: {
-    ...type.label,
-    fontWeight: '600',
-    marginBottom: space.md,
   },
   list: {
+    gap: space.sm + 2,
+  },
+  done: {
+    alignItems: 'center',
     gap: space.md,
-    paddingBottom: space.xl,
+    paddingVertical: space.xxl,
+  },
+  doneIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  doneText: {
+    ...type.body,
   },
   empty: {
     ...type.body,

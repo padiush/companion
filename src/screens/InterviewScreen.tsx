@@ -223,7 +223,9 @@ export function InterviewScreen() {
           ))}
 
           <TouchableOpacity testID="sync-retry" onPress={retry} accessibilityRole="button">
-            <Text style={[styles.bannerAction, { color: theme.primary }]}>{t('sync.retry')}</Text>
+            <Text style={[styles.bannerAction, { color: theme.primaryText }]}>
+              {t('sync.retry')}
+            </Text>
           </TouchableOpacity>
         </View>
       ) : null}
@@ -250,7 +252,7 @@ export function InterviewScreen() {
                   onPress={() => addRepeat(section.id)}
                   accessibilityRole="button"
                 >
-                  <Text style={[styles.addSetText, { color: theme.primary }]}>
+                  <Text style={[styles.addSetText, { color: theme.primaryText }]}>
                     + {t('interview.addSet')}
                   </Text>
                 </TouchableOpacity>
@@ -306,7 +308,7 @@ const styles = StyleSheet.create({
   preparing: type.body,
   banner: {
     borderWidth: border.width,
-    borderRadius: radius.control,
+    borderRadius: radius.card,
     padding: space.lg,
     marginBottom: space.xl,
     gap: space.sm,
@@ -336,7 +338,7 @@ const styles = StyleSheet.create({
   },
   set: {
     borderWidth: border.width,
-    borderRadius: radius.control,
+    borderRadius: radius.card,
     padding: space.lg,
     marginBottom: space.md,
   },

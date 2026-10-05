@@ -34,10 +34,11 @@ beforeEach(() => {
 });
 
 describe('sweepCaptureCache', () => {
+  /** The photo previews pass through ImageManipulator's folder, in plaintext. */
   it('deletes every capture spool directory', () => {
     sweepCaptureCache();
 
-    expect(mockDeleted).toEqual(['ExpoAudio', 'Audio', 'ImagePicker']);
+    expect(mockDeleted).toEqual(['ExpoAudio', 'Audio', 'ImagePicker', 'ImageManipulator']);
   });
 
   it('leaves missing directories alone', () => {
@@ -53,7 +54,7 @@ describe('sweepCaptureCache', () => {
 
     sweepCaptureCache();
 
-    expect(mockDeleted).toEqual(['ExpoAudio', 'ImagePicker']);
+    expect(mockDeleted).toEqual(['ExpoAudio', 'ImagePicker', 'ImageManipulator']);
     // Plaintext leftovers may remain; the directory name is deliberately not
     // part of the report.
     expect(recordDiagnostic).toHaveBeenCalledWith('capture_cache_sweep_failed');

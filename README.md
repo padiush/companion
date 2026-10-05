@@ -85,9 +85,16 @@ src/
   capture/         The interview itself: inputs, media, validation, draft state
   sync/            Pull, push, media upload, and resolving what the server refused
   screens/         The three tabs, a project's forms, an interview, a field record
-  navigation/      Root stack and the signed-in bottom tabs
+  navigation/      Root stack and the signed-in floating tab bar
+  ui/              Shared pieces of the look: header, tiles, rows, inputs, icons
+  whatsNew/        Release notes shown after an update
   i18n/            es / en / pt, Spanish first
 ```
+
+The look follows the web's: its palette and its typeface, Montserrat, embedded
+in the build through the `expo-font` plugin in `app.json`. Colours, radii and
+type live in `src/theme.ts`, where a test checks every text colour against the
+surfaces it is drawn on.
 
 Everything user-facing is localized in all three languages; the local store is
 versioned by `PRAGMA user_version` (`src/db/schema.ts`), so schema changes reach

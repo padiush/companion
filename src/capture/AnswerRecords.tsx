@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { Chevron } from '../components/Chevron';
 import type { FieldRecordRow } from '../db/types';
 import { border, radius, space, touch, type, useTheme } from '../theme';
 import { Button } from '../ui/Button';
+import { Icon } from '../ui/Icon';
 
 /** How a record's sync state reads beside its answer. */
 const RECORD_STATUS: Record<string, string> = {
@@ -55,7 +55,7 @@ export function AnswerRecords({ slot, records, canRecord, onOpen, onRecord }: Pr
               {t(RECORD_STATUS[record.sync_status] ?? RECORD_STATUS.draft)}
             </Text>
           </View>
-          <Chevron color={theme.muted} />
+          <Icon name="chevronRight" color={theme.muted} size={18} />
         </TouchableOpacity>
       ))}
 

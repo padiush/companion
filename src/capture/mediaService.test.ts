@@ -3,6 +3,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { insertMedia, insertMediaChunk } from '../db/mediaRepository';
 import { recordDiagnostic } from '../diagnostics';
 import { attachMedia } from './mediaService';
+import { makeThumbnail } from './thumbnail';
 
 let mockFileSize: number | null = 0;
 let mockReads: Uint8Array[] = [];
@@ -30,6 +31,8 @@ jest.mock('../db/mediaRepository', () => ({
 }));
 jest.mock('../ids', () => ({ uuid: jest.fn(() => 'media-uuid') }));
 jest.mock('../diagnostics', () => ({ recordDiagnostic: jest.fn().mockResolvedValue(undefined) }));
+const mockThumbnail = Uint8Array.from([1, 2]);
+jest.mock('./thumbnail', () => ({ makeThumbnail: jest.fn() }));
 
 const CHUNK_BYTES = 4 * 1024 * 1024;
 
@@ -48,6 +51,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockFileSize = 0;
   mockReads = [];
+  (makeThumbnail as jest.Mock).mockResolvedValue(mockThumbnail);
 });
 
 describe('attachMedia', () => {
@@ -115,5 +119,41 @@ describe('attachMedia', () => {
     // The encrypted copy is stored, but an unencrypted original is still on
     // the device — reportable, because the privacy policy says otherwise.
     expect(recordDiagnostic).toHaveBeenCalledWith('plaintext_capture_retained');
+  });
+
+  /** A list shows a record by its photo; the camera's file is the only chance to make one. */
+  it('stores a photograph with a preview made from the camera file', async () => {
+    mockFileSize = 1;
+    mockReads = [Uint8Array.from([5])];
+
+    await attachMedia(db, params);
+
+    expect(makeThumbnail).toHaveBeenCalledWith('file:///cache/p.jpg');
+    expect(insertMedia).toHaveBeenCalledWith(
+      db,
+      expect.objectContaining({ thumbnail: mockThumbnail })
+    );
+  });
+
+  it('makes no preview of a recording', async () => {
+    mockFileSize = 1;
+    mockReads = [Uint8Array.from([5])];
+
+    await attachMedia(db, { ...params, kind: 'audio', contentType: 'audio/mp4' });
+
+    expect(makeThumbnail).not.toHaveBeenCalled();
+    expect(insertMedia).toHaveBeenCalledWith(db, expect.objectContaining({ thumbnail: null }));
+  });
+
+  /** A preview is a convenience; never a reason to lose the photo. */
+  it('keeps the photograph when no preview could be made', async () => {
+    (makeThumbnail as jest.Mock).mockResolvedValue(null);
+    mockFileSize = 1;
+    mockReads = [Uint8Array.from([5])];
+
+    await attachMedia(db, params);
+
+    expect(insertMedia).toHaveBeenCalledWith(db, expect.objectContaining({ thumbnail: null }));
+    expect(insertMediaChunk).toHaveBeenCalled();
   });
 });

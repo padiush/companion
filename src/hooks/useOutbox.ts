@@ -8,6 +8,7 @@ import { countPendingMedia } from '../db/mediaRepository';
 import { pushDiagnostics } from '../sync/pushDiagnostics';
 import { pushDrafts, type PushSummary } from '../sync/push';
 import { pushFieldRecords, type FieldRecordPushSummary } from '../sync/pushFieldRecords';
+import { recordSyncSuccess } from '../sync/lastSync';
 import { uploadMedia, type MediaUploadSummary } from '../sync/uploadMedia';
 
 export interface OutboxState {
@@ -88,6 +89,7 @@ export function useOutbox(): OutboxState {
       // Last, and unable to throw: a device reporting that it lost captures
       // must not lose the sync that carries the rest of them too.
       await pushDiagnostics(db);
+      await recordSyncSuccess(db);
       setLastResult(result);
       setLastRecordResult(records);
       setCount(await countDrafts(db));

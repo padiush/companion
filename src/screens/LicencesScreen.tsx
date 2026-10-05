@@ -55,7 +55,7 @@ export function LicencesScreen() {
           onPress={() => Linking.openURL(SOURCE_URL)}
           accessibilityRole="link"
         >
-          <Text style={[styles.sourceLink, { color: theme.primary }]}>
+          <Text style={[styles.sourceLink, { color: theme.primaryText }]}>
             {t('licences.viewSource')}
           </Text>
         </TouchableOpacity>

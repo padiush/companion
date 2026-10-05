@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { getDatabase } from '../db/database';
 import { getProjects } from '../db/projectsRepository';
 import type { CachedProject } from '../db/types';
+import { recordSyncSuccess } from '../sync/lastSync';
 import { pull } from '../sync/pull';
 
 export interface ProjectsState {
@@ -59,6 +60,7 @@ export function useProjects(): ProjectsState {
     try {
       const db = await getDatabase();
       await pull(db);
+      await recordSyncSuccess(db);
       setProjects(await getProjects(db));
       return true;
     } catch {

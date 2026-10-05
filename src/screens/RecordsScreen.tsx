@@ -11,25 +11,29 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fieldRecordRow } from '../capture/listing';
 import { defaultRecordProject } from '../capture/recordProject';
 import { useFieldRecords } from '../hooks/useFieldRecords';
 import { useProjects } from '../hooks/useProjects';
+import { useRecordCovers } from '../hooks/useRecordCovers';
 import type { RootStackParamList } from '../navigation/types';
-import { border, radius, space, type, useTheme } from '../theme';
-import { Button } from '../ui/Button';
+import { radius, space, touch, type, useTheme } from '../theme';
+import { ChoiceRow } from '../ui/ChoiceRow';
+import { Hero } from '../ui/Hero';
+import { Icon } from '../ui/Icon';
 import { SectionLabel } from '../ui/SectionLabel';
-import { StatusRow } from '../ui/StatusRow';
+import { Sheet } from '../ui/Sheet';
+import { StatusChip } from '../ui/StatusChip';
+import { Thumbnail } from '../ui/Thumbnail';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 /**
  * The Registros tab: every field record made on this device, from any project,
- * and a new one. Records are not filed under a project's forms because most
- * are not part of an interview at all — a plant seen on the way, a specimen
- * taken on a walk.
+ * shown by its first photograph, and a new one. Records are not filed under a
+ * project's forms because most are not part of an interview at all — a plant
+ * seen on the way, a specimen taken on a walk.
  *
  * A new record goes to the project the last one went to. The project is
  * settled before the record opens rather than inside it: its permits, and the
@@ -39,9 +43,9 @@ export function RecordsScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
   const navigation = useNavigation<Nav>();
-  const insets = useSafeAreaInsets();
   const { records, lastProjectId, loading, refresh } = useFieldRecords();
   const { projects } = useProjects();
+  const covers = useRecordCovers();
   const [chosenId, setChosenId] = useState<number | null>(null);
   const [choosing, setChoosing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -67,105 +71,144 @@ export function RecordsScreen() {
     setChoosing(false);
   };
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.bg, paddingTop: insets.top + 12 }]}>
-      <Text style={[styles.title, { color: theme.text }]}>{t('records.title')}</Text>
+  // The project a new record goes to, in the header: a chip that changes it
+  // when there is more than one, a plain label when there is nothing to choose.
+  const projectName = target ? (
+    <>
+      <Icon name="project" color={theme.onPrimary} size={16} />
+      <Text
+        testID="record-project"
+        style={[styles.projectText, { color: theme.onPrimary }]}
+        numberOfLines={1}
+      >
+        {t('records.inProject', { project: target.name })}
+      </Text>
+    </>
+  ) : null;
 
+  const projectLine = !target ? undefined : projects.length > 1 ? (
+    <TouchableOpacity
+      testID="change-record-project"
+      onPress={() => setChoosing(true)}
+      accessibilityRole="button"
+      accessibilityHint={t('records.changeProject')}
+      style={styles.projectChip}
+    >
+      {projectName}
+      <Icon name="chevronDown" color={theme.onPrimary} size={16} />
+    </TouchableOpacity>
+  ) : (
+    <View style={styles.projectChip}>{projectName}</View>
+  );
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <ScrollView
         testID="records-scroll"
-        contentContainerStyle={styles.list}
+        contentContainerStyle={styles.scroll}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
       >
-        {target ? (
-          <View style={styles.newRecord}>
-            <Button
-              testID="new-field-record"
-              label={t('records.new')}
-              onPress={() => navigation.navigate('FieldRecord', { projectId: target.id })}
-            />
-            <View style={styles.target}>
-              <Text
-                testID="record-project"
-                style={[styles.targetText, { color: theme.muted }]}
-                numberOfLines={2}
-              >
-                {t('records.inProject', { project: target.name })}
-              </Text>
-              {projects.length > 1 ? (
+        <Hero title={t('records.title')} subtitle={projectLine} />
+
+        <View style={styles.body}>
+          {target ? null : (
+            <Text testID="records-no-projects" style={[styles.empty, { color: theme.muted }]}>
+              {t('records.noProjects')}
+            </Text>
+          )}
+
+          <SectionLabel>{t('records.onDevice')}</SectionLabel>
+
+          {loading ? (
+            <ActivityIndicator color={theme.primary} />
+          ) : (
+            <View style={styles.grid}>
+              {target ? (
                 <TouchableOpacity
-                  testID="change-record-project"
-                  onPress={() => setChoosing((open) => !open)}
+                  testID="new-field-record"
                   accessibilityRole="button"
-                  accessibilityState={{ expanded: choosing }}
+                  onPress={() => navigation.navigate('FieldRecord', { projectId: target.id })}
+                  style={[styles.card, styles.newCard, { borderColor: theme.chipBorder }]}
                 >
-                  <Text style={[styles.change, { color: theme.primary }]}>
-                    {t(choosing ? 'common.cancel' : 'records.changeProject')}
+                  <View style={[styles.newIcon, { backgroundColor: theme.primary }]}>
+                    <Icon name="add" color={theme.onPrimary} size={26} strokeWidth={2.6} />
+                  </View>
+                  <Text style={[styles.newLabel, { color: theme.primaryText }]}>
+                    {t('records.new')}
                   </Text>
                 </TouchableOpacity>
               ) : null}
+
+              {records.map((record) => {
+                const row = fieldRecordRow(record, t);
+                return (
+                  <TouchableOpacity
+                    key={record.client_id}
+                    testID={`field-record-${record.client_id}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={row.title}
+                    onPress={() =>
+                      navigation.navigate('FieldRecord', {
+                        projectId: record.project_id,
+                        clientId: record.client_id,
+                      })
+                    }
+                    style={[
+                      styles.card,
+                      { backgroundColor: theme.card, borderColor: theme.border },
+                    ]}
+                  >
+                    <Thumbnail
+                      testID={`record-cover-${record.client_id}`}
+                      mediaId={covers[record.client_id] ?? null}
+                      placeholder="record"
+                      style={styles.cover}
+                    />
+                    <View style={styles.cardBody}>
+                      <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+                        {row.title}
+                      </Text>
+                      {row.meta.map((line) => (
+                        <Text
+                          key={line}
+                          style={[styles.meta, { color: theme.muted }]}
+                          numberOfLines={1}
+                        >
+                          {line}
+                        </Text>
+                      ))}
+                      <StatusChip status={record.sync_status} />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
+          )}
 
-            {choosing ? (
-              <View style={styles.choices}>
-                {projects.map((project) => {
-                  const selected = project.id === target.id;
-
-                  return (
-                    <TouchableOpacity
-                      key={project.id}
-                      testID={`record-project-${project.id}`}
-                      onPress={() => choose(project.id)}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected }}
-                      style={[
-                        styles.choice,
-                        {
-                          backgroundColor: theme.card,
-                          borderColor: selected ? theme.primary : theme.border,
-                        },
-                      ]}
-                    >
-                      <Text style={[styles.choiceText, { color: theme.text }]}>{project.name}</Text>
-                      {selected ? (
-                        <Text style={[styles.check, { color: theme.primary }]}>✓</Text>
-                      ) : null}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ) : null}
-          </View>
-        ) : (
-          <Text testID="records-no-projects" style={[styles.empty, { color: theme.muted }]}>
-            {t('records.noProjects')}
-          </Text>
-        )}
-
-        <SectionLabel>{t('records.onDevice')}</SectionLabel>
-
-        {loading ? (
-          <ActivityIndicator color={theme.primary} />
-        ) : records.length === 0 ? (
-          <Text style={[styles.empty, { color: theme.muted }]}>{t('records.empty')}</Text>
-        ) : (
-          records.map((record) => (
-            <StatusRow
-              key={record.client_id}
-              testID={`field-record-${record.client_id}`}
-              status={record.sync_status}
-              {...fieldRecordRow(record, t)}
-              onPress={() =>
-                navigation.navigate('FieldRecord', {
-                  projectId: record.project_id,
-                  clientId: record.client_id,
-                })
-              }
-            />
-          ))
-        )}
+          {!loading && records.length === 0 ? (
+            <Text style={[styles.empty, { color: theme.muted }]}>{t('records.empty')}</Text>
+          ) : null}
+        </View>
       </ScrollView>
+
+      <Sheet
+        testID="choose-record-project"
+        visible={choosing}
+        title={t('records.chooseProject')}
+        onClose={() => setChoosing(false)}
+      >
+        {projects.map((project) => (
+          <ChoiceRow
+            key={project.id}
+            testID={`record-project-${project.id}`}
+            label={project.name}
+            selected={project.id === target?.id}
+            onPress={() => choose(project.id)}
+          />
+        ))}
+      </Sheet>
     </View>
   );
 }
@@ -173,53 +216,78 @@ export function RecordsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: space.xl,
   },
-  title: {
-    ...type.title,
-    marginBottom: space.xl,
-  },
-  list: {
-    gap: space.md,
+  scroll: {
     paddingBottom: space.xl,
   },
-  newRecord: {
-    gap: space.sm,
-    marginBottom: space.lg,
-  },
-  target: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: space.md,
-  },
-  targetText: {
-    ...type.label,
-    flexShrink: 1,
-  },
-  change: {
-    ...type.label,
-    fontWeight: '600',
-  },
-  choices: {
-    gap: space.sm,
-  },
-  choice: {
+  projectChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space.md,
-    borderWidth: border.width,
-    borderRadius: radius.control,
-    padding: space.md,
+    alignSelf: 'flex-start',
+    gap: space.sm,
+    maxWidth: '100%',
+    minHeight: touch.min,
+    marginTop: space.sm,
+    paddingHorizontal: space.md,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.18)',
   },
-  choiceText: {
-    ...type.body,
+  projectText: {
+    ...type.label,
+    fontWeight: '700',
     flexShrink: 1,
   },
-  check: {
+  body: {
+    paddingHorizontal: space.lg,
+    paddingTop: space.xl,
+    gap: space.sm,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.md,
+  },
+  card: {
+    flexBasis: '47%',
+    flexGrow: 1,
+    maxWidth: '48.5%',
+    borderRadius: radius.card,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  newCard: {
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    minHeight: 220,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.sm,
+  },
+  newIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  newLabel: {
+    ...type.label,
+    fontWeight: '800',
+  },
+  cover: {
+    height: 112,
+  },
+  cardBody: {
+    padding: space.md,
+    gap: space.xs + 2,
+  },
+  name: {
     ...type.body,
-    fontWeight: '700',
+    fontWeight: '800',
+  },
+  meta: {
+    ...type.caption,
+    fontSize: 12,
   },
   empty: {
     ...type.body,

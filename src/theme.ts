@@ -35,6 +35,22 @@ const light = {
   inputBg: '#ffffff',
   chip: '#ffffff',
   chipBorder: '#80837a',
+  // The field look: tinted surfaces behind icons, and a soft fill for each
+  // state a capture can be in, each with a text colour that reads on it.
+  primarySoft: '#e2ead4',
+  primaryText: '#3c6200',
+  success: '#00704f',
+  successSoft: '#d8f1e5',
+  warn: '#8a4700',
+  warnSoft: '#fbead3',
+  info: '#005a75',
+  infoSoft: '#d8ecf3',
+  dangerSoft: '#fbe0e4',
+  neutralSoft: '#e9eae7',
+  // Text on the green header, beside `onPrimary` for its title.
+  heroMuted: '#d6e5bd',
+  // The part of a voice note's waveform not yet played.
+  track: '#a9c08a',
 };
 
 const dark = {
@@ -49,6 +65,18 @@ const dark = {
   inputBg: '#30342e',
   chip: '#252a24',
   chipBorder: '#70736a',
+  primarySoft: '#2a3a1b',
+  primaryText: '#a6cc75',
+  success: '#62d4a5',
+  successSoft: '#16342a',
+  warn: '#f3b866',
+  warnSoft: '#3b2b14',
+  info: '#80d1ea',
+  infoSoft: '#13303a',
+  dangerSoft: '#3d1a20',
+  neutralSoft: '#30362e',
+  heroMuted: '#13200a',
+  track: '#4f6b31',
 };
 
 export type Theme = typeof light;
@@ -65,18 +93,17 @@ export function useTheme(): Theme {
  * Shape, rhythm and type, in one place so a change lands once rather than in
  * nine stylesheets.
  *
- * `radius` is a single value on purpose. The app had five (2, 6, 10, 12, 22)
- * for no reason anyone could name; 10 is both the one it already used most and
- * a step from the web's 8, close enough that the two read as the same family
- * at phone scale. Pills stay pills.
+ * The field look: rounder and larger than the web, because it is used with
+ * one hand, outdoors, often in a hurry. `control` rounds buttons and inputs,
+ * `card` the rows and tiles they sit among, and `hero` the green header's
+ * lower edge. Pills stay pills.
  *
- * `border` stays at 1 rather than adopting the web's 1.5px: desktop displays
- * are often 1x where a hairline looks fragile, while a phone renders 1 logical
- * point as two or three physical pixels already. There are no shadows for the
- * same kind of reason — the web theme is flat (`--depth: 0`), and RN elevation
- * diverges across platforms and costs render time in lists.
+ * `border` stays at 1 rather than adopting the web's 1.5px: a phone renders 1
+ * logical point as two or three physical pixels already. Shadows are kept for
+ * the few things that float over the page — the action tiles and the tab bar
+ * — and nowhere down a list, where RN elevation costs render time.
  */
-export const radius = { control: 10, pill: 999 } as const;
+export const radius = { control: 14, card: 18, hero: 28, pill: 999 } as const;
 
 export const border = { width: 1 } as const;
 
@@ -84,22 +111,29 @@ export const border = { width: 1 } as const;
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 
 /**
+ * Montserrat, as on the web. It is embedded in the build (the expo-font
+ * plugin in app.json) with one face per weight from 400 to 800, so
+ * `fontWeight` picks the face on both platforms.
+ */
+export const font = { family: 'Montserrat' } as const;
+
+/**
  * Five steps, replacing ten font sizes. `title` heads a screen, `heading` a
  * section of the researcher's form, `body` is answers and content, `label`
  * names a field, `caption` is metadata and helper text.
  */
 export const type = {
-  title: { fontSize: 24, fontWeight: '700' },
-  heading: { fontSize: 18, fontWeight: '700' },
-  body: { fontSize: 16, fontWeight: '400' },
-  label: { fontSize: 14, fontWeight: '500' },
-  caption: { fontSize: 13, fontWeight: '400' },
-  /** The uppercase kicker the web uses for section labels. */
+  title: { fontFamily: font.family, fontSize: 28, fontWeight: '800' },
+  heading: { fontFamily: font.family, fontSize: 18, fontWeight: '800' },
+  body: { fontFamily: font.family, fontSize: 16, fontWeight: '400' },
+  label: { fontFamily: font.family, fontSize: 14, fontWeight: '600' },
+  caption: { fontFamily: font.family, fontSize: 13, fontWeight: '400' },
+  /** Section labels: the web's kicker, in the heavier field weight. */
   kicker: {
+    fontFamily: font.family,
     fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    fontWeight: '800',
+    letterSpacing: 0.4,
   },
 } as const;
 

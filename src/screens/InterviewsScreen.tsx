@@ -12,26 +12,36 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../auth/AuthContext';
-import { Chevron } from '../components/Chevron';
 import { interviewRow } from '../capture/listing';
+import { defaultRecordProject } from '../capture/recordProject';
 import { useDrafts } from '../hooks/useDrafts';
+import { useFieldRecords } from '../hooks/useFieldRecords';
+import { useLastSync } from '../hooks/useLastSync';
 import { useOutbox } from '../hooks/useOutbox';
 import { useProjects } from '../hooks/useProjects';
 import type { RootStackParamList } from '../navigation/types';
-import { border, radius, space, type, useTheme } from '../theme';
+import { describeLastSync } from '../sync/lastSync';
+import { radius, space, type, useTheme } from '../theme';
+import { ActionTile } from '../ui/ActionTile';
+import { Banner } from '../ui/Banner';
+import { ChoiceRow } from '../ui/ChoiceRow';
+import { Hero, HeroLine } from '../ui/Hero';
+import { Icon } from '../ui/Icon';
 import { SectionLabel } from '../ui/SectionLabel';
+import { Sheet } from '../ui/Sheet';
 import { StatusRow } from '../ui/StatusRow';
 import { currentVersion } from '../whatsNew/releases';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 /**
- * The Entrevistas tab: the projects an interview is started in, and every
- * interview recorded on this device, sent or not, to reopen. What still has
- * to be sent is gathered in Por enviar; field records have a tab of their own.
+ * The Entrevistas tab, and the screen the app opens on: who is signed in and
+ * how fresh the data is, the two things a researcher comes to do — start an
+ * interview, record a plant — then the projects and every interview on this
+ * device, sent or not, to reopen. What still has to be sent is gathered in
+ * Por enviar.
  */
 export function InterviewsScreen() {
   const { t, i18n } = useTranslation();
@@ -42,10 +52,12 @@ export function InterviewsScreen() {
   const { count: unsentInterviews, fieldRecords: unsentRecords } = useOutbox();
   const count = unsentInterviews + unsentRecords;
   const { drafts: interviews } = useDrafts();
+  const { lastProjectId } = useFieldRecords();
+  const lastSync = useLastSync();
   const navigation = useNavigation<Nav>();
-  const insets = useSafeAreaInsets();
   const [signingOut, setSigningOut] = useState(false);
   const [syncedOk, setSyncedOk] = useState(false);
+  const [choosingProject, setChoosingProject] = useState(false);
 
   // Opening the app online — signed in just now, or a session the server
   // confirmed at launch — brings the projects and their forms up to date
@@ -53,7 +65,10 @@ export function InterviewsScreen() {
   // while signed in. Offline, the cached projects are what there is.
   useEffect(() => {
     if (!offline) {
-      void sync({ quiet: true });
+      void (async () => {
+        await sync({ quiet: true });
+        await lastSync.reload();
+      })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -61,6 +76,7 @@ export function InterviewsScreen() {
   const onSync = async () => {
     setSyncedOk(false);
     setSyncedOk(await sync());
+    await lastSync.reload();
   };
 
   const doSignOut = async () => {
@@ -85,146 +101,218 @@ export function InterviewsScreen() {
     );
   };
 
+  const openProject = (projectId: number) => {
+    const project = projects.find((candidate) => candidate.id === projectId);
+    if (project) {
+      navigation.navigate('Project', { projectId: project.id, projectName: project.name });
+    }
+  };
+
+  /** An interview is started from a project's forms; with one project, go straight there. */
+  const newInterview = () => {
+    if (projects.length === 1) {
+      openProject(projects[0].id);
+    } else {
+      setChoosingProject(true);
+    }
+  };
+
+  /** A record goes to the project the last one went to, as on the Registros tab. */
+  const newRecord = () => {
+    const projectId = defaultRecordProject(
+      projects.map((project) => project.id),
+      lastProjectId
+    );
+    if (projectId !== null) {
+      navigation.navigate('FieldRecord', { projectId });
+    }
+  };
+
+  const noProjects = projects.length === 0;
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.bg, paddingTop: insets.top + 12 }]}>
-      <View style={styles.header}>
-        <View style={styles.headerText}>
-          <Text style={[styles.greeting, { color: theme.text }]}>
-            {t('home.greeting', { name: user?.name ?? '' })}
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.muted }]}>{t('home.subtitle')}</Text>
-        </View>
-        <TouchableOpacity
-          testID="sign-out"
-          onPress={onSignOut}
-          disabled={signingOut}
-          accessibilityRole="button"
-        >
-          {signingOut ? (
-            <ActivityIndicator color={theme.muted} />
-          ) : (
-            <Text style={[styles.signOutText, { color: theme.muted }]}>{t('home.signOut')}</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {offline ? (
-        <View
-          testID="offline-notice"
-          style={[styles.offline, { backgroundColor: theme.card, borderColor: theme.border }]}
-        >
-          <Text style={[styles.offlineText, { color: theme.muted }]}>{t('home.offline')}</Text>
-        </View>
-      ) : null}
-
-      <View style={styles.projectsHeader}>
-        <SectionLabel>{t('home.projects')}</SectionLabel>
-        <TouchableOpacity
-          testID="sync"
-          onPress={onSync}
-          disabled={syncing}
-          accessibilityRole="button"
-        >
-          {syncing ? (
-            <ActivityIndicator color={theme.primary} />
-          ) : (
-            <Text style={[styles.syncText, { color: theme.primary }]}>{t('home.sync')}</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {error ? (
-        <Text style={[styles.error, { color: theme.danger }]}>{t('home.syncError')}</Text>
-      ) : syncedOk ? (
-        <Text style={[styles.success, { color: theme.primary }]}>{t('home.synced')}</Text>
-      ) : null}
-
+    <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <ScrollView
         testID="projects-scroll"
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={styles.scroll}
         refreshControl={
           <RefreshControl refreshing={syncing} onRefresh={onSync} tintColor={theme.primary} />
         }
       >
-        {loading ? (
-          <ActivityIndicator color={theme.primary} />
-        ) : projects.length === 0 ? (
-          <Text style={[styles.empty, { color: theme.muted }]}>{t('home.empty')}</Text>
-        ) : (
-          projects.map((project) => (
+        <Hero
+          title={t('home.greeting', { name: user?.name ?? '' })}
+          subtitle={
+            <HeroLine testID="last-sync">
+              <Icon name="synced" color={theme.heroMuted} size={16} />
+              <Text style={[styles.heroLine, { color: theme.heroMuted }]}>
+                {describeLastSync(lastSync.at, t, i18n.language)}
+                {count > 0 ? `  ·  ${t('home.unsent', { count })}` : ''}
+              </Text>
+            </HeroLine>
+          }
+          end={
+            <View style={styles.heroActions}>
+              <TouchableOpacity
+                testID="sync"
+                onPress={onSync}
+                disabled={syncing}
+                accessibilityRole="button"
+                accessibilityLabel={t('home.sync')}
+                style={styles.heroButton}
+              >
+                {syncing ? (
+                  <ActivityIndicator color={theme.onPrimary} />
+                ) : (
+                  <Icon name="sync" color={theme.onPrimary} size={20} />
+                )}
+              </TouchableOpacity>
+              <TouchableOpacity
+                testID="sign-out"
+                onPress={onSignOut}
+                disabled={signingOut}
+                accessibilityRole="button"
+                accessibilityLabel={t('home.signOut')}
+                style={styles.heroButton}
+              >
+                {signingOut ? (
+                  <ActivityIndicator color={theme.onPrimary} />
+                ) : (
+                  <Icon name="signOut" color={theme.onPrimary} size={20} />
+                )}
+              </TouchableOpacity>
+            </View>
+          }
+          tiles={
+            <>
+              <ActionTile
+                testID="new-interview"
+                icon="interview"
+                label={t('project.newInterview')}
+                onPress={newInterview}
+                disabled={noProjects}
+              />
+              <ActionTile
+                testID="new-record"
+                icon="record"
+                label={t('records.new')}
+                onPress={newRecord}
+                disabled={noProjects}
+              />
+            </>
+          }
+        />
+
+        <View style={styles.body}>
+          {offline ? (
+            <Banner testID="offline-notice" tone="warn" icon="offline">
+              {t('home.offline')}
+            </Banner>
+          ) : null}
+
+          {error ? (
+            <Banner tone="danger" icon="alert">
+              {t('home.syncError')}
+            </Banner>
+          ) : syncedOk ? (
+            <Banner tone="success" icon="check">
+              {t('home.synced')}
+            </Banner>
+          ) : null}
+
+          <View>
+            <SectionLabel>{t('home.projects')}</SectionLabel>
+            {loading ? (
+              <ActivityIndicator color={theme.primary} />
+            ) : noProjects ? (
+              <Text style={[styles.empty, { color: theme.muted }]}>{t('home.empty')}</Text>
+            ) : (
+              <View style={styles.list}>
+                {projects.map((project) => (
+                  <ChoiceRow
+                    key={project.id}
+                    testID={`project-${project.id}`}
+                    label={project.name}
+                    onPress={() => openProject(project.id)}
+                  />
+                ))}
+              </View>
+            )}
+          </View>
+
+          <View>
+            <SectionLabel>{t('home.onDevice')}</SectionLabel>
+            {interviews.length === 0 ? (
+              <Text style={[styles.empty, { color: theme.muted }]}>{t('drafts.empty')}</Text>
+            ) : (
+              <View style={styles.list}>
+                {interviews.map((interview) => (
+                  <StatusRow
+                    key={interview.id}
+                    testID={`interview-${interview.id}`}
+                    status={interview.sync_status}
+                    icon="interview"
+                    {...interviewRow(interview, t, i18n.language)}
+                    onPress={() =>
+                      navigation.navigate('Interview', {
+                        formId: interview.form_id,
+                        projectId: interview.project_id,
+                        formName: interview.form_name ?? '',
+                        instanceId: interview.id,
+                      })
+                    }
+                  />
+                ))}
+              </View>
+            )}
+          </View>
+
+          {/*
+            The version running and what each release brought; then attribution
+            for the packages this app is built from. Shipping a binary is
+            distribution, and the licences require their notice to travel with
+            it.
+          */}
+          <View style={styles.footer}>
             <TouchableOpacity
-              key={project.id}
-              testID={`project-${project.id}`}
-              style={[
-                styles.projectRow,
-                { backgroundColor: theme.card, borderColor: theme.border },
-              ]}
-              onPress={() =>
-                navigation.navigate('Project', {
-                  projectId: project.id,
-                  projectName: project.name,
-                })
-              }
+              testID="whats-new-link"
+              onPress={() => navigation.navigate('WhatsNew')}
               accessibilityRole="button"
+              style={styles.footerLink}
             >
-              <Text style={[styles.projectName, { color: theme.text }]}>{project.name}</Text>
-              <Chevron color={theme.muted} />
+              <Text style={[styles.footerText, { color: theme.muted }]}>
+                {t('whatsNew.link', { version: currentVersion() })}
+              </Text>
             </TouchableOpacity>
-          ))
-        )}
-
-        <View style={styles.section}>
-          <SectionLabel>{t('home.onDevice')}</SectionLabel>
-        </View>
-        {interviews.length === 0 ? (
-          <Text style={[styles.empty, { color: theme.muted }]}>{t('drafts.empty')}</Text>
-        ) : (
-          interviews.map((interview) => (
-            <StatusRow
-              key={interview.id}
-              testID={`interview-${interview.id}`}
-              status={interview.sync_status}
-              {...interviewRow(interview, t, i18n.language)}
-              onPress={() =>
-                navigation.navigate('Interview', {
-                  formId: interview.form_id,
-                  projectId: interview.project_id,
-                  formName: interview.form_name ?? '',
-                  instanceId: interview.id,
-                })
-              }
-            />
-          ))
-        )}
-
-        {/*
-          The version running and what each release brought; then attribution
-          for the packages this app is built from. Shipping a binary is
-          distribution, and the licences require their notice to travel with
-          it.
-        */}
-        <View style={styles.footer}>
-          <TouchableOpacity
-            testID="whats-new-link"
-            onPress={() => navigation.navigate('WhatsNew')}
-            accessibilityRole="button"
-            style={styles.footerLink}
-          >
-            <Text style={[styles.licencesText, { color: theme.muted }]}>
-              {t('whatsNew.link', { version: currentVersion() })}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            testID="licences"
-            onPress={() => navigation.navigate('Licences')}
-            accessibilityRole="button"
-            style={styles.footerLink}
-          >
-            <Text style={[styles.licencesText, { color: theme.muted }]}>{t('licences.title')}</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              testID="licences"
+              onPress={() => navigation.navigate('Licences')}
+              accessibilityRole="button"
+              style={styles.footerLink}
+            >
+              <Text style={[styles.footerText, { color: theme.muted }]}>{t('licences.title')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
+
+      <Sheet
+        testID="choose-project"
+        visible={choosingProject}
+        title={t('home.chooseProject')}
+        onClose={() => setChoosingProject(false)}
+      >
+        {projects.map((project) => (
+          <ChoiceRow
+            key={project.id}
+            testID={`interview-project-${project.id}`}
+            label={project.name}
+            onPress={() => {
+              setChoosingProject(false);
+              openProject(project.id);
+            }}
+          />
+        ))}
+      </Sheet>
     </View>
   );
 }
@@ -232,92 +320,44 @@ export function InterviewsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: space.xl,
-    paddingBottom: space.md,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: space.lg,
-    marginBottom: space.xxl,
+  scroll: {
+    paddingBottom: space.xl,
   },
-  headerText: {
+  heroLine: {
+    ...type.label,
     flexShrink: 1,
   },
-  greeting: type.title,
-  subtitle: {
-    ...type.body,
-    marginTop: space.sm,
-  },
-  signOutText: {
-    ...type.label,
-    fontWeight: '600',
-    paddingVertical: space.xs,
-  },
-  offline: {
-    borderWidth: border.width,
-    borderRadius: radius.control,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
-    marginBottom: space.lg,
-  },
-  offlineText: type.label,
-  projectsHeader: {
+  heroActions: {
     flexDirection: 'row',
+    gap: space.sm,
+  },
+  heroButton: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: space.md,
+    justifyContent: 'center',
   },
-  syncText: {
-    ...type.label,
-    fontWeight: '600',
-  },
-  error: {
-    ...type.label,
-    marginBottom: space.md,
-  },
-  success: {
-    ...type.label,
-    fontWeight: '600',
-    marginBottom: space.md,
+  body: {
+    paddingHorizontal: space.lg,
+    paddingTop: space.xl,
+    gap: space.xl,
   },
   list: {
-    flex: 1,
-  },
-  listContent: {
-    gap: space.md,
-    paddingBottom: space.lg,
+    gap: space.sm + 2,
   },
   empty: {
     ...type.body,
-    marginTop: space.sm,
-  },
-  section: {
-    marginTop: space.lg,
   },
   footer: {
-    marginTop: space.xl,
     alignItems: 'center',
   },
   footerLink: {
     paddingVertical: space.sm,
   },
-  licencesText: {
+  footerText: {
     ...type.caption,
-  },
-  projectRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space.md,
-    borderWidth: border.width,
-    borderRadius: radius.control,
-    padding: space.lg,
-  },
-  projectName: {
-    ...type.body,
-    flexShrink: 1,
-    fontWeight: '500',
   },
 });

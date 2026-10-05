@@ -4,10 +4,14 @@ import { insertInstance, setSyncStatus } from './instancesRepository';
 import {
   countFailedMedia,
   countPendingMedia,
+  deleteMediaBytes,
+  getThumbnail,
+  insertMedia,
   insertMediaChunk,
   listPendingMedia,
   mediaByteSize,
   readMediaRange,
+  recordCoverPhotos,
   recordUploadFailure,
   setMediaUploaded,
 } from './mediaRepository';
@@ -239,5 +243,51 @@ describe('reading media in parts', () => {
 
     expect(Array.from(await readMediaRange(db, 'm-1', 8, 8))).toEqual([8, 9]);
     expect(Array.from(await readMediaRange(db, 'm-1', 12, 8))).toEqual([]);
+  });
+});
+
+describe('photo previews', () => {
+  const photo = (
+    clientId: string,
+    fieldRecordId: string,
+    capturedAt: string,
+    thumbnail: Uint8Array | null
+  ) =>
+    insertMedia(db, {
+      clientId,
+      fieldRecordId,
+      kind: 'photo',
+      contentType: 'image/jpeg',
+      byteSize: 1,
+      capturedAt,
+      thumbnail,
+    });
+
+  it('keeps a preview with the photograph', async () => {
+    await seedRecord('fr-1', null);
+    await photo('p-1', 'fr-1', AT, Uint8Array.from([9, 8, 7]));
+
+    expect(Array.from((await getThumbnail(db, 'p-1')) ?? [])).toEqual([9, 8, 7]);
+  });
+
+  /** Once the server has the photo, nothing of it stays on the device. */
+  it('deletes the preview with the photograph’s bytes', async () => {
+    await seedRecord('fr-1', null);
+    await photo('p-1', 'fr-1', AT, Uint8Array.from([9]));
+    await insertMediaChunk(db, 'p-1', 0, Uint8Array.from([1]));
+
+    await deleteMediaBytes(db, 'p-1');
+
+    await expect(getThumbnail(db, 'p-1')).resolves.toBeNull();
+  });
+
+  it('shows each record by its first photograph that still has a preview', async () => {
+    await seedRecord('fr-1', null);
+    await seedRecord('fr-2', null);
+    await photo('p-late', 'fr-1', '2026-08-06T12:00:00.000Z', Uint8Array.from([1]));
+    await photo('p-early', 'fr-1', '2026-08-06T09:00:00.000Z', Uint8Array.from([1]));
+    await photo('p-sent', 'fr-2', '2026-08-06T09:00:00.000Z', null);
+
+    await expect(recordCoverPhotos(db)).resolves.toEqual({ 'fr-1': 'p-early' });
   });
 });

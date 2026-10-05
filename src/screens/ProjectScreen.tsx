@@ -10,10 +10,10 @@ import {
   View,
 } from 'react-native';
 
-import { Chevron } from '../components/Chevron';
 import { useForms } from '../hooks/useForms';
 import type { RootStackParamList } from '../navigation/types';
 import { border, radius, space, type, useTheme } from '../theme';
+import { Icon } from '../ui/Icon';
 import { SectionLabel } from '../ui/SectionLabel';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Project'>;
@@ -58,16 +58,22 @@ export function ProjectScreen() {
               }
               accessibilityRole="button"
             >
+              <View style={[styles.badge, { backgroundColor: theme.primarySoft }]}>
+                <Icon name="form" color={theme.primaryText} size={22} />
+              </View>
               <View style={styles.rowText}>
                 <Text style={[styles.rowTitle, { color: theme.text }]}>{form.name}</Text>
                 {form.description ? (
                   <Text style={[styles.rowDetail, { color: theme.muted }]}>{form.description}</Text>
                 ) : null}
-                <Text style={[styles.start, { color: theme.primary }]}>
-                  {t('project.newInterview')}
-                </Text>
+                <View style={styles.start}>
+                  <Icon name="interview" color={theme.primaryText} size={16} strokeWidth={2.4} />
+                  <Text style={[styles.startText, { color: theme.primaryText }]}>
+                    {t('project.newInterview')}
+                  </Text>
+                </View>
               </View>
-              <Chevron color={theme.muted} />
+              <Icon name="chevronRight" color={theme.muted} size={20} />
             </TouchableOpacity>
           ))
         )}
@@ -81,7 +87,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: space.xl,
+    padding: space.lg,
     paddingBottom: space.xxl,
   },
   list: {
@@ -94,24 +100,35 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space.md,
+    gap: space.md + 2,
     borderWidth: border.width,
-    borderRadius: radius.control,
-    padding: space.lg,
+    borderRadius: radius.card,
+    padding: space.md + 2,
+  },
+  badge: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   rowText: {
-    flexShrink: 1,
+    flex: 1,
     gap: space.xs,
   },
   rowTitle: {
     ...type.body,
-    fontWeight: '600',
+    fontWeight: '800',
   },
   rowDetail: type.label,
   start: {
-    ...type.label,
-    fontWeight: '600',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs + 2,
     marginTop: space.xs,
+  },
+  startText: {
+    ...type.label,
+    fontWeight: '800',
   },
 });

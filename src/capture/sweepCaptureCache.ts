@@ -7,7 +7,7 @@ import { recordDiagnostic } from '../diagnostics';
  * `attachMedia` ingests it: expo-audio uses `ExpoAudio/` on iOS and `Audio/`
  * on Android; expo-image-picker uses `ImagePicker/`.
  */
-const CAPTURE_CACHE_DIRS = ['ExpoAudio', 'Audio', 'ImagePicker'];
+const CAPTURE_CACHE_DIRS = ['ExpoAudio', 'Audio', 'ImagePicker', 'ImageManipulator'];
 
 /**
  * Delete capture temp files left behind if the app died mid-capture, so no

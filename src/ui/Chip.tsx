@@ -65,8 +65,11 @@ const styles = StyleSheet.create({
     borderWidth: border.width,
     borderRadius: radius.pill,
     paddingHorizontal: space.lg,
-    minHeight: touch.min,
+    minHeight: touch.min + 4,
     justifyContent: 'center',
   },
-  label: type.body,
+  label: {
+    ...type.body,
+    fontWeight: '600',
+  },
 });

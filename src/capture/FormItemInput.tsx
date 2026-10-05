@@ -1,11 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, TextInput } from 'react-native';
 
 import type { Item } from '../api/types';
-import { border, radius, space, type, useTheme } from '../theme';
 import { Button } from '../ui/Button';
 import { Chip, ChipGroup } from '../ui/Chip';
 import { Field } from '../ui/Field';
+import { Input } from '../ui/Input';
 import { DateField } from './DateField';
 import type { ValidationIssue } from './validate';
 import type { AnswerValue } from './values';
@@ -24,7 +23,6 @@ interface Props {
 
 /** Renders the right input for an item type and reports changes as an AnswerValue. */
 export function FormItemInput({ item, value, onChange, error, issue, onDiscard }: Props) {
-  const theme = useTheme();
   const { t } = useTranslation();
 
   /**
@@ -108,28 +106,14 @@ export function FormItemInput({ item, value, onChange, error, issue, onDiscard }
   const isNumber = item.type === 'number';
 
   return field(
-    <TextInput
+    <Input
       testID={`input-${item.id}`}
-      style={[
-        styles.input,
-        { color: theme.text, borderColor: theme.border, backgroundColor: theme.inputBg },
-      ]}
+      icon={isNumber ? 'number' : undefined}
       value={typeof value === 'string' ? value : ''}
       onChangeText={onChange}
       keyboardType={isNumber ? 'numeric' : 'default'}
       autoCapitalize={isNumber ? 'none' : 'sentences'}
       placeholder={isNumber ? undefined : t('interview.answerPlaceholder')}
-      placeholderTextColor={theme.muted}
     />
   );
 }
-
-const styles = StyleSheet.create({
-  input: {
-    borderWidth: border.width,
-    borderRadius: radius.control,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
-    ...type.body,
-  },
-});

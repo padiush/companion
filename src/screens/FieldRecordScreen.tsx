@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
   type TextInputProps,
 } from 'react-native';
@@ -18,15 +17,35 @@ import { BASES, EXEMPTIONS, permitLabel, type FieldRecordDraft } from '../captur
 import { useFieldRecord } from '../capture/useFieldRecord';
 import type { RootStackParamList } from '../navigation/types';
 import { border, radius, space, type, useTheme } from '../theme';
+import { Banner } from '../ui/Banner';
 import { Button } from '../ui/Button';
 import { Chip, ChipGroup } from '../ui/Chip';
+import { ChoiceGrid, ChoiceTile } from '../ui/ChoiceTile';
 import { Field } from '../ui/Field';
+import { Icon, type IconName } from '../ui/Icon';
+import { Input } from '../ui/Input';
 import { SectionLabel } from '../ui/SectionLabel';
 
 /** What the server accepts for any one text field (`max:255`). */
 const TEXT_LIMIT = 255;
 
 type TextField = 'vernacularName' | 'collectionNumber' | 'collector' | 'locality' | 'notes';
+
+/** What each field holds, at a glance; the name says it is kept encrypted. */
+const FIELD_ICONS: Partial<Record<TextField, IconName>> = {
+  vernacularName: 'encrypted',
+  collectionNumber: 'number',
+  collector: 'person',
+  locality: 'location',
+};
+
+/** What a record is, as a picture: a pressed specimen, an eye, a plant, a cutting. */
+const BASIS_ICONS: Record<string, IconName> = {
+  preserved_specimen: 'specimen',
+  human_observation: 'observed',
+  living_specimen: 'living',
+  material_sample: 'sample',
+};
 
 /**
  * Record one documented encounter: what it was, whether anything was taken,
@@ -77,18 +96,13 @@ export function FieldRecordScreen() {
   }
 
   const input = (field: TextField, props: Omit<TextInputProps, 'style'> = {}) => (
-    <TextInput
+    <Input
       testID={`record-${field}`}
-      style={[
-        styles.input,
-        props.multiline ? styles.multiline : null,
-        { color: theme.text, borderColor: theme.border, backgroundColor: theme.inputBg },
-      ]}
+      icon={FIELD_ICONS[field]}
       value={draft[field]}
       onChangeText={(value) => update({ [field]: value } as Partial<FieldRecordDraft>)}
       editable={!readOnly}
       maxLength={TEXT_LIMIT}
-      placeholderTextColor={theme.muted}
       {...props}
     />
   );
@@ -133,29 +147,25 @@ export function FieldRecordScreen() {
       automaticallyAdjustKeyboardInsets
     >
       {readOnly ? (
-        <View
-          testID="record-sent"
-          style={[styles.banner, { borderColor: theme.border, backgroundColor: theme.card }]}
-        >
-          <Text style={[styles.bannerText, { color: theme.text }]}>
+        <View style={styles.banner}>
+          <Banner testID="record-sent" tone="success" icon="synced">
             {t('fieldRecord.sentReadOnly')}
-          </Text>
+          </Banner>
         </View>
       ) : null}
 
       {refused ? (
-        <View
-          testID="record-refused"
-          style={[styles.banner, { borderColor: theme.danger, backgroundColor: theme.card }]}
-        >
-          <Text style={[styles.bannerTitle, { color: theme.danger }]}>
-            {t('fieldRecord.refusedTitle')}
-          </Text>
-          <Text style={[styles.bannerText, { color: theme.text }]}>
+        <View style={styles.banner}>
+          <Banner
+            testID="record-refused"
+            tone="danger"
+            icon="alert"
+            title={t('fieldRecord.refusedTitle')}
+          >
             {t(`sync.recordErrors.${syncError}`, {
               defaultValue: t('sync.recordErrors.unknown'),
             })}
-          </Text>
+          </Banner>
         </View>
       ) : null}
 
@@ -169,18 +179,19 @@ export function FieldRecordScreen() {
         ) : null}
 
         <Field label={t('fieldRecord.basis')} hint={t(`fieldRecord.basisHint.${draft.basis}`)}>
-          <ChipGroup>
+          <ChoiceGrid>
             {BASES.map((basis) => (
-              <Chip
+              <ChoiceTile
                 key={basis}
                 testID={`record-basis-${basis}`}
+                icon={BASIS_ICONS[basis] ?? 'record'}
                 label={t(`fieldRecord.bases.${basis}`)}
                 selected={draft.basis === basis}
                 disabled={readOnly}
                 onPress={() => update({ basis })}
               />
             ))}
-          </ChipGroup>
+          </ChoiceGrid>
         </Field>
 
         <Field label={t('fieldRecord.vernacularName')} hint={t('fieldRecord.vernacularNameHint')}>
@@ -230,19 +241,41 @@ export function FieldRecordScreen() {
         <Field label={t('fieldRecord.locality')}>{input('locality')}</Field>
 
         <Field label={t('fieldRecord.coordinates')}>
-          <Text testID="record-coordinates" style={[styles.value, { color: theme.text }]}>
-            {draft.location
-              ? `${draft.location.lat.toFixed(5)}, ${draft.location.lng.toFixed(5)}`
-              : locating
-                ? t('fieldRecord.locating')
-                : locationFailed
-                  ? t('fieldRecord.locationFailed')
-                  : t('fieldRecord.noCoordinates')}
-          </Text>
+          <View style={[styles.place, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <View
+              style={[
+                styles.placeIcon,
+                { backgroundColor: draft.location ? theme.successSoft : theme.neutralSoft },
+              ]}
+            >
+              <Icon
+                name="location"
+                color={draft.location ? theme.success : theme.muted}
+                size={22}
+              />
+            </View>
+            <Text
+              testID="record-coordinates"
+              style={[
+                styles.value,
+                { color: draft.location ? theme.text : theme.muted },
+                draft.location ? styles.coordinates : null,
+              ]}
+            >
+              {draft.location
+                ? `${draft.location.lat.toFixed(5)}, ${draft.location.lng.toFixed(5)}`
+                : locating
+                  ? t('fieldRecord.locating')
+                  : locationFailed
+                    ? t('fieldRecord.locationFailed')
+                    : t('fieldRecord.noCoordinates')}
+            </Text>
+          </View>
           {readOnly ? null : (
             <Button
               testID="record-locate"
               variant="ghost"
+              icon="location"
               label={t(draft.location ? 'fieldRecord.relocate' : 'fieldRecord.locate')}
               busy={locating}
               disabled={locating}
@@ -353,7 +386,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: space.xl,
+    padding: space.lg,
     paddingBottom: space.xxl,
   },
   center: {
@@ -362,29 +395,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   banner: {
-    borderWidth: border.width,
-    borderRadius: radius.control,
-    padding: space.lg,
     marginBottom: space.xl,
-    gap: space.sm,
   },
-  bannerTitle: {
-    ...type.body,
-    fontWeight: '700',
-  },
-  bannerText: type.label,
-  input: {
+  place: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    padding: space.md + 2,
     borderWidth: border.width,
-    borderRadius: radius.control,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
+    borderRadius: radius.card,
+  },
+  placeIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  value: {
     ...type.body,
+    flex: 1,
   },
-  multiline: {
-    minHeight: 96,
-    textAlignVertical: 'top',
+  coordinates: {
+    fontWeight: '800',
   },
-  value: type.body,
   origin: {
     ...type.caption,
     marginBottom: space.md,

@@ -46,7 +46,17 @@
     "synced": "Projetos atualizados",
     "drafts": "Minhas entrevistas",
     "offline": "Sem conexão. Você está usando a sessão salva neste dispositivo; sincronize quando tiver sinal novamente.",
-    "onDevice": "Entrevistas neste dispositivo"
+    "onDevice": "Entrevistas neste dispositivo",
+    "neverSynced": "Ainda não sincronizado",
+    "syncedJustNow": "Sincronizado agora mesmo",
+    "syncedMinutes_one": "Sincronizado há 1 min",
+    "syncedMinutes_other": "Sincronizado há {{count}} min",
+    "syncedHours_one": "Sincronizado há 1 h",
+    "syncedHours_other": "Sincronizado há {{count}} h",
+    "syncedOn": "Sincronizado em {{date}}",
+    "unsent_one": "1 para enviar",
+    "unsent_other": "{{count}} para enviar",
+    "chooseProject": "Em qual projeto?"
   },
   "project": {
     "forms": "Formulários",
@@ -79,7 +89,6 @@
     "recordingLost": "A gravação parou e não foi possível recuperá-la.",
     "photos": "Fotos",
     "addPhoto": "Adicionar foto",
-    "photo": "Foto",
     "recordPlant": "Registrar esta planta",
     "recordPlantAgain": "Outro registro desta planta",
     "mediaPermission": "É necessária permissão para câmera ou microfone.",
@@ -95,7 +104,8 @@
       "min": "Deve ser {{limit}} ou mais.",
       "max": "Deve ser {{limit}} ou menos.",
       "step": "Deve ir de {{limit}} em {{limit}}."
-    }
+    },
+    "photo": "Foto"
   },
   "fieldRecord": {
     "title": "Registro de campo",
@@ -170,7 +180,8 @@
     "changeProject": "Mudar de projeto",
     "noProjects": "Sincronize seus projetos em Entrevistas para começar a registrar.",
     "onDevice": "Neste dispositivo",
-    "empty": "Ainda não há registros neste dispositivo. Anote aqui o que você documenta em campo, coletando ou não; a identificação e o depósito são feitos depois, na web."
+    "empty": "Ainda não há registros neste dispositivo. Anote aqui o que você documenta em campo, coletando ou não; a identificação e o depósito são feitos depois, na web.",
+    "chooseProject": "Para qual projeto você está registrando?"
   },
   "drafts": {
     "send": "Enviar",
@@ -211,7 +222,16 @@
     "title": "Para enviar",
     "empty": "Tudo foi enviado.",
     "onlyMedia_one": "Falta enviar 1 arquivo de algo que já foi enviado.",
-    "onlyMedia_other": "Faltam enviar {{count}} arquivos de coisas que já foram enviadas."
+    "onlyMedia_other": "Faltam enviar {{count}} arquivos de coisas que já foram enviadas.",
+    "offline": "Sem conexão agora. Envie quando tiver sinal de novo.",
+    "ready": "Pronto para enviar",
+    "sendNow": "Enviar agora",
+    "interviews_one": "1 entrevista",
+    "interviews_other": "{{count}} entrevistas",
+    "records_one": "1 registro",
+    "records_other": "{{count}} registros",
+    "files_one": "1 arquivo",
+    "files_other": "{{count}} arquivos"
   },
   "sync": {
     "rejectedTitle": "O servidor não aceitou esta entrevista",
@@ -269,6 +289,7 @@
         "version": "1.1.0",
         "date": null,
         "items": [
+          "O app tem um visual novo, como o da web, pensado para ser usado com uma mão em campo, e mostra as fotos de cada registro.",
           "O app se organiza em três abas: Entrevistas, Registros e Para enviar.",
           "Registre em campo o que você observa ou coleta, com coordenadas, fotos, uma nota de voz e a licença de coleta.",
           "Durante uma entrevista, registre a planta que a pessoa entrevistada cita sem sair da entrevista.",

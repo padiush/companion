@@ -19,6 +19,8 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 jest.mock('../hooks/useFieldRecords', () => ({ useFieldRecords: jest.fn() }));
 jest.mock('../hooks/useProjects', () => ({ useProjects: jest.fn() }));
+let mockCovers: Record<string, string> = {};
+jest.mock('../hooks/useRecordCovers', () => ({ useRecordCovers: () => mockCovers }));
 
 const mockUseFieldRecords = useFieldRecords as jest.Mock;
 const mockUseProjects = useProjects as jest.Mock;
@@ -151,5 +153,17 @@ describe('RecordsScreen', () => {
     const { getByText } = await render(<RecordsScreen />);
 
     expect(getByText('records.empty')).toBeTruthy();
+  });
+
+  /** A record of something never collected is its photograph; the list shows it. */
+  it('shows each record by its photograph', async () => {
+    mock({ records: [record()] });
+    mockCovers = { 'fr-1': 'photo-1' };
+
+    const { getByTestId } = await render(<RecordsScreen />);
+
+    // Decorative: the card already names the record for a screen reader.
+    expect(getByTestId('record-cover-fr-1', { includeHiddenElements: true })).toBeTruthy();
+    mockCovers = {};
   });
 });

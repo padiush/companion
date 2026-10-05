@@ -1,13 +1,21 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { getDatabase } from '../db/database';
 import type { MediaRow } from '../db/types';
-import { space, type, useTheme } from '../theme';
-import { Button } from '../ui/Button';
+import { radius, space, type, useTheme } from '../theme';
+import { Icon } from '../ui/Icon';
 import { SectionLabel } from '../ui/SectionLabel';
+import { Thumbnail } from '../ui/Thumbnail';
 import {
   currentOwner,
   isReadOnly,
@@ -88,28 +96,48 @@ export function MediaSection(props: MediaOwnerProps) {
     <View style={styles.container}>
       <SectionLabel>{t('interview.photos')}</SectionLabel>
 
-      {photos.map((item) => (
-        <Text
-          key={item.client_id}
-          testID={`media-${item.client_id}`}
-          style={[styles.item, { color: theme.muted }]}
-        >
-          {t('interview.photo')}
-        </Text>
-      ))}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.strip}
+      >
+        {readOnly ? null : (
+          <TouchableOpacity
+            testID="add-photo"
+            accessibilityRole="button"
+            accessibilityLabel={t('interview.addPhoto')}
+            accessibilityState={{ busy, disabled: busy }}
+            disabled={busy}
+            onPress={addPhoto}
+            style={[styles.tile, styles.add, { borderColor: theme.chipBorder }]}
+          >
+            {busy ? (
+              <ActivityIndicator color={theme.primaryText} />
+            ) : (
+              <>
+                <Icon name="camera" color={theme.primaryText} size={26} />
+                <Text style={[styles.addLabel, { color: theme.primaryText }]}>
+                  {t('interview.addPhoto')}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+
+        {photos.map((item, index) => (
+          <Thumbnail
+            key={item.client_id}
+            testID={`media-${item.client_id}`}
+            accessibilityLabel={`${t('interview.photo')} ${index + 1}`}
+            mediaId={item.client_id}
+            // A photo already sent has left the device, preview and all.
+            placeholder={item.upload_status === 'uploaded' ? 'synced' : 'photo'}
+            style={styles.tile}
+          />
+        ))}
+      </ScrollView>
 
       {error ? <Text style={[styles.error, { color: theme.danger }]}>{error}</Text> : null}
-
-      {readOnly ? null : (
-        <Button
-          testID="add-photo"
-          variant="ghost"
-          label={t('interview.addPhoto')}
-          onPress={addPhoto}
-          busy={busy}
-          style={styles.action}
-        />
-      )}
     </View>
   );
 }
@@ -119,15 +147,29 @@ const styles = StyleSheet.create({
     marginTop: space.sm,
     marginBottom: space.xl,
   },
-  item: {
-    ...type.body,
-    paddingVertical: space.xs,
+  strip: {
+    gap: space.sm + 2,
+  },
+  tile: {
+    width: 104,
+    height: 104,
+    borderRadius: radius.card - 2,
+  },
+  add: {
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.xs + 2,
+    padding: space.sm,
+  },
+  addLabel: {
+    ...type.caption,
+    fontWeight: '800',
+    textAlign: 'center',
   },
   error: {
     ...type.label,
     marginTop: space.sm,
-  },
-  action: {
-    marginTop: space.md,
   },
 });

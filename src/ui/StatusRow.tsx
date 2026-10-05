@@ -1,8 +1,8 @@
-import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { Chevron } from '../components/Chevron';
 import { border, radius, space, type, useTheme } from '../theme';
+import { Icon, type IconName } from './Icon';
+import { StatusChip } from './StatusChip';
 
 interface StatusRowProps {
   testID: string;
@@ -11,24 +11,25 @@ interface StatusRowProps {
   status: string;
   /** Detail lines under the title, one line each. */
   meta: string[];
+  /** What the row is: an interview or a field record. */
+  icon?: IconName;
   onPress: () => void;
 }
 
 /**
  * One interview or field record in a list, with its sync status. Every tab
  * lists them the same way, so the same thing reads the same wherever it
- * appears.
+ * appears. Large on purpose: rows are opened one-handed, in the field.
  */
-export function StatusRow({ testID, title, status, meta, onPress }: StatusRowProps) {
-  const { t } = useTranslation();
+export function StatusRow({
+  testID,
+  title,
+  status,
+  meta,
+  icon = 'interview',
+  onPress,
+}: StatusRowProps) {
   const theme = useTheme();
-
-  const statusColor =
-    status === 'synced'
-      ? theme.primary
-      : status === 'rejected' || status === 'partial'
-        ? theme.danger
-        : theme.muted;
 
   return (
     <TouchableOpacity
@@ -37,30 +38,30 @@ export function StatusRow({ testID, title, status, meta, onPress }: StatusRowPro
       onPress={onPress}
       style={[styles.row, { backgroundColor: theme.card, borderColor: theme.border }]}
     >
-      <View style={styles.rowMain}>
-        <View style={styles.rowHeader}>
-          <Text
-            style={[styles.title, { color: theme.text }]}
-            numberOfLines={1}
-            // The name can be long and is rarely what distinguishes two rows;
-            // one line keeps every row the same height.
-          >
-            {title}
-          </Text>
-          <View style={[styles.status, { borderColor: statusColor }]}>
-            <Text style={[styles.statusText, { color: statusColor }]}>
-              {t(`drafts.status.${status}`, { defaultValue: status })}
-            </Text>
-          </View>
-        </View>
+      <View style={[styles.badge, { backgroundColor: theme.primarySoft }]}>
+        <Icon name={icon} color={theme.primaryText} size={22} />
+      </View>
+      <View style={styles.main}>
+        <Text
+          style={[styles.title, { color: theme.text }]}
+          numberOfLines={1}
+          // The name can be long and is rarely what distinguishes two rows;
+          // one line keeps every row the same height.
+        >
+          {title}
+        </Text>
 
         {meta.map((line) => (
           <Text key={line} style={[styles.meta, { color: theme.muted }]} numberOfLines={1}>
             {line}
           </Text>
         ))}
+
+        <View style={styles.status}>
+          <StatusChip status={status} />
+        </View>
       </View>
-      <Chevron color={theme.muted} />
+      <Icon name="chevronRight" color={theme.muted} size={20} />
     </TouchableOpacity>
   );
 }
@@ -70,36 +71,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: border.width,
-    borderRadius: radius.control,
-    padding: space.lg,
-    gap: space.md,
+    borderRadius: radius.card,
+    padding: space.md + 2,
+    gap: space.md + 2,
   },
-  rowMain: {
-    flex: 1,
-    gap: space.xs,
-  },
-  rowHeader: {
-    flexDirection: 'row',
+  badge: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space.sm,
+    justifyContent: 'center',
+  },
+  main: {
+    flex: 1,
+    gap: 3,
   },
   title: {
     ...type.body,
-    fontWeight: '600',
-    flexShrink: 1,
+    fontWeight: '800',
   },
   meta: type.caption,
   status: {
-    borderWidth: border.width,
-    borderRadius: radius.pill,
-    paddingHorizontal: space.sm,
-    paddingVertical: 2,
-  },
-  statusText: {
-    ...type.kicker,
-    // Below the caption step on purpose: this rides inside a pill next to the
-    // row's name and must not compete with it for attention.
-    fontSize: 11,
+    marginTop: space.xs + 2,
   },
 });

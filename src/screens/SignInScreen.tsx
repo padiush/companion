@@ -4,23 +4,28 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '../api/client';
 import { SignInCancelled } from '../auth/accountStore';
 import { useAuth, type ConfirmReplace } from '../auth/AuthContext';
 import { AppLogo } from '../components/AppLogo';
 import type { PendingWork } from '../db/ownership';
-import { border, radius, space, type, useTheme } from '../theme';
+import { radius, space, type, useTheme } from '../theme';
+import { Banner } from '../ui/Banner';
 import { Button } from '../ui/Button';
+import { Field } from '../ui/Field';
+import { Input } from '../ui/Input';
 
 export function SignInScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { signIn } = useAuth();
 
   const [email, setEmail] = useState('');
@@ -84,63 +89,69 @@ export function SignInScreen() {
     }
   };
 
-  const inputStyle = [
-    styles.input,
-    { color: theme.text, borderColor: theme.border, backgroundColor: theme.inputBg },
-  ];
-
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.bg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.header}>
-        <AppLogo size={64} color={theme.primary} style={styles.logo} />
-        <Text style={[styles.brand, { color: theme.text }]}>{t('app.name')}</Text>
-        <Text style={[styles.tagline, { color: theme.muted }]}>{t('app.tagline')}</Text>
-      </View>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: theme.primary, paddingTop: insets.top + space.xxl },
+          ]}
+        >
+          <AppLogo size={64} color={theme.onPrimary} style={styles.logo} />
+          <Text style={[styles.brand, { color: theme.onPrimary }]}>{t('app.name')}</Text>
+          <Text style={[styles.tagline, { color: theme.heroMuted }]}>{t('app.tagline')}</Text>
+        </View>
 
-      <View style={styles.field}>
-        <Text style={[styles.label, { color: theme.muted }]}>{t('auth.emailLabel')}</Text>
-        <TextInput
-          testID="email"
-          style={inputStyle}
-          value={email}
-          onChangeText={setEmail}
-          placeholder={t('auth.emailPlaceholder')}
-          placeholderTextColor={theme.muted}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="email-address"
-          textContentType="username"
-          editable={!submitting}
-        />
-      </View>
+        <View style={styles.form}>
+          <Field label={t('auth.emailLabel')}>
+            <Input
+              testID="email"
+              icon="person"
+              value={email}
+              onChangeText={setEmail}
+              placeholder={t('auth.emailPlaceholder')}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              textContentType="username"
+              editable={!submitting}
+            />
+          </Field>
 
-      <View style={styles.field}>
-        <Text style={[styles.label, { color: theme.muted }]}>{t('auth.passwordLabel')}</Text>
-        <TextInput
-          testID="password"
-          style={inputStyle}
-          value={password}
-          onChangeText={setPassword}
-          placeholder={t('auth.passwordPlaceholder')}
-          placeholderTextColor={theme.muted}
-          secureTextEntry
-          textContentType="password"
-          editable={!submitting}
-        />
-      </View>
+          <Field label={t('auth.passwordLabel')}>
+            <Input
+              testID="password"
+              icon="encrypted"
+              value={password}
+              onChangeText={setPassword}
+              placeholder={t('auth.passwordPlaceholder')}
+              secureTextEntry
+              textContentType="password"
+              editable={!submitting}
+            />
+          </Field>
 
-      {error ? <Text style={[styles.error, { color: theme.danger }]}>{error}</Text> : null}
+          {error ? (
+            <View style={styles.error}>
+              <Banner tone="danger" icon="alert">
+                {error}
+              </Banner>
+            </View>
+          ) : null}
 
-      <Button
-        testID="submit"
-        label={t('auth.submit')}
-        onPress={onSubmit}
-        busy={submitting}
-        style={styles.submit}
-      />
+          <Button
+            testID="submit"
+            label={t('auth.submit')}
+            onPress={onSubmit}
+            busy={submitting}
+            style={styles.submit}
+          />
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -148,37 +159,33 @@ export function SignInScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: space.xl,
+  },
+  scroll: {
+    flexGrow: 1,
   },
   header: {
-    marginBottom: space.xxl,
+    paddingHorizontal: space.xl,
+    paddingBottom: space.xxl,
+    borderBottomLeftRadius: radius.hero,
+    borderBottomRightRadius: radius.hero,
   },
   logo: {
     marginBottom: space.lg,
   },
-  brand: type.title,
+  brand: {
+    ...type.title,
+    fontSize: 32,
+  },
   tagline: {
     ...type.body,
+    fontWeight: '600',
     marginTop: space.xs,
   },
-  field: {
-    marginBottom: space.lg,
-  },
-  label: {
-    ...type.caption,
-    marginBottom: space.xs,
-  },
-  input: {
-    borderWidth: border.width,
-    borderRadius: radius.control,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
-    ...type.body,
+  form: {
+    padding: space.xl,
   },
   error: {
-    ...type.label,
-    marginBottom: space.md,
+    marginBottom: space.lg,
   },
   submit: {
     marginTop: space.sm,
