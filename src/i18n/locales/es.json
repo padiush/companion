@@ -78,7 +78,7 @@
     },
     "outbox": {
       "title": "Por enviar",
-      "body": "Lo que registras espera aquí hasta que lo envíes. Cuando tengas conexión, toca Enviar ahora y lo verás en la web. Desliza hacia abajo en Entrevistas para traer los formularios nuevos."
+      "body": "Lo que registres queda aquí hasta que lo envíes. Cuando tengas conexión, toca Enviar ahora y lo verás en la web. Desliza hacia abajo en Entrevistas para descargar los formularios nuevos."
     }
   },
   "project": {
@@ -154,7 +154,7 @@
       "material_sample": "Se tomó una parte, no el ejemplar completo."
     },
     "vernacularName": "Nombre local",
-    "vernacularNameHint": "Como lo llamó quien te acompañaba. Se guarda cifrado.",
+    "vernacularNameHint": "El nombre que le dio la persona que te acompañaba. Se guarda cifrado.",
     "collectionNumber": "Número de colecta",
     "collectionNumberHint": "El número que escribiste en la etiqueta.",
     "audioHint": "Una nota de voz: el nombre tal como se dijo, o lo que te contaron de la planta.",
@@ -170,7 +170,7 @@
     "permit": "Permiso",
     "permitUnnamed": "Permiso sin referencia",
     "permitUnlisted": "Un permiso que el proyecto ya no tiene",
-    "noPermits": "Este proyecto no tiene permisos en el dispositivo. Se registran en la web y llegan con la siguiente sincronización.",
+    "noPermits": "Este proyecto aún no tiene permisos en este dispositivo. Los permisos se registran en la web y llegan en la siguiente sincronización.",
     "exemption": "Motivo de exención",
     "exemptionHint": "Solo si la recolecta no necesitaba permiso.",
     "exemptions": {
@@ -183,7 +183,7 @@
     "saving": "Guardando…",
     "savedLocally": "Guardado en este dispositivo",
     "notSavedYet": "Se guarda en cuanto anotes algo.",
-    "fromAnswer": "Hecho desde una respuesta de la entrevista. Se envía después de ella.",
+    "fromAnswer": "Creado a partir de una respuesta de la entrevista. Se envía después de la entrevista.",
     "done": "Listo",
     "discard": "Descartar registro",
     "discardTitle": "¿Descartar este registro?",
@@ -244,9 +244,9 @@
   "outbox": {
     "title": "Por enviar",
     "empty": "Todo está enviado.",
-    "onlyMedia_one": "Queda 1 archivo por subir de algo que ya se envió.",
-    "onlyMedia_other": "Quedan {{count}} archivos por subir de cosas que ya se enviaron.",
-    "offline": "Sin conexión ahora. Envía cuando vuelvas a tener señal.",
+    "onlyMedia_one": "Queda 1 archivo por subir de una entrevista o un registro ya enviado.",
+    "onlyMedia_other": "Quedan {{count}} archivos por subir de entrevistas o registros ya enviados.",
+    "offline": "No hay conexión. Podrás enviar cuando vuelvas a tener señal.",
     "ready": "Listo para enviar",
     "sendNow": "Enviar ahora",
     "interviews_one": "1 entrevista",
@@ -319,7 +319,7 @@
           "Durante una entrevista, registra la planta que nombra la persona entrevistada sin salir de la entrevista.",
           "Descarta un registro que todavía no enviaste.",
           "Al abrir la app con conexión, tus proyectos se ponen al día solos.",
-          "Las grabaciones largas ya no empiezan de nuevo si se corta la conexión al enviarlas: siguen donde quedaron."
+          "Las grabaciones largas ya no empiezan de nuevo si se corta la conexión al enviarlas: continúan donde se quedaron."
         ]
       },
       {

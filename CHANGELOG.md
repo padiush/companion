@@ -17,6 +17,9 @@ in [docs/releasing.md](docs/releasing.md).
   a green header on each tab with the two main actions as large tiles,
   larger rows and controls with icons, and a floating tab bar. Choosing what a
   field record is now uses four large tiles.
+- Clearer wording for a record's local name, a record made from an answer,
+  the offline notice, files still to upload and the walkthrough's last step,
+  in all three languages.
 
 ### Added
 
