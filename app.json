@@ -10,7 +10,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.padiushbio.companion",
       "buildNumber": "1",
-      "appleTeamId": "XD8M2W9X4S"
+      "appleTeamId": "XD8M2W9X4S",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.padiushbio.companion",

@@ -196,9 +196,14 @@ npx eas-cli submit --platform ios --profile production
 ```
 
 From 1.1.0 every release ships to both Google Play and the App Store, built
-from the same commit. `android.versionCode` and `ios.buildNumber` in
-[app.json](app.json) are the record of what shipped — the production profile
-increments them, so commit the bump.
+from the same commit. The iOS submission goes to the App Store Connect app in
+the `production` submit profile and lands in TestFlight first. It authenticates
+with an App Store Connect API key given through `EXPO_ASC_API_KEY_PATH`,
+`EXPO_ASC_KEY_ID` and `EXPO_ASC_ISSUER_ID`, which are never committed.
+
+`android.versionCode` and `ios.buildNumber` in [app.json](app.json) are the
+record of what shipped — the production profile increments them, so commit the
+bump.
 
 Releases are numbered and announced: what changed is in
 [CHANGELOG.md](CHANGELOG.md), researchers see it as "What's new" in the app,
