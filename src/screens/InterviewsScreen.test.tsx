@@ -2,13 +2,15 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
+import { useDrafts } from '../hooks/useDrafts';
 import { useOutbox } from '../hooks/useOutbox';
 import { useProjects } from '../hooks/useProjects';
-import { HomeScreen } from './HomeScreen';
+import { InterviewsScreen } from './InterviewsScreen';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, opts?: { name?: string }) => (opts?.name ? `${key}:${opts.name}` : key),
+    i18n: { language: 'es' },
   }),
 }));
 jest.mock('react-native-safe-area-context', () => ({
@@ -17,6 +19,7 @@ jest.mock('react-native-safe-area-context', () => ({
 jest.mock('../auth/AuthContext', () => ({ useAuth: jest.fn() }));
 jest.mock('../hooks/useProjects', () => ({ useProjects: jest.fn() }));
 jest.mock('../hooks/useOutbox', () => ({ useOutbox: jest.fn() }));
+jest.mock('../hooks/useDrafts', () => ({ useDrafts: jest.fn() }));
 
 const mockNavigate = jest.fn();
 jest.mock('@react-navigation/native', () => ({
@@ -26,6 +29,28 @@ jest.mock('@react-navigation/native', () => ({
 const mockUseAuth = useAuth as jest.Mock;
 const mockUseProjects = useProjects as jest.Mock;
 const mockUseOutbox = useOutbox as jest.Mock;
+const mockUseDrafts = useDrafts as jest.Mock;
+
+function interview(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'i1',
+    form_id: 27,
+    project_id: 9,
+    form_name: 'Plant uses',
+    captured_at: '2026-07-13T10:00:00Z',
+    created_at: '2026-07-13T09:00:00Z',
+    sync_status: 'synced',
+    answer_count: 3,
+    media_count: 0,
+    audio_count: 0,
+    preview: 'Ruda',
+    ...overrides,
+  };
+}
+
+function mockInterviews(drafts: unknown[] = []) {
+  mockUseDrafts.mockReturnValue({ drafts, fieldRecords: [], loading: false, refresh: jest.fn() });
+}
 
 type AlertButton = { text?: string; style?: string; onPress?: () => void };
 
@@ -56,9 +81,10 @@ function mockProjects(overrides: Record<string, unknown> = {}) {
   });
 }
 
-function mockOutbox(count = 0) {
+function mockOutbox(count = 0, fieldRecords = 0) {
   mockUseOutbox.mockReturnValue({
     count,
+    fieldRecords,
     sending: false,
     error: false,
     lastResult: null,
@@ -71,12 +97,13 @@ beforeEach(() => {
   mockAuth();
   mockProjects();
   mockOutbox();
+  mockInterviews();
   jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 });
 
-describe('HomeScreen', () => {
+describe('InterviewsScreen', () => {
   it('says nothing about connectivity when the session was verified online', async () => {
-    const { queryByTestId } = await render(<HomeScreen />);
+    const { queryByTestId } = await render(<InterviewsScreen />);
 
     expect(queryByTestId('offline-notice')).toBeNull();
   });
@@ -84,7 +111,7 @@ describe('HomeScreen', () => {
   it('tells the user when they opened on a cached session', async () => {
     mockAuth(jest.fn(), true);
 
-    const { getByTestId } = await render(<HomeScreen />);
+    const { getByTestId } = await render(<InterviewsScreen />);
 
     expect(getByTestId('offline-notice')).toBeTruthy();
   });
@@ -93,7 +120,7 @@ describe('HomeScreen', () => {
     const signOut = jest.fn().mockResolvedValue(undefined);
     mockAuth(signOut);
 
-    const { getByTestId, getByText } = await render(<HomeScreen />);
+    const { getByTestId, getByText } = await render(<InterviewsScreen />);
     expect(getByText('home.greeting:Field')).toBeTruthy();
 
     await fireEvent.press(getByTestId('sign-out'));
@@ -108,7 +135,7 @@ describe('HomeScreen', () => {
   it('warns about unsynced interviews when signing out with a full outbox', async () => {
     mockOutbox(3);
 
-    const { getByTestId } = await render(<HomeScreen />);
+    const { getByTestId } = await render(<InterviewsScreen />);
     await fireEvent.press(getByTestId('sign-out'));
 
     expect(Alert.alert).toHaveBeenCalledWith(
@@ -118,10 +145,50 @@ describe('HomeScreen', () => {
     );
   });
 
+  /** Records stay on the device until sent just as interviews do. */
+  it('counts unsent field records in the sign-out warning', async () => {
+    mockOutbox(0, 2);
+
+    const { getByTestId } = await render(<InterviewsScreen />);
+    await fireEvent.press(getByTestId('sign-out'));
+
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'home.signOutTitle',
+      'home.signOutUnsynced',
+      expect.any(Array)
+    );
+  });
+
+  /** Sent or not, an interview recorded here can be reopened from here. */
+  it('lists every interview on the device with its status, and reopens one', async () => {
+    mockInterviews([interview(), interview({ id: 'i2', preview: 'Sábila', sync_status: 'draft' })]);
+
+    const { getByTestId } = await render(<InterviewsScreen />);
+
+    expect(getByTestId('interview-i1')).toHaveTextContent(/Ruda/);
+    expect(getByTestId('interview-i1')).toHaveTextContent(/drafts\.status\.synced/);
+    expect(getByTestId('interview-i2')).toHaveTextContent(/drafts\.status\.draft/);
+
+    await fireEvent.press(getByTestId('interview-i1'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('Interview', {
+      formId: 27,
+      projectId: 9,
+      formName: 'Plant uses',
+      instanceId: 'i1',
+    });
+  });
+
+  it('says when no interview has been recorded yet', async () => {
+    const { getByText } = await render(<InterviewsScreen />);
+
+    expect(getByText('drafts.empty')).toBeTruthy();
+  });
+
   it('does not warn about unsynced interviews when the outbox is empty', async () => {
     mockOutbox(0);
 
-    const { getByTestId } = await render(<HomeScreen />);
+    const { getByTestId } = await render(<InterviewsScreen />);
     await fireEvent.press(getByTestId('sign-out'));
 
     expect(Alert.alert).toHaveBeenCalledWith(
@@ -139,7 +206,7 @@ describe('HomeScreen', () => {
       ],
     });
 
-    const { getByText, getByTestId } = await render(<HomeScreen />);
+    const { getByText, getByTestId } = await render(<InterviewsScreen />);
     expect(getByText('Cloud forest')).toBeTruthy();
     expect(getByTestId('project-2')).toBeTruthy();
   });
@@ -147,7 +214,7 @@ describe('HomeScreen', () => {
   it('opens a project when tapped', async () => {
     mockProjects({ projects: [{ id: 5, name: 'Cloud forest' }] });
 
-    const { getByTestId } = await render(<HomeScreen />);
+    const { getByTestId } = await render(<InterviewsScreen />);
     await fireEvent.press(getByTestId('project-5'));
 
     expect(mockNavigate).toHaveBeenCalledWith('Project', {
@@ -159,7 +226,7 @@ describe('HomeScreen', () => {
   it('shows the empty state when there are no projects', async () => {
     mockProjects({ projects: [] });
 
-    const { getByText } = await render(<HomeScreen />);
+    const { getByText } = await render(<InterviewsScreen />);
     expect(getByText('home.empty')).toBeTruthy();
   });
 
@@ -167,7 +234,7 @@ describe('HomeScreen', () => {
     const sync = jest.fn().mockResolvedValue(true);
     mockProjects({ sync });
 
-    const { getByTestId } = await render(<HomeScreen />);
+    const { getByTestId } = await render(<InterviewsScreen />);
     await fireEvent.press(getByTestId('sync'));
 
     expect(sync).toHaveBeenCalled();
@@ -176,7 +243,7 @@ describe('HomeScreen', () => {
   it('confirms a successful sync', async () => {
     mockProjects({ sync: jest.fn().mockResolvedValue(true) });
 
-    const { getByTestId, findByText } = await render(<HomeScreen />);
+    const { getByTestId, findByText } = await render(<InterviewsScreen />);
     await fireEvent.press(getByTestId('sync'));
 
     expect(await findByText('home.synced')).toBeTruthy();
@@ -186,7 +253,7 @@ describe('HomeScreen', () => {
     const sync = jest.fn().mockResolvedValue(true);
     mockProjects({ sync });
 
-    const { getByTestId } = await render(<HomeScreen />);
+    const { getByTestId } = await render(<InterviewsScreen />);
     getByTestId('projects-scroll').props.refreshControl.props.onRefresh();
 
     expect(sync).toHaveBeenCalled();
@@ -195,7 +262,7 @@ describe('HomeScreen', () => {
   it('surfaces a sync error', async () => {
     mockProjects({ error: true });
 
-    const { getByText } = await render(<HomeScreen />);
+    const { getByText } = await render(<InterviewsScreen />);
     expect(getByText('home.syncError')).toBeTruthy();
   });
 });

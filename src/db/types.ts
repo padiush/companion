@@ -160,8 +160,8 @@ export interface FieldRecordRow {
   updated_at: string;
 }
 
-/** A field record not yet accepted by the server, with the project it belongs to. */
-export interface WaitingFieldRecord extends FieldRecordRow {
+/** A record as it is listed: with its project's name, since lists span projects. */
+export interface FieldRecordListItem extends FieldRecordRow {
   /** Null if the project is no longer cached on this device. */
   project_name: string | null;
 }

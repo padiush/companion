@@ -27,8 +27,9 @@
     "cancel": "Cancelar"
   },
   "tabs": {
-    "projects": "Proyectos",
-    "interviews": "Entrevistas"
+    "interviews": "Entrevistas",
+    "records": "Registros",
+    "outbox": "Por enviar"
   },
   "home": {
     "greeting": "Hola, {{name}}",
@@ -36,23 +37,21 @@
     "signOut": "Cerrar sesión",
     "signOutTitle": "¿Cerrar sesión?",
     "signOutMessage": "Deberás iniciar sesión de nuevo para volver a sincronizar.",
-    "signOutUnsynced_one": "Tienes 1 entrevista sin enviar. Permanecerá cifrada en este dispositivo hasta que vuelvas a iniciar sesión y la envíes.",
-    "signOutUnsynced_other": "Tienes {{count}} entrevistas sin enviar. Permanecerán cifradas en este dispositivo hasta que vuelvas a iniciar sesión y las envíes.",
+    "signOutUnsynced_one": "Tienes 1 entrevista o registro sin enviar. Permanecerá cifrado en este dispositivo hasta que vuelvas a iniciar sesión y lo envíes.",
+    "signOutUnsynced_other": "Tienes {{count}} entrevistas o registros sin enviar. Permanecerán cifrados en este dispositivo hasta que vuelvas a iniciar sesión y los envíes.",
     "projects": "Proyectos",
     "sync": "Sincronizar",
     "empty": "Aún no hay proyectos. Sincroniza para cargarlos.",
     "syncError": "No se pudo sincronizar. Revisa tu conexión.",
     "synced": "Proyectos actualizados",
     "drafts": "Mis entrevistas",
-    "offline": "Sin conexión. Estás usando la sesión guardada en este dispositivo; sincroniza cuando vuelvas a tener señal."
+    "offline": "Sin conexión. Estás usando la sesión guardada en este dispositivo; sincroniza cuando vuelvas a tener señal.",
+    "onDevice": "Entrevistas en este dispositivo"
   },
   "project": {
     "forms": "Formularios",
     "newInterview": "Nueva entrevista",
-    "empty": "Este proyecto no tiene formularios activos.",
-    "fieldRecords": "Registros de campo",
-    "newFieldRecord": "Añadir un registro",
-    "noFieldRecords": "Aún no hay registros en este dispositivo. Anota aquí lo que documentes en campo, lo recolectes o no; la identificación y el depósito se hacen después en la web."
+    "empty": "Este proyecto no tiene formularios activos."
   },
   "interview": {
     "preparing": "Preparando la entrevista…",
@@ -164,16 +163,24 @@
       "refused": "Rechazado"
     }
   },
+  "records": {
+    "title": "Registros de campo",
+    "new": "Nuevo registro",
+    "inProject": "En {{project}}",
+    "changeProject": "Cambiar de proyecto",
+    "noProjects": "Sincroniza tus proyectos en Entrevistas para empezar a registrar.",
+    "onDevice": "En este dispositivo",
+    "empty": "Aún no hay registros en este dispositivo. Anota aquí lo que documentes en campo, lo recolectes o no; la identificación y el depósito se hacen después en la web."
+  },
   "drafts": {
-    "title": "Entrevistas",
     "send": "Enviar",
     "sendError": "No se pudieron enviar. Revisa tu conexión.",
     "sent_one": "1 entrevista enviada",
     "sent_other": "{{count}} entrevistas enviadas",
     "recordsSent_one": "1 registro de campo enviado",
     "recordsSent_other": "{{count}} registros de campo enviados",
-    "recordsRefused_one": "El servidor no aceptó 1 registro de campo. Ábrelo desde su proyecto para ver por qué.",
-    "recordsRefused_other": "El servidor no aceptó {{count}} registros de campo. Ábrelos desde su proyecto para ver por qué.",
+    "recordsRefused_one": "El servidor no aceptó 1 registro de campo. Ábrelo en la lista para ver por qué.",
+    "recordsRefused_other": "El servidor no aceptó {{count}} registros de campo. Ábrelos en la lista para ver por qué.",
     "empty": "Aún no hay entrevistas.",
     "fieldRecords": "Registros de campo",
     "interviews": "Entrevistas",
@@ -199,6 +206,12 @@
       "formPending": "formulario pendiente",
       "empty": "sin contenido todavía"
     }
+  },
+  "outbox": {
+    "title": "Por enviar",
+    "empty": "Todo está enviado.",
+    "onlyMedia_one": "Queda 1 archivo por subir de algo que ya se envió.",
+    "onlyMedia_other": "Quedan {{count}} archivos por subir de cosas que ya se enviaron."
   },
   "sync": {
     "rejectedTitle": "El servidor no aceptó esta entrevista",

@@ -1,42 +1,41 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 
+import { getLastRecordProject } from '../capture/recordProject';
 import { getDatabase } from '../db/database';
-import { listFieldRecords } from '../db/fieldRecordsRepository';
-import type { FieldRecordRow } from '../db/types';
+import { listAllFieldRecords } from '../db/fieldRecordsRepository';
+import type { FieldRecordListItem } from '../db/types';
 
 export interface FieldRecordsState {
-  records: FieldRecordRow[];
+  records: FieldRecordListItem[];
+  /** The project the last record was made in — where a new one goes by default. */
+  lastProjectId: number | null;
   loading: boolean;
+  refresh: () => Promise<void>;
 }
 
 /**
- * The field records captured on this device for a project, newest first.
+ * Every field record captured on this device, from any project, newest first.
  * Reloaded whenever the screen regains focus, so a record made or edited on
  * its own screen is in the list on the way back.
  */
-export function useFieldRecords(projectId: number): FieldRecordsState {
-  const [records, setRecords] = useState<FieldRecordRow[]>([]);
+export function useFieldRecords(): FieldRecordsState {
+  const [records, setRecords] = useState<FieldRecordListItem[]>([]);
+  const [lastProjectId, setLastProjectId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    const db = await getDatabase();
+    setRecords(await listAllFieldRecords(db));
+    setLastProjectId(await getLastRecordProject(db));
+    setLoading(false);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      let active = true;
-
-      getDatabase()
-        .then((db) => listFieldRecords(db, projectId))
-        .then((rows) => {
-          if (active) setRecords(rows);
-        })
-        .finally(() => {
-          if (active) setLoading(false);
-        });
-
-      return () => {
-        active = false;
-      };
-    }, [projectId])
+      void refresh();
+    }, [refresh])
   );
 
-  return { records, loading };
+  return { records, lastProjectId, loading, refresh };
 }

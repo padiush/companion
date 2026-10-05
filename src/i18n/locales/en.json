@@ -27,8 +27,9 @@
     "cancel": "Cancel"
   },
   "tabs": {
-    "projects": "Projects",
-    "interviews": "Interviews"
+    "interviews": "Interviews",
+    "records": "Records",
+    "outbox": "To send"
   },
   "home": {
     "greeting": "Hi, {{name}}",
@@ -36,23 +37,21 @@
     "signOut": "Sign out",
     "signOutTitle": "Sign out?",
     "signOutMessage": "You'll need to sign in again to sync.",
-    "signOutUnsynced_one": "You have 1 interview that hasn't been sent. It will stay encrypted on this device until you sign in again and send it.",
-    "signOutUnsynced_other": "You have {{count}} interviews that haven't been sent. They'll stay encrypted on this device until you sign in again and send them.",
+    "signOutUnsynced_one": "You have 1 interview or record that hasn't been sent. It will stay encrypted on this device until you sign in again and send it.",
+    "signOutUnsynced_other": "You have {{count}} interviews or records that haven't been sent. They will stay encrypted on this device until you sign in again and send them.",
     "projects": "Projects",
     "sync": "Sync",
     "empty": "No projects yet. Sync to load them.",
     "syncError": "Couldn't sync. Check your connection.",
     "synced": "Projects updated",
     "drafts": "My interviews",
-    "offline": "Offline. You are using the session saved on this device; sync when you have signal again."
+    "offline": "Offline. You are using the session saved on this device; sync when you have signal again.",
+    "onDevice": "Interviews on this device"
   },
   "project": {
     "forms": "Forms",
     "newInterview": "New interview",
-    "empty": "This project has no active forms.",
-    "fieldRecords": "Field records",
-    "newFieldRecord": "Add a record",
-    "noFieldRecords": "No records on this device yet. Note here what you document in the field, whether or not you collect it; identifying and depositing it happen later, on the web."
+    "empty": "This project has no active forms."
   },
   "interview": {
     "preparing": "Preparing interview…",
@@ -164,16 +163,24 @@
       "refused": "Refused"
     }
   },
+  "records": {
+    "title": "Field records",
+    "new": "New record",
+    "inProject": "In {{project}}",
+    "changeProject": "Change project",
+    "noProjects": "Sync your projects in Interviews to start recording.",
+    "onDevice": "On this device",
+    "empty": "No records on this device yet. Note here what you document in the field, whether or not you collect it; identifying and depositing it happen later, on the web."
+  },
   "drafts": {
-    "title": "Interviews",
     "send": "Send",
     "sendError": "Couldn't send. Check your connection.",
     "sent_one": "1 interview sent",
     "sent_other": "{{count}} interviews sent",
     "recordsSent_one": "1 field record sent",
     "recordsSent_other": "{{count}} field records sent",
-    "recordsRefused_one": "The server did not accept 1 field record. Open it from its project to see why.",
-    "recordsRefused_other": "The server did not accept {{count}} field records. Open them from their project to see why.",
+    "recordsRefused_one": "The server did not accept 1 field record. Open it in the list to see why.",
+    "recordsRefused_other": "The server did not accept {{count}} field records. Open them in the list to see why.",
     "empty": "No interviews yet.",
     "fieldRecords": "Field records",
     "interviews": "Interviews",
@@ -199,6 +206,12 @@
       "formPending": "form still to fill in",
       "empty": "nothing recorded yet"
     }
+  },
+  "outbox": {
+    "title": "To send",
+    "empty": "Everything has been sent.",
+    "onlyMedia_one": "1 file is still to upload, for something already sent.",
+    "onlyMedia_other": "{{count}} files are still to upload, for things already sent."
   },
   "sync": {
     "rejectedTitle": "The server did not accept this interview",

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
 
 import { getDatabase } from '../db/database';
 import { getProjects } from '../db/projectsRepository';
@@ -28,22 +29,26 @@ export function useProjects(): ProjectsState {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    let active = true;
+  // On focus, not just on mount: each tab keeps its screen mounted, and a
+  // sync run from one must show on the others when they are opened.
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
 
-    getDatabase()
-      .then(getProjects)
-      .then((cached) => {
-        if (active) setProjects(cached);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+      getDatabase()
+        .then(getProjects)
+        .then((cached) => {
+          if (active) setProjects(cached);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
 
-    return () => {
-      active = false;
-    };
-  }, []);
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
   const sync = useCallback(async () => {
     setSyncing(true);
