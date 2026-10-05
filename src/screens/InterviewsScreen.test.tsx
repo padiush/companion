@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
@@ -235,9 +235,11 @@ describe('InterviewsScreen', () => {
     mockProjects({ sync });
 
     const { getByTestId } = await render(<InterviewsScreen />);
+    sync.mockClear();
     await fireEvent.press(getByTestId('sync'));
 
-    expect(sync).toHaveBeenCalled();
+    // Asked for, so not quiet: a failure is reported.
+    expect(sync).toHaveBeenCalledWith();
   });
 
   it('confirms a successful sync', async () => {
@@ -254,9 +256,42 @@ describe('InterviewsScreen', () => {
     mockProjects({ sync });
 
     const { getByTestId } = await render(<InterviewsScreen />);
-    getByTestId('projects-scroll').props.refreshControl.props.onRefresh();
+    sync.mockClear();
+    await act(async () => {
+      await getByTestId('projects-scroll').props.refreshControl.props.onRefresh();
+    });
 
-    expect(sync).toHaveBeenCalled();
+    expect(sync).toHaveBeenCalledWith();
+  });
+
+  /** Signed in just now, or a session the server confirmed at launch. */
+  it('syncs the projects quietly on opening online', async () => {
+    const sync = jest.fn().mockResolvedValue(true);
+    mockProjects({ sync });
+
+    await render(<InterviewsScreen />);
+
+    expect(sync).toHaveBeenCalledTimes(1);
+    expect(sync).toHaveBeenCalledWith({ quiet: true });
+  });
+
+  it('does not try to sync when it opened offline', async () => {
+    const sync = jest.fn().mockResolvedValue(true);
+    mockProjects({ sync });
+    mockAuth(jest.fn(), true);
+
+    await render(<InterviewsScreen />);
+
+    expect(sync).not.toHaveBeenCalled();
+  });
+
+  /** "Proyectos actualizados" answers a press of Sync; nobody pressed it. */
+  it('does not announce a sync nobody asked for', async () => {
+    mockProjects({ sync: jest.fn().mockResolvedValue(true) });
+
+    const { queryByText } = await render(<InterviewsScreen />);
+
+    expect(queryByText('home.synced')).toBeNull();
   });
 
   it('surfaces a sync error', async () => {

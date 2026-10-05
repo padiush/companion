@@ -14,8 +14,11 @@ export interface ProjectsState {
   syncing: boolean;
   /** The last sync failed (e.g. offline). */
   error: boolean;
-  /** Refresh from the API; resolves true on success, false on failure. */
-  sync: () => Promise<boolean>;
+  /**
+   * Refresh from the API; resolves true on success, false on failure. A
+   * `quiet` sync — one nobody asked for — does not report its failure.
+   */
+  sync: (options?: { quiet?: boolean }) => Promise<boolean>;
 }
 
 /**
@@ -50,7 +53,7 @@ export function useProjects(): ProjectsState {
     }, [])
   );
 
-  const sync = useCallback(async () => {
+  const sync = useCallback(async ({ quiet = false }: { quiet?: boolean } = {}) => {
     setSyncing(true);
     setError(false);
     try {
@@ -59,7 +62,9 @@ export function useProjects(): ProjectsState {
       setProjects(await getProjects(db));
       return true;
     } catch {
-      setError(true);
+      // A failure nobody asked about is not news: the cached projects are
+      // still there, and Sync reports properly when it is pressed.
+      if (!quiet) setError(true);
       return false;
     } finally {
       setSyncing(false);

@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -45,6 +45,17 @@ export function InterviewsScreen() {
   const insets = useSafeAreaInsets();
   const [signingOut, setSigningOut] = useState(false);
   const [syncedOk, setSyncedOk] = useState(false);
+
+  // Opening the app online — signed in just now, or a session the server
+  // confirmed at launch — brings the projects and their forms up to date
+  // without anyone pressing Sync. Once per opening: this tab stays mounted
+  // while signed in. Offline, the cached projects are what there is.
+  useEffect(() => {
+    if (!offline) {
+      void sync({ quiet: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onSync = async () => {
     setSyncedOk(false);
