@@ -58,6 +58,29 @@
     "unsent_other": "{{count}} por enviar",
     "chooseProject": "¿En qué proyecto?"
   },
+  "intro": {
+    "skip": "Saltar",
+    "next": "Siguiente",
+    "start": "Empezar",
+    "progress": "Paso {{current}} de {{total}}",
+    "replay": "Ver la introducción",
+    "welcome": {
+      "title": "Padiush en el campo",
+      "body": "Con esta app registras entrevistas y plantas donde estés, aun sin señal. Los formularios se diseñan y los datos se analizan en la web."
+    },
+    "interviews": {
+      "title": "Entrevistas",
+      "body": "Empieza una entrevista desde un formulario de tu proyecto. Las respuestas, el audio y la ubicación quedan guardados y cifrados en este dispositivo."
+    },
+    "records": {
+      "title": "Registros de campo",
+      "body": "Registra cada planta que colectes o que solo observes, con fotos, notas de voz y su ubicación."
+    },
+    "outbox": {
+      "title": "Por enviar",
+      "body": "Lo que registras espera aquí hasta que lo envíes. Cuando tengas conexión, toca Enviar ahora y lo verás en la web. Desliza hacia abajo en Entrevistas para traer los formularios nuevos."
+    }
+  },
   "project": {
     "forms": "Formularios",
     "newInterview": "Nueva entrevista",
@@ -291,6 +314,7 @@
         "items": [
           "La app tiene un aspecto nuevo, como el de la web, pensado para usarse con una mano en campo, y muestra las fotos de cada registro.",
           "La app se organiza en tres pestañas: Entrevistas, Registros y Por enviar.",
+          "La primera vez que entras, una breve introducción te muestra para qué sirve la app y sus tres pestañas. Puedes saltarla y volver a verla desde Entrevistas.",
           "Registra en campo lo que observas o colectas, con coordenadas, fotos, una nota de voz y el permiso de colecta.",
           "Durante una entrevista, registra la planta que nombra la persona entrevistada sin salir de la entrevista.",
           "Descarta un registro que todavía no enviaste.",

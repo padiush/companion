@@ -35,6 +35,8 @@ Three tabs: **Entrevistas** starts an interview in a project and reopens any
 recorded on the device; **Registros** does the same for field records, from
 every project, a new one going to the project the last one did; **Por enviar**
 gathers what the server does not have yet, with the one Send that carries it.
+The first time an account signs in on a device, a short walkthrough introduces
+the app and the three tabs; it can be skipped and seen again from Entrevistas.
 
 ## Scope — capture only
 

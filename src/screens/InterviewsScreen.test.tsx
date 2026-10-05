@@ -353,6 +353,16 @@ describe('InterviewsScreen', () => {
   });
 
   /** Whether what is on the phone is current, before anything else. */
+  /** For whoever skipped it, or wants it again. */
+  it('opens the walkthrough again from the foot of the page', async () => {
+    const { getByTestId, queryByText } = await render(<InterviewsScreen />);
+    expect(queryByText('intro.welcome.title')).toBeNull();
+
+    await fireEvent.press(getByTestId('intro-link'));
+
+    expect(queryByText('intro.welcome.title')).toBeTruthy();
+  });
+
   it('says when the device last synced', async () => {
     const { getByTestId } = await render(<InterviewsScreen />);
 
