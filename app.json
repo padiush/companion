@@ -61,6 +61,14 @@
           "photosPermission": "Padiush attaches photos from your library to an interview."
         }
       ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "enableSceneSupport": true
+          }
+        }
+      ],
       "expo-asset",
       "expo-localization",
       "@react-native-community/datetimepicker",
