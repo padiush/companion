@@ -25,10 +25,16 @@ export function useFieldRecords(): FieldRecordsState {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const db = await getDatabase();
-    setRecords(await listAllFieldRecords(db));
-    setLastProjectId(await getLastRecordProject(db));
-    setLoading(false);
+    try {
+      const db = await getDatabase();
+      setRecords(await listAllFieldRecords(db));
+      setLastProjectId(await getLastRecordProject(db));
+    } catch {
+      // A read that fails keeps what is shown; the next focus or pull reads
+      // again. Whatever happens, the list stops loading.
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useFocusEffect(
