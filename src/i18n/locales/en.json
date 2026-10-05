@@ -254,5 +254,36 @@
     "thisApp": "This app",
     "thisAppBody": "Padiush Companion is free software, released under the GNU Affero General Public License, version 3 or later (AGPL-3.0-or-later). © Mercedes Menéndez and Rodrigo Arévalo. You may use, study, modify and redistribute it, and you are entitled to the source of the version you are running.",
     "viewSource": "View the source code"
+  },
+  "whatsNew": {
+    "title": "What's new?",
+    "intro": "Here is what changed since you last opened the app.",
+    "gotIt": "Got it",
+    "screenTitle": "What's new",
+    "link": "Padiush {{version}} · What's new",
+    "version": "Version {{version}}",
+    "releasedOn": "Released on {{date}}",
+    "empty": "There are no release notes yet.",
+    "releases": [
+      {
+        "version": "1.1.0",
+        "date": null,
+        "items": [
+          "The app is organised in three tabs: Interviews, Records and To send.",
+          "Record what you observe or collect in the field, with coordinates, photographs, a voice note and the collecting permit.",
+          "During an interview, record the plant the interviewee names without leaving the interview.",
+          "Discard a record you have not sent yet.",
+          "When the app opens online, your projects bring themselves up to date.",
+          "Long recordings no longer start over when the connection drops while sending: they carry on where they left off."
+        ]
+      },
+      {
+        "version": "1.0.0",
+        "date": "2026-08-15",
+        "items": [
+          "Capture interviews offline, with audio, photographs and location, and send them when you have signal again."
+        ]
+      }
+    ]
   }
 }

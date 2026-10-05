@@ -73,7 +73,7 @@ By making a contribution to this project, I certify that:
 
 ## Working on the code
 
-Setup is in the [README](README.md). Two conventions the history follows:
+Setup is in the [README](README.md). Three conventions the history follows:
 
 - **Changes ship with their tests.** The suites are the reason a change can be
   trusted; a pull request that adds behaviour without covering it will be asked
@@ -81,6 +81,9 @@ Setup is in the [README](README.md). Two conventions the history follows:
 - **Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/)**
   and describe the outcome rather than the mechanics — `git log` is the best
   guide to the house style.
+- **Changes people would notice go in the changelog.** Add a line under
+  _Unreleased_ in [CHANGELOG.md](CHANGELOG.md) in the same pull request.
+  Releases are cut as described in [docs/releasing.md](docs/releasing.md).
 
 ## Never commit research data
 

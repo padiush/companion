@@ -7,6 +7,7 @@ import { FieldRecordScreen } from '../screens/FieldRecordScreen';
 import { InterviewScreen } from '../screens/InterviewScreen';
 import { LicencesScreen } from '../screens/LicencesScreen';
 import { ProjectScreen } from '../screens/ProjectScreen';
+import { WhatsNewScreen } from '../screens/WhatsNewScreen';
 import { MainTabs } from './MainTabs';
 import type { RootStackParamList } from './types';
 
@@ -46,6 +47,11 @@ export function RootNavigator() {
           name="Licences"
           component={LicencesScreen}
           options={{ title: t('licences.title') }}
+        />
+        <Stack.Screen
+          name="WhatsNew"
+          component={WhatsNewScreen}
+          options={{ title: t('whatsNew.screenTitle') }}
         />
       </Stack.Navigator>
     </NavigationContainer>

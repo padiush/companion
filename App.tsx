@@ -9,10 +9,13 @@ import { sweepCaptureCache } from './src/capture/sweepCaptureCache';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { useTheme } from './src/theme';
+import { WhatsNewSheet } from './src/whatsNew/WhatsNewSheet';
+import { useUnseenRelease } from './src/whatsNew/useUnseenRelease';
 
 function AuthGate() {
   const { status } = useAuth();
   const theme = useTheme();
+  const whatsNew = useUnseenRelease(status);
 
   if (status === 'loading') {
     return (
@@ -22,7 +25,18 @@ function AuthGate() {
     );
   }
 
-  return status === 'signedIn' ? <RootNavigator /> : <SignInScreen />;
+  if (status !== 'signedIn') {
+    return <SignInScreen />;
+  }
+
+  return (
+    <>
+      <RootNavigator />
+      {whatsNew.since ? (
+        <WhatsNewSheet since={whatsNew.since} onDismiss={whatsNew.dismiss} />
+      ) : null}
+    </>
+  );
 }
 
 export default function App() {

@@ -187,6 +187,10 @@ npx eas-cli submit --platform android --profile production
 `android.versionCode` in [app.json](app.json) is the record of what shipped —
 the production profile increments it, so commit the bump.
 
+Releases are numbered and announced: what changed is in
+[CHANGELOG.md](CHANGELOG.md), researchers see it as "What's new" in the app,
+and the routine is in [docs/releasing.md](docs/releasing.md).
+
 ## Forking this app
 
 Everything needed to build your own is here, but five values belong to this
