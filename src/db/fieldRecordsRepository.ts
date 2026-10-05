@@ -173,10 +173,71 @@ export async function listWaitingFieldRecords(db: SQLiteDatabase): Promise<Waiti
   );
 }
 
-/** Records the server has not accepted yet — what a push sends. */
+/**
+ * The one refusal a later send can cure without anyone touching the record:
+ * the answer it came out of was not on the server yet. Once its interview
+ * lands, the same record is accepted as it stands.
+ */
+export const ANSWER_NOT_FOUND = 'api.sync.answer_not_found';
+
+/**
+ * Records a push sends: those the server has not accepted yet, and those it
+ * refused only because their answer had not arrived. The second kind would
+ * otherwise sit refused until edited, though nothing about it needs changing
+ * — the interview being sent first is the whole fix.
+ */
 export async function listDraftFieldRecords(db: SQLiteDatabase): Promise<FieldRecordRow[]> {
   return db.getAllAsync<FieldRecordRow>(
-    "SELECT * FROM field_records WHERE sync_status = 'draft' ORDER BY created_at"
+    `SELECT * FROM field_records
+      WHERE sync_status = 'draft' OR (sync_status = 'rejected' AND sync_error = ?)
+      ORDER BY created_at`,
+    [ANSWER_NOT_FOUND]
+  );
+}
+
+/**
+ * Records made from an answer in this interview, oldest first, each with the
+ * answer it came out of — so the interview can show, beside an answer, what
+ * was already recorded from it.
+ */
+export async function listFieldRecordsForInstance(
+  db: SQLiteDatabase,
+  instanceId: string
+): Promise<FieldRecordRow[]> {
+  return db.getAllAsync<FieldRecordRow>(
+    `SELECT r.* FROM field_records r
+       JOIN answers a ON a.client_id = r.answer_client_id
+      WHERE a.instance_id = ?
+      ORDER BY r.created_at`,
+    [instanceId]
+  );
+}
+
+/**
+ * Let go of answers that are about to be deleted on the device.
+ *
+ * A record the server has not accepted would otherwise name an answer that no
+ * longer exists anywhere, and be refused on every send. It stays a record of
+ * its own — the plant was still documented — and goes back to the outbox if
+ * that refusal was what held it. A record the server already holds keeps its
+ * link: the server never clears one, and its copy of the answer is unaffected.
+ */
+export async function unlinkFieldRecordsFromAnswers(
+  db: SQLiteDatabase,
+  answerClientIds: string[]
+): Promise<void> {
+  if (answerClientIds.length === 0) {
+    return;
+  }
+
+  const placeholders = answerClientIds.map(() => '?').join(', ');
+  await db.runAsync(
+    `UPDATE field_records
+        SET answer_client_id = NULL,
+            sync_status = CASE WHEN sync_error = ? THEN 'draft' ELSE sync_status END,
+            sync_error = CASE WHEN sync_error = ? THEN NULL ELSE sync_error END
+      WHERE server_id IS NULL AND answer_client_id IN (${placeholders})`,
+    [ANSWER_NOT_FOUND, ANSWER_NOT_FOUND, ...answerClientIds]
   );
 }
 
