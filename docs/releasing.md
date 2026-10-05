@@ -29,14 +29,18 @@ The notes researchers see are drafted as the release takes shape, under
 1. Pick the number: minor for new features, patch for fixes only, major for a
    change that needs a platform release the old app cannot talk to.
 2. Set `expo.version` in `app.json` and `version` in `CITATION.cff`. Leave
-   `android.versionCode` to the production build, which increments it.
+   `android.versionCode` and `ios.buildNumber` to the production builds, which
+   increment them.
 3. Set the release's `date` in the notes. The locale test fails if a release at
    or below `app.json` has no date, or one above it has a date.
 4. In `CHANGELOG.md`, rename **Unreleased** to `[x.y.z] — YYYY-MM-DD`, start a
    new empty **Unreleased**, and update the comparison links.
-5. Merge, build and submit with EAS (see the README), and commit the
-   `versionCode` the build used.
-6. Tag `vx.y.z` on `main` and publish a GitHub release with the changelog
+5. Merge, then build and submit for both stores with EAS (see the README):
+   Android to Google Play, iOS to App Store Connect, from the same commit.
+   Commit the `versionCode` and `buildNumber` the builds used.
+6. In each store, give the release its notes in Spanish, English and
+   Portuguese, from the same points as `whatsNew`, and send it for review.
+7. Tag `vx.y.z` on `main` and publish a GitHub release with the changelog
    section. Zenodo archives it; record the version DOI in `CITATION.cff` and
    the README in a follow-up.
 

@@ -191,10 +191,14 @@ ship whatever a developer happened to leave in `.env`**.
 ```bash
 npx eas-cli build --platform android --profile production
 npx eas-cli submit --platform android --profile production
+npx eas-cli build --platform ios --profile production
+npx eas-cli submit --platform ios --profile production
 ```
 
-`android.versionCode` in [app.json](app.json) is the record of what shipped —
-the production profile increments it, so commit the bump.
+From 1.1.0 every release ships to both Google Play and the App Store, built
+from the same commit. `android.versionCode` and `ios.buildNumber` in
+[app.json](app.json) are the record of what shipped — the production profile
+increments them, so commit the bump.
 
 Releases are numbered and announced: what changed is in
 [CHANGELOG.md](CHANGELOG.md), researchers see it as "What's new" in the app,

@@ -11,6 +11,8 @@ in [docs/releasing.md](docs/releasing.md).
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-10-05
+
 ### Changed
 
 - A new look, matching the web's: its palette and its typeface, Montserrat,
@@ -23,6 +25,8 @@ in [docs/releasing.md](docs/releasing.md).
 
 ### Added
 
+- Releases ship to the App Store as well as Google Play, from the same
+  commit. `ios.buildNumber` in `app.json` records each iOS build.
 - Photo previews: each photograph gets a small preview at capture, kept
   encrypted with it and deleted with it once sent (store schema v6). Records
   are listed as cards showing their first photograph, and a record's or an
@@ -67,5 +71,6 @@ First public release: offline interview capture against the project's forms,
 with audio, photographs and location, kept in an encrypted store and sent when
 the device is back online.
 
-[Unreleased]: https://github.com/padiush/companion/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/padiush/companion/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/padiush/companion/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/padiush/companion/releases/tag/v1.0.0

@@ -6,7 +6,7 @@ abstract: >-
   interviews entirely offline — answers, audio, photographs and location — in
   an encrypted on-device store, and synchronises them when connectivity allows.
 type: software
-version: "1.0.0"
+version: "1.1.0"
 authors:
   - family-names: "Menéndez"
     given-names: "Mercedes"
