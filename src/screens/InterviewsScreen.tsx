@@ -24,6 +24,7 @@ import type { RootStackParamList } from '../navigation/types';
 import { border, radius, space, type, useTheme } from '../theme';
 import { SectionLabel } from '../ui/SectionLabel';
 import { StatusRow } from '../ui/StatusRow';
+import { currentVersion } from '../whatsNew/releases';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -198,18 +199,31 @@ export function InterviewsScreen() {
         )}
 
         {/*
-          Attribution for the packages this app is built from. Shipping a
-          binary is distribution, and the licences require their notice to
-          travel with it.
+          The version running and what each release brought; then attribution
+          for the packages this app is built from. Shipping a binary is
+          distribution, and the licences require their notice to travel with
+          it.
         */}
-        <TouchableOpacity
-          testID="licences"
-          onPress={() => navigation.navigate('Licences')}
-          accessibilityRole="button"
-          style={styles.licences}
-        >
-          <Text style={[styles.licencesText, { color: theme.muted }]}>{t('licences.title')}</Text>
-        </TouchableOpacity>
+        <View style={styles.footer}>
+          <TouchableOpacity
+            testID="whats-new-link"
+            onPress={() => navigation.navigate('WhatsNew')}
+            accessibilityRole="button"
+            style={styles.footerLink}
+          >
+            <Text style={[styles.licencesText, { color: theme.muted }]}>
+              {t('whatsNew.link', { version: currentVersion() })}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            testID="licences"
+            onPress={() => navigation.navigate('Licences')}
+            accessibilityRole="button"
+            style={styles.footerLink}
+          >
+            <Text style={[styles.licencesText, { color: theme.muted }]}>{t('licences.title')}</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
@@ -282,9 +296,11 @@ const styles = StyleSheet.create({
   section: {
     marginTop: space.lg,
   },
-  licences: {
+  footer: {
     marginTop: space.xl,
-    alignSelf: 'center',
+    alignItems: 'center',
+  },
+  footerLink: {
     paddingVertical: space.sm,
   },
   licencesText: {

@@ -25,4 +25,6 @@ export type RootStackParamList = {
   };
   /** Attribution for the open-source packages the app ships. */
   Licences: undefined;
+  /** What each release of the app brought. */
+  WhatsNew: undefined;
 };

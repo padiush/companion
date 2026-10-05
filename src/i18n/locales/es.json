@@ -254,5 +254,36 @@
     "thisApp": "Esta aplicación",
     "thisAppBody": "Padiush Companion es software libre, publicado bajo la Licencia Pública General Affero de GNU, versión 3 o posterior (AGPL-3.0-or-later). © Mercedes Menéndez y Rodrigo Arévalo. Puedes usarla, estudiarla, modificarla y redistribuirla; tienes derecho a obtener el código fuente de la versión que estás ejecutando.",
     "viewSource": "Ver el código fuente"
+  },
+  "whatsNew": {
+    "title": "¿Qué hay de nuevo?",
+    "intro": "Esto cambió desde la última vez que abriste la app.",
+    "gotIt": "Entendido",
+    "screenTitle": "Novedades",
+    "link": "Padiush {{version}} · Novedades",
+    "version": "Versión {{version}}",
+    "releasedOn": "Publicada el {{date}}",
+    "empty": "Todavía no hay notas de versión.",
+    "releases": [
+      {
+        "version": "1.1.0",
+        "date": null,
+        "items": [
+          "La app se organiza en tres pestañas: Entrevistas, Registros y Por enviar.",
+          "Registra en campo lo que observas o colectas, con coordenadas, fotos, una nota de voz y el permiso de colecta.",
+          "Durante una entrevista, registra la planta que nombra la persona entrevistada sin salir de la entrevista.",
+          "Descarta un registro que todavía no enviaste.",
+          "Al abrir la app con conexión, tus proyectos se ponen al día solos.",
+          "Las grabaciones largas ya no empiezan de nuevo si se corta la conexión al enviarlas: siguen donde quedaron."
+        ]
+      },
+      {
+        "version": "1.0.0",
+        "date": "2026-08-15",
+        "items": [
+          "Captura entrevistas sin conexión, con audio, fotos y ubicación, y envíalas cuando vuelvas a tener señal."
+        ]
+      }
+    ]
   }
 }
