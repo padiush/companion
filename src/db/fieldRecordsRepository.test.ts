@@ -9,6 +9,7 @@ import {
   listDraftFieldRecords,
   listFieldRecords,
   listFieldRecordsForInstance,
+  listAllFieldRecords,
   listWaitingFieldRecords,
   setFieldRecordSyncResult,
   updateFieldRecord,
@@ -272,6 +273,29 @@ describe('records waiting to be sent', () => {
     const [waiting] = await listWaitingFieldRecords(db);
 
     expect(waiting).toMatchObject({ client_id: 'fr-1', project_name: null });
+  });
+});
+
+describe('every record on the device', () => {
+  /** Sent or not, from any project: the Registros tab lists them all. */
+  it('lists records of every status and project, newest first, with the project', async () => {
+    await upsertProjects(db, [
+      { id: 1, name: 'Cloud forest', capabilities: {} as never, updated_at: null },
+      { id: 2, name: 'Market plants', capabilities: {} as never, updated_at: null },
+    ]);
+    await insertFieldRecord(db, record({ clientId: 'fr-old', createdAt: AT }));
+    await insertFieldRecord(
+      db,
+      record({ clientId: 'fr-new', projectId: 2, createdAt: '2026-08-23T11:00:00.000Z' })
+    );
+    await setFieldRecordSyncResult(db, 'fr-old', { status: 'synced', serverId: 41 });
+
+    const all = await listAllFieldRecords(db);
+
+    expect(all.map((row) => [row.client_id, row.sync_status, row.project_name])).toEqual([
+      ['fr-new', 'draft', 'Market plants'],
+      ['fr-old', 'synced', 'Cloud forest'],
+    ]);
   });
 });
 

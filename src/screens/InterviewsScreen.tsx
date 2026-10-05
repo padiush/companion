@@ -16,24 +16,31 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../auth/AuthContext';
 import { Chevron } from '../components/Chevron';
+import { interviewRow } from '../capture/listing';
+import { useDrafts } from '../hooks/useDrafts';
 import { useOutbox } from '../hooks/useOutbox';
 import { useProjects } from '../hooks/useProjects';
 import type { RootStackParamList } from '../navigation/types';
 import { border, radius, space, type, useTheme } from '../theme';
 import { SectionLabel } from '../ui/SectionLabel';
+import { StatusRow } from '../ui/StatusRow';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 /**
- * The Proyectos tab: the cached project list, from which interviews are started.
- * Recorded interviews live in the Entrevistas tab.
+ * The Entrevistas tab: the projects an interview is started in, and every
+ * interview recorded on this device, sent or not, to reopen. What still has
+ * to be sent is gathered in Por enviar; field records have a tab of their own.
  */
-export function HomeScreen() {
-  const { t } = useTranslation();
+export function InterviewsScreen() {
+  const { t, i18n } = useTranslation();
   const theme = useTheme();
   const { user, offline, signOut } = useAuth();
   const { projects, loading, syncing, error, sync } = useProjects();
-  const { count } = useOutbox();
+  // Interviews and records alike stay on the device until sent.
+  const { count: unsentInterviews, fieldRecords: unsentRecords } = useOutbox();
+  const count = unsentInterviews + unsentRecords;
+  const { drafts: interviews } = useDrafts();
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const [signingOut, setSigningOut] = useState(false);
@@ -137,7 +144,10 @@ export function HomeScreen() {
             <TouchableOpacity
               key={project.id}
               testID={`project-${project.id}`}
-              style={[styles.projectRow, { backgroundColor: theme.card, borderColor: theme.border }]}
+              style={[
+                styles.projectRow,
+                { backgroundColor: theme.card, borderColor: theme.border },
+              ]}
               onPress={() =>
                 navigation.navigate('Project', {
                   projectId: project.id,
@@ -152,6 +162,30 @@ export function HomeScreen() {
           ))
         )}
 
+        <View style={styles.section}>
+          <SectionLabel>{t('home.onDevice')}</SectionLabel>
+        </View>
+        {interviews.length === 0 ? (
+          <Text style={[styles.empty, { color: theme.muted }]}>{t('drafts.empty')}</Text>
+        ) : (
+          interviews.map((interview) => (
+            <StatusRow
+              key={interview.id}
+              testID={`interview-${interview.id}`}
+              status={interview.sync_status}
+              {...interviewRow(interview, t, i18n.language)}
+              onPress={() =>
+                navigation.navigate('Interview', {
+                  formId: interview.form_id,
+                  projectId: interview.project_id,
+                  formName: interview.form_name ?? '',
+                  instanceId: interview.id,
+                })
+              }
+            />
+          ))
+        )}
+
         {/*
           Attribution for the packages this app is built from. Shipping a
           binary is distribution, and the licences require their notice to
@@ -163,9 +197,7 @@ export function HomeScreen() {
           accessibilityRole="button"
           style={styles.licences}
         >
-          <Text style={[styles.licencesText, { color: theme.muted }]}>
-            {t('licences.title')}
-          </Text>
+          <Text style={[styles.licencesText, { color: theme.muted }]}>{t('licences.title')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -235,6 +267,9 @@ const styles = StyleSheet.create({
   empty: {
     ...type.body,
     marginTop: space.sm,
+  },
+  section: {
+    marginTop: space.lg,
   },
   licences: {
     marginTop: space.xl,

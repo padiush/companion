@@ -1,9 +1,10 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
-/** The signed-in tab bar: starting interviews vs. reviewing/sending them. */
+/** The signed-in tab bar: interviews, field records, and what is still to send. */
 export type MainTabParamList = {
-  Projects: undefined;
-  Drafts: undefined;
+  Interviews: undefined;
+  Records: undefined;
+  Outbox: undefined;
 };
 
 /** The app's navigation stack and each screen's params. */

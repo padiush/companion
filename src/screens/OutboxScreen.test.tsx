@@ -2,7 +2,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 
 import { useDrafts } from '../hooks/useDrafts';
 import { useOutbox } from '../hooks/useOutbox';
-import { DraftsScreen } from './DraftsScreen';
+import { OutboxScreen } from './OutboxScreen';
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key, i18n: { language: 'es' } }),
@@ -71,13 +71,13 @@ beforeEach(() => {
   mockOutbox();
 });
 
-describe('DraftsScreen', () => {
+describe('OutboxScreen', () => {
   it('lists interviews with their status', async () => {
     mockDrafts({
       drafts: [draft(), draft({ id: 'd2', preview: 'Sábila', sync_status: 'rejected' })],
     });
 
-    const { getByTestId, getByText } = await render(<DraftsScreen />);
+    const { getByTestId, getByText } = await render(<OutboxScreen />);
 
     expect(getByTestId('draft-d1')).toBeTruthy();
     // The row leads with what tells two interviews apart, not the form name
@@ -90,7 +90,7 @@ describe('DraftsScreen', () => {
   it('shows a content preview to tell same-form drafts apart', async () => {
     mockDrafts({ drafts: [draft({ preview: 'Ruda' }), draft({ id: 'd2', preview: 'Sábila' })] });
 
-    const { getByText } = await render(<DraftsScreen />);
+    const { getByText } = await render(<OutboxScreen />);
 
     expect(getByText('Ruda')).toBeTruthy();
     expect(getByText('Sábila')).toBeTruthy();
@@ -99,7 +99,7 @@ describe('DraftsScreen', () => {
   it('offers no send action when everything has reached the server', async () => {
     mockOutbox({ count: 0, pendingMedia: 0 });
 
-    const { queryByTestId } = await render(<DraftsScreen />);
+    const { queryByTestId } = await render(<OutboxScreen />);
 
     expect(queryByTestId('send')).toBeNull();
   });
@@ -112,7 +112,7 @@ describe('DraftsScreen', () => {
   it('offers to upload media even when no interview is waiting', async () => {
     mockOutbox({ count: 0, pendingMedia: 3 });
 
-    const { getByTestId, getByText } = await render(<DraftsScreen />);
+    const { getByTestId, getByText } = await render(<OutboxScreen />);
 
     expect(getByTestId('send')).toBeTruthy();
     expect(getByText('drafts.sendMedia')).toBeTruthy();
@@ -121,7 +121,7 @@ describe('DraftsScreen', () => {
   it('counts interviews on the send action when there are any', async () => {
     mockOutbox({ count: 2, pendingMedia: 3 });
 
-    const { getByText } = await render(<DraftsScreen />);
+    const { getByText } = await render(<OutboxScreen />);
 
     expect(getByText('drafts.send · 2')).toBeTruthy();
   });
@@ -130,7 +130,7 @@ describe('DraftsScreen', () => {
   it('counts field records on the send action alongside interviews', async () => {
     mockOutbox({ count: 2, fieldRecords: 3 });
 
-    const { getByText } = await render(<DraftsScreen />);
+    const { getByText } = await render(<OutboxScreen />);
 
     expect(getByText('drafts.send · 5')).toBeTruthy();
   });
@@ -138,7 +138,7 @@ describe('DraftsScreen', () => {
   it('offers to send when only field records are waiting', async () => {
     mockOutbox({ count: 0, fieldRecords: 1 });
 
-    const { getByText } = await render(<DraftsScreen />);
+    const { getByText } = await render(<OutboxScreen />);
 
     expect(getByText('drafts.send · 1')).toBeTruthy();
   });
@@ -147,7 +147,7 @@ describe('DraftsScreen', () => {
     const send = jest.fn().mockResolvedValue({ synced: 0, partial: 0, rejected: 0 });
     mockOutbox({ fieldRecords: 3, send, lastRecordResult: { synced: 2, rejected: 1 } });
 
-    const { getByTestId, findByTestId } = await render(<DraftsScreen />);
+    const { getByTestId, findByTestId } = await render(<OutboxScreen />);
     await fireEvent.press(getByTestId('send'));
 
     expect(await findByTestId('records-sent')).toHaveTextContent('drafts.recordsSent');
@@ -167,14 +167,17 @@ describe('DraftsScreen', () => {
       ...overrides,
     });
 
-    /** The Send count would otherwise point at nothing on this screen. */
-    it('lists them above the interviews, saying which project each is in', async () => {
-      mockDrafts({ fieldRecords: [waiting()] });
+    /**
+     * The Send count would otherwise point at nothing on this screen. Records
+     * come after the interviews, as they are sent after them.
+     */
+    it('lists them after the interviews, saying which project each is in', async () => {
+      mockDrafts({ drafts: [draft()], fieldRecords: [waiting()] });
 
-      const { getByTestId, getByText } = await render(<DraftsScreen />);
+      const { getByTestId, getByText } = await render(<OutboxScreen />);
 
-      expect(getByText('drafts.fieldRecords')).toBeTruthy();
       expect(getByText('drafts.interviews')).toBeTruthy();
+      expect(getByText('drafts.fieldRecords')).toBeTruthy();
       expect(getByTestId('waiting-record-fr-1')).toHaveTextContent(/guaba/);
       expect(getByTestId('waiting-record-fr-1')).toHaveTextContent(/Cloud forest/);
       expect(getByTestId('waiting-record-fr-1')).toHaveTextContent(/drafts\.status\.draft/);
@@ -183,7 +186,7 @@ describe('DraftsScreen', () => {
     it('opens a record in its project', async () => {
       mockDrafts({ fieldRecords: [waiting()] });
 
-      const { getByTestId } = await render(<DraftsScreen />);
+      const { getByTestId } = await render(<OutboxScreen />);
       await fireEvent.press(getByTestId('waiting-record-fr-1'));
 
       expect(mockNavigate).toHaveBeenCalledWith('FieldRecord', { projectId: 9, clientId: 'fr-1' });
@@ -194,33 +197,58 @@ describe('DraftsScreen', () => {
         fieldRecords: [waiting({ vernacular_name: null, sync_status: 'rejected' })],
       });
 
-      const { getByTestId } = await render(<DraftsScreen />);
+      const { getByTestId } = await render(<OutboxScreen />);
 
       expect(getByTestId('waiting-record-fr-1')).toHaveTextContent(/fieldRecord\.untitled/);
       expect(getByTestId('waiting-record-fr-1')).toHaveTextContent(/drafts\.status\.rejected/);
     });
 
-    it('adds no headings when no record is waiting', async () => {
+    it('heads only the kinds that have something waiting', async () => {
       mockDrafts({ drafts: [draft()] });
 
-      const { queryByText } = await render(<DraftsScreen />);
+      const { getByText, queryByText } = await render(<OutboxScreen />);
 
+      expect(getByText('drafts.interviews')).toBeTruthy();
       expect(queryByText('drafts.fieldRecords')).toBeNull();
-      expect(queryByText('drafts.interviews')).toBeNull();
     });
   });
 
-  it('shows the empty state when there are no interviews', async () => {
+  it('says everything has been sent when nothing is waiting', async () => {
     mockDrafts({ drafts: [] });
 
-    const { getByText } = await render(<DraftsScreen />);
-    expect(getByText('drafts.empty')).toBeTruthy();
+    const { getByTestId } = await render(<OutboxScreen />);
+    expect(getByTestId('outbox-empty')).toHaveTextContent('outbox.empty');
+  });
+
+  /** A sent interview stays in Entrevistas; this tab is only what the server lacks. */
+  it('leaves out the interviews the server already has in full', async () => {
+    mockDrafts({
+      drafts: [
+        draft({ id: 'sent', sync_status: 'synced' }),
+        draft({ id: 'refused-answers', sync_status: 'partial' }),
+      ],
+    });
+
+    const { queryByTestId, getByTestId } = await render(<OutboxScreen />);
+
+    expect(queryByTestId('draft-sent')).toBeNull();
+    expect(getByTestId('draft-refused-answers')).toBeTruthy();
+  });
+
+  it('says what is left when only files of sent work remain', async () => {
+    mockDrafts({ drafts: [draft({ sync_status: 'synced' })] });
+    mockOutbox({ pendingMedia: 2 });
+
+    const { getByText, queryByTestId } = await render(<OutboxScreen />);
+
+    expect(getByText('outbox.onlyMedia')).toBeTruthy();
+    expect(queryByTestId('outbox-empty')).toBeNull();
   });
 
   it('reopens a draft as an interview when a row is tapped', async () => {
     mockDrafts({ drafts: [draft()] });
 
-    const { getByTestId } = await render(<DraftsScreen />);
+    const { getByTestId } = await render(<OutboxScreen />);
     await fireEvent.press(getByTestId('draft-d1'));
 
     expect(mockNavigate).toHaveBeenCalledWith('Interview', {
@@ -237,7 +265,7 @@ describe('DraftsScreen', () => {
     mockDrafts({ refresh });
     mockOutbox({ count: 2, send });
 
-    const { getByTestId, findByText } = await render(<DraftsScreen />);
+    const { getByTestId, findByText } = await render(<OutboxScreen />);
     await fireEvent.press(getByTestId('send'));
 
     expect(send).toHaveBeenCalled();
@@ -248,7 +276,7 @@ describe('DraftsScreen', () => {
   it('hides the send button when there is nothing to send', async () => {
     mockOutbox({ count: 0 });
 
-    const { queryByTestId } = await render(<DraftsScreen />);
+    const { queryByTestId } = await render(<OutboxScreen />);
     expect(queryByTestId('send')).toBeNull();
   });
 
@@ -256,8 +284,8 @@ describe('DraftsScreen', () => {
     const refresh = jest.fn().mockResolvedValue(undefined);
     mockDrafts({ refresh });
 
-    const { getByTestId } = await render(<DraftsScreen />);
-    getByTestId('drafts-scroll').props.refreshControl.props.onRefresh();
+    const { getByTestId } = await render(<OutboxScreen />);
+    getByTestId('outbox-scroll').props.refreshControl.props.onRefresh();
 
     await waitFor(() => expect(refresh).toHaveBeenCalled());
   });

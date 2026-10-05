@@ -13,8 +13,9 @@ import type { RootStackParamList } from './types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 /**
- * The signed-in navigation: a bottom-tab home (projects + interviews), over
- * which a project's forms and an interview are pushed as full screens.
+ * The signed-in navigation: a bottom-tab home (interviews, field records, and
+ * what is still to send), over which a project's forms, an interview and a
+ * field record are pushed as full screens.
  */
 export function RootNavigator() {
   const scheme = useColorScheme();

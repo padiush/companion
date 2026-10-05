@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-import type { FieldRecordRow, WaitingFieldRecord } from './types';
+import type { FieldRecordListItem, FieldRecordRow } from './types';
 
 /** Where the encounter happened, as this device measured it. */
 export interface FieldRecordLocation {
@@ -178,20 +178,31 @@ export async function listFieldRecords(
   );
 }
 
-/**
- * Every record the server has not accepted, from any project, newest first —
- * the ones still waiting to be sent and the ones it refused. This is what the
- * Send action is about, so it is listed where that action is, beside the
- * interviews; sent records are looked up in their own project.
- */
-export async function listWaitingFieldRecords(db: SQLiteDatabase): Promise<WaitingFieldRecord[]> {
-  return db.getAllAsync<WaitingFieldRecord>(
-    `SELECT r.*, p.name AS project_name
+/** The records as listed, each with its project's name, newest first. */
+function listedFieldRecords(where: string): string {
+  return `SELECT r.*, p.name AS project_name
        FROM field_records r
        LEFT JOIN projects p ON p.id = r.project_id
-      WHERE r.sync_status != 'synced'
-      ORDER BY r.created_at DESC`
-  );
+      ${where}
+      ORDER BY r.created_at DESC`;
+}
+
+/**
+ * Every record made on this device, from any project. Records have a tab of
+ * their own rather than a place inside each project: most are not part of an
+ * interview, and a walk crosses no project boundaries.
+ */
+export async function listAllFieldRecords(db: SQLiteDatabase): Promise<FieldRecordListItem[]> {
+  return db.getAllAsync<FieldRecordListItem>(listedFieldRecords(''));
+}
+
+/**
+ * Every record the server has not accepted, from any project — the ones still
+ * waiting to be sent and the ones it refused. This is what the Send action is
+ * about, so it is listed where that action is, beside the interviews.
+ */
+export async function listWaitingFieldRecords(db: SQLiteDatabase): Promise<FieldRecordListItem[]> {
+  return db.getAllAsync<FieldRecordListItem>(listedFieldRecords("WHERE r.sync_status != 'synced'"));
 }
 
 /**

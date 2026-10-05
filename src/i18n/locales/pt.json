@@ -27,8 +27,9 @@
     "cancel": "Cancelar"
   },
   "tabs": {
-    "projects": "Projetos",
-    "interviews": "Entrevistas"
+    "interviews": "Entrevistas",
+    "records": "Registros",
+    "outbox": "Para enviar"
   },
   "home": {
     "greeting": "Olá, {{name}}",
@@ -36,23 +37,21 @@
     "signOut": "Sair",
     "signOutTitle": "Sair?",
     "signOutMessage": "Você precisará entrar novamente para sincronizar.",
-    "signOutUnsynced_one": "Você tem 1 entrevista não enviada. Ela ficará criptografada neste dispositivo até você entrar novamente e enviá-la.",
-    "signOutUnsynced_other": "Você tem {{count}} entrevistas não enviadas. Elas ficarão criptografadas neste dispositivo até você entrar novamente e enviá-las.",
+    "signOutUnsynced_one": "Você tem 1 entrevista ou registro não enviado. Ele ficará criptografado neste dispositivo até você entrar novamente e enviá-lo.",
+    "signOutUnsynced_other": "Você tem {{count}} entrevistas ou registros não enviados. Eles ficarão criptografados neste dispositivo até você entrar novamente e enviá-los.",
     "projects": "Projetos",
     "sync": "Sincronizar",
     "empty": "Ainda não há projetos. Sincronize para carregá-los.",
     "syncError": "Não foi possível sincronizar. Verifique sua conexão.",
     "synced": "Projetos atualizados",
     "drafts": "Minhas entrevistas",
-    "offline": "Sem conexão. Você está usando a sessão salva neste dispositivo; sincronize quando tiver sinal novamente."
+    "offline": "Sem conexão. Você está usando a sessão salva neste dispositivo; sincronize quando tiver sinal novamente.",
+    "onDevice": "Entrevistas neste dispositivo"
   },
   "project": {
     "forms": "Formulários",
     "newInterview": "Nova entrevista",
-    "empty": "Este projeto não tem formulários ativos.",
-    "fieldRecords": "Registros de campo",
-    "newFieldRecord": "Adicionar um registro",
-    "noFieldRecords": "Ainda não há registros neste dispositivo. Anote aqui o que você documenta em campo, coletando ou não; a identificação e o depósito são feitos depois, na web."
+    "empty": "Este projeto não tem formulários ativos."
   },
   "interview": {
     "preparing": "Preparando a entrevista…",
@@ -164,16 +163,24 @@
       "refused": "Recusado"
     }
   },
+  "records": {
+    "title": "Registros de campo",
+    "new": "Novo registro",
+    "inProject": "Em {{project}}",
+    "changeProject": "Mudar de projeto",
+    "noProjects": "Sincronize seus projetos em Entrevistas para começar a registrar.",
+    "onDevice": "Neste dispositivo",
+    "empty": "Ainda não há registros neste dispositivo. Anote aqui o que você documenta em campo, coletando ou não; a identificação e o depósito são feitos depois, na web."
+  },
   "drafts": {
-    "title": "Entrevistas",
     "send": "Enviar",
     "sendError": "Não foi possível enviar. Verifique sua conexão.",
     "sent_one": "1 entrevista enviada",
     "sent_other": "{{count}} entrevistas enviadas",
     "recordsSent_one": "1 registro de campo enviado",
     "recordsSent_other": "{{count}} registros de campo enviados",
-    "recordsRefused_one": "O servidor não aceitou 1 registro de campo. Abra-o no projeto para ver o motivo.",
-    "recordsRefused_other": "O servidor não aceitou {{count}} registros de campo. Abra-os no projeto para ver o motivo.",
+    "recordsRefused_one": "O servidor não aceitou 1 registro de campo. Abra-o na lista para ver o motivo.",
+    "recordsRefused_other": "O servidor não aceitou {{count}} registros de campo. Abra-os na lista para ver o motivo.",
     "empty": "Ainda não há entrevistas.",
     "fieldRecords": "Registros de campo",
     "interviews": "Entrevistas",
@@ -199,6 +206,12 @@
       "formPending": "formulário pendente",
       "empty": "nada gravado ainda"
     }
+  },
+  "outbox": {
+    "title": "Para enviar",
+    "empty": "Tudo foi enviado.",
+    "onlyMedia_one": "Falta enviar 1 arquivo de algo que já foi enviado.",
+    "onlyMedia_other": "Faltam enviar {{count}} arquivos de coisas que já foram enviadas."
   },
   "sync": {
     "rejectedTitle": "O servidor não aceitou esta entrevista",

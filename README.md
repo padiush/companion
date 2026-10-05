@@ -31,6 +31,11 @@ nothing about capture waits on a network, a GPS fix, or a complete answer sheet.
   replaces the store, and says how much unsent work that destroys before it does.
 - **Spanish, English and Portuguese**, throughout.
 
+Three tabs: **Entrevistas** starts an interview in a project and reopens any
+recorded on the device; **Registros** does the same for field records, from
+every project, a new one going to the project the last one did; **Por enviar**
+gathers what the server does not have yet, with the one Send that carries it.
+
 ## Scope — capture only
 
 This app records interviews in the field, **fully offline**, and syncs when
@@ -79,7 +84,7 @@ src/
   db/              Encrypted SQLite store: schema migrations and repositories
   capture/         The interview itself: inputs, media, validation, draft state
   sync/            Pull, push, media upload, and resolving what the server refused
-  screens/         Projects, one project, an interview, recorded interviews
+  screens/         The three tabs, a project's forms, an interview, a field record
   navigation/      Root stack and the signed-in bottom tabs
   i18n/            es / en / pt, Spanish first
 ```

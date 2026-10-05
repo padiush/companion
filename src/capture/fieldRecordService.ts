@@ -3,6 +3,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import { insertFieldRecord, updateFieldRecord } from '../db/fieldRecordsRepository';
 import { uuid } from '../ids';
 import { toStoredFields, type FieldRecordDraft } from './fieldRecord';
+import { rememberRecordProject } from './recordProject';
 
 /**
  * Store a new field record and return its client-generated id — the key the
@@ -28,6 +29,10 @@ export async function createFieldRecord(
     answerClientId,
     createdAt: now,
   });
+
+  // The next record, started from the Registros tab, goes here unless told
+  // otherwise.
+  await rememberRecordProject(db, projectId);
 
   return clientId;
 }

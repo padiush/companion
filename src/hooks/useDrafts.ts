@@ -4,12 +4,12 @@ import { useCallback, useState } from 'react';
 import { getDatabase } from '../db/database';
 import { listWaitingFieldRecords } from '../db/fieldRecordsRepository';
 import { listInstancesWithMeta } from '../db/instancesRepository';
-import type { DraftListItem, WaitingFieldRecord } from '../db/types';
+import type { DraftListItem, FieldRecordListItem } from '../db/types';
 
 export interface DraftsState {
   drafts: DraftListItem[];
   /** Field records still to be sent, or refused — what Send carries besides interviews. */
-  fieldRecords: WaitingFieldRecord[];
+  fieldRecords: FieldRecordListItem[];
   loading: boolean;
   refresh: () => Promise<void>;
 }
@@ -20,7 +20,7 @@ export interface DraftsState {
  */
 export function useDrafts(): DraftsState {
   const [drafts, setDrafts] = useState<DraftListItem[]>([]);
-  const [fieldRecords, setFieldRecords] = useState<WaitingFieldRecord[]>([]);
+  const [fieldRecords, setFieldRecords] = useState<FieldRecordListItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {

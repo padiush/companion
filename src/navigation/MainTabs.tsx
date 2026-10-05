@@ -2,25 +2,25 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
 
 import { useOutbox } from '../hooks/useOutbox';
-import { DraftsScreen } from '../screens/DraftsScreen';
-import { HomeScreen } from '../screens/HomeScreen';
+import { InterviewsScreen } from '../screens/InterviewsScreen';
+import { OutboxScreen } from '../screens/OutboxScreen';
+import { RecordsScreen } from '../screens/RecordsScreen';
 import { useTheme } from '../theme';
-import { InterviewsIcon, ProjectsIcon } from './TabIcons';
+import { InterviewsIcon, OutboxIcon, RecordsIcon } from './TabIcons';
 import type { MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 /**
- * The signed-in home: two tabs — Proyectos (start interviews) and Entrevistas
- * (review and send them). The Entrevistas tab carries a badge with the number
- * of interviews still waiting to sync.
+ * The signed-in home: three tabs. Entrevistas starts and reopens interviews,
+ * Registros does the same for field records from any project, and Por enviar
+ * gathers what the server does not have yet, with the Send action. Its badge
+ * counts what that Send will carry.
  */
 export function MainTabs() {
   const { t } = useTranslation();
   const theme = useTheme();
   const { count, fieldRecords } = useOutbox();
-  // Everything the Send action on this tab will push, records included: they
-  // are made in a project, but this is where they are sent from.
   const unsent = count + fieldRecords;
 
   return (
@@ -33,20 +33,28 @@ export function MainTabs() {
       }}
     >
       <Tab.Screen
-        name="Projects"
-        component={HomeScreen}
+        name="Interviews"
+        component={InterviewsScreen}
         options={{
-          tabBarLabel: t('tabs.projects'),
-          tabBarIcon: ({ color, size }) => <ProjectsIcon color={color} size={size} />,
+          tabBarLabel: t('tabs.interviews'),
+          tabBarIcon: ({ color, size }) => <InterviewsIcon color={color} size={size} />,
         }}
       />
       <Tab.Screen
-        name="Drafts"
-        component={DraftsScreen}
+        name="Records"
+        component={RecordsScreen}
         options={{
-          tabBarLabel: t('tabs.interviews'),
+          tabBarLabel: t('tabs.records'),
+          tabBarIcon: ({ color, size }) => <RecordsIcon color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="Outbox"
+        component={OutboxScreen}
+        options={{
+          tabBarLabel: t('tabs.outbox'),
           tabBarBadge: unsent > 0 ? unsent : undefined,
-          tabBarIcon: ({ color, size }) => <InterviewsIcon color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <OutboxIcon color={color} size={size} />,
         }}
       />
     </Tab.Navigator>
