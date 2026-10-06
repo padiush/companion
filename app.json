@@ -9,7 +9,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.padiushbio.companion",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "appleTeamId": "XD8M2W9X4S",
       "config": {
         "usesNonExemptEncryption": false
