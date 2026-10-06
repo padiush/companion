@@ -227,6 +227,8 @@ deployment and have to become yours before a build will work:
 Then work from [docs/play-data-safety.md](docs/play-data-safety.md): it records
 what the app transmits, with every row traceable to the file that sends it, and
 is what a store submission's data declaration should be built on.
+[docs/app-store-privacy.md](docs/app-store-privacy.md) maps the same facts onto
+App Store Connect's App Privacy questions.
 
 ## Testing
 

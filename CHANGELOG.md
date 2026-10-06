@@ -17,6 +17,9 @@ in [docs/releasing.md](docs/releasing.md).
   Connect record.
 - iOS builds declare that the app uses only exempt encryption (HTTPS and the
   encrypted on-device store), so App Store Connect does not ask on each build.
+- `docs/app-store-privacy.md` gives the answers to App Store Connect's App
+  Privacy questionnaire, from the same facts as the Google Play data safety
+  sheet, which now records how its two open questions were answered.
 
 ### Fixed
 

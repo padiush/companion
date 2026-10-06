@@ -39,7 +39,10 @@ The notes researchers see are drafted as the release takes shape, under
    Android to Google Play, iOS to App Store Connect, from the same commit.
    Commit the `versionCode` and `buildNumber` the builds used.
 6. In each store, give the release its notes in Spanish, English and
-   Portuguese, from the same points as `whatsNew`, and send it for review.
+   Portuguese, from the same points as `whatsNew`, and send it for review. If
+   what the app sends off the device changed, update each store's privacy
+   answers first, from [play-data-safety.md](play-data-safety.md) and
+   [app-store-privacy.md](app-store-privacy.md).
 7. Tag `vx.y.z` on `main` and publish a GitHub release with the changelog
    section. Zenodo archives it; record the version DOI in `CITATION.cff` and
    the README in a follow-up.
