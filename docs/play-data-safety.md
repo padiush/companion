@@ -8,7 +8,7 @@ future change can be checked against this document.
 It is written in the shape of Google Play's **App content → Data safety**
 questionnaire, because that form asks the right questions and the answers have
 to be defensible either way. If you publish your own build, this is the sheet to
-work from — the answers about *what* the app sends hold for any deployment, and
+work from — the answers about _what_ the app sends hold for any deployment, and
 the ones naming a server or a privacy policy are this deployment's for you to
 replace.
 
@@ -34,18 +34,18 @@ of adopting a crash-reporting vendor — a vendor would have made this "Yes".
 All rows are **linked to the user** (everything is tied to an authenticated
 account) and **none is processed ephemerally** (it is all stored).
 
-| Play data type                              | Collected          | Required? | Purposes                              | Why — what actually sends it                                                                                |
-| ------------------------------------------- | ------------------ | --------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Personal info → Email address               | Yes                | Required  | Account management, App functionality | Sign-in posts `email` to `/tokens` ([types.ts](../src/api/types.ts) `TokenRequest`).                        |
-| Personal info → User IDs                    | Yes                | Required  | Account management, App functionality | Every request carries a per-device bearer token bound to the account.                                       |
-| Personal info → Name                        | **See decision 2** | —         | —                                     | `device_name` at sign-in is `Device.deviceName` ([deviceName.ts](../src/auth/deviceName.ts)).               |
-| Location → Approximate location             | Yes                | Optional  | App functionality                     | `ACCESS_COARSE_LOCATION`; sent as `location` on an instance.                                                |
-| Location → Precise location                 | Yes                | Optional  | App functionality                     | `ACCESS_FINE_LOCATION`; interviews save fine without it, so optional.                                       |
-| Photos and videos → Photos                  | Yes                | Optional  | App functionality                     | Attached to an interview or a field record, uploaded via presigned URL.                                     |
-| Audio files → Voice or sound recordings     | Yes                | Optional  | App functionality                     | Interview recordings and voice notes on field records, same upload path.                                    |
-| App activity → Other user-generated content | Yes                | Required  | App functionality                     | Interview answers — free text the researcher's form defines ([types.ts](../src/api/types.ts) `AnswerPush`). |
-| App info and performance → Diagnostics      | Yes                | Required  | App functionality                     | The integrity events in [diagnostics.ts](../src/diagnostics.ts) — four codes, no payload.                   |
-| Health and fitness → Health info            | **See decision 1** | —         | —                                     | Nothing in the app collects this; whether a form does is a study-design question.                           |
+| Play data type                              | Collected | Required? | Purposes                              | Why — what actually sends it                                                                                |
+| ------------------------------------------- | --------- | --------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Personal info → Email address               | Yes       | Required  | Account management, App functionality | Sign-in posts `email` to `/tokens` ([types.ts](../src/api/types.ts) `TokenRequest`).                        |
+| Personal info → User IDs                    | Yes       | Required  | Account management, App functionality | Every request carries a per-device bearer token bound to the account.                                       |
+| Personal info → Name                        | Yes       | Required  | Account management, App functionality | `device_name` at sign-in is `Device.deviceName` ([deviceName.ts](../src/auth/deviceName.ts)); see below.    |
+| Location → Approximate location             | Yes       | Optional  | App functionality                     | `ACCESS_COARSE_LOCATION`; sent as `location` on an instance.                                                |
+| Location → Precise location                 | Yes       | Optional  | App functionality                     | `ACCESS_FINE_LOCATION`; interviews save fine without it, so optional.                                       |
+| Photos and videos → Photos                  | Yes       | Optional  | App functionality                     | Attached to an interview or a field record, uploaded via presigned URL.                                     |
+| Audio files → Voice or sound recordings     | Yes       | Optional  | App functionality                     | Interview recordings and voice notes on field records, same upload path.                                    |
+| App activity → Other user-generated content | Yes       | Required  | App functionality                     | Interview answers — free text the researcher's form defines ([types.ts](../src/api/types.ts) `AnswerPush`). |
+| App info and performance → Diagnostics      | Yes       | Required  | App functionality                     | The integrity events in [diagnostics.ts](../src/diagnostics.ts) — four codes, no payload.                   |
+| Health and fitness → Health info            | Yes       | Optional  | App functionality                     | Interview answers can record an interviewee's health, when a form asks; see below.                          |
 
 **Not collected:** financial info, contacts, calendar, SMS, call logs, installed
 apps, search history, advertising IDs, purchase history. There is no analytics
@@ -55,38 +55,28 @@ The password is not listed because Play has no data type for it and the app
 never stores it — it is posted once to `/tokens` and exchanged for a token held
 in the system keychain ([tokens.ts](../src/api/tokens.ts)).
 
-## Two decisions that are not mine to make
+## Two answers that depend on more than the code
 
-### 1. Health info — the one with real consequences
+### Health info
 
-Ethnobotanical interviews about medicinal plant use can record an informant's
-ailments and the remedies used for them. Nothing in this app asks for that; a
-researcher's form might.
+Ethnobotanical interviews about medicinal plant use can record an interviewee's
+ailments and the remedies used for them. Nothing in this app asks for that, but
+a researcher's form can, and Play's category ("information about an
+individual's health, such as medical records or symptoms") does not carve out
+third parties. It is declared, as optional, because a study need not ask about
+health at all. The App Store answers ([app-store-privacy.md](app-store-privacy.md))
+declare Health for the same reason.
 
-Play's category is "information about an individual's health, such as medical
-records or symptoms" and does not carve out third parties. If your forms can
-capture that, declare it. Under-declaring is the failure Play enforces against
-hardest, and re-declaring later is cheap next to an enforcement action.
+### Name
 
-Worth noting the answers are already declared as user-generated content, so
-adding this row costs nothing except accuracy.
+`deviceName()` returns `Device.deviceName`. On Android that is the name the
+device's owner set, which may be their own, so Name is declared. On iOS 16 and
+later it is the generic "iPhone", so the App Store answers leave Name out.
+Sending `Device.modelName` alone would keep names off the server entirely, at
+the cost of a less recognisable entry in the web's device list.
 
-### 2. The device name probably contains a person's name
-
-`deviceName()` returns `Device.deviceName`, which on iOS is conventionally
-"_<First name>_'s iPhone". So a real name usually reaches the server at sign-in.
-
-Two problems, one form and one factual:
-
-- On the form, either declare **Personal info → Name** as collected, or stop
-  sending it.
-- In the privacy policy, §3 says "the name you give a device". Nobody gives it —
-  the app reads it from the OS. That sentence is inaccurate as written.
-
-The cleanest fix makes both go away: use `Device.modelName` only, so the token
-is labelled "iPhone 15" rather than someone's name. It costs a little
-recognisability on the web's device list. Alternatively, ask the user to name
-their device at sign-in, which would make the policy true as written.
+The privacy policy (§3) describes this as "the name you give a device"; the app
+reads it from the system rather than asking for it.
 
 ## What would invalidate this sheet
 
