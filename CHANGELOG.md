@@ -11,23 +11,6 @@ in [docs/releasing.md](docs/releasing.md).
 
 ## [Unreleased]
 
-### Added
-
-- The `production` submit profile sends iOS builds to the app's App Store
-  Connect record.
-- iOS builds declare that the app uses only exempt encryption (HTTPS and the
-  encrypted on-device store), so App Store Connect does not ask on each build.
-- `docs/app-store-privacy.md` gives the answers to App Store Connect's App
-  Privacy questionnaire, from the same facts as the Google Play data safety
-  sheet, which now records how its two open questions were answered.
-
-### Fixed
-
-- On iOS, the prompts that ask for the microphone, location, camera and photos
-  are in Spanish, English or Portuguese, following the device's language,
-  instead of always in English. They also mention field records as well as
-  interviews.
-
 ## [1.1.0] — 2026-10-05
 
 ### Changed
@@ -44,6 +27,13 @@ in [docs/releasing.md](docs/releasing.md).
 
 - Releases ship to the App Store as well as Google Play, from the same
   commit. `ios.buildNumber` in `app.json` records each iOS build.
+- The `production` submit profile sends iOS builds to the app's App Store
+  Connect record.
+- iOS builds declare that the app uses only exempt encryption (HTTPS and the
+  encrypted on-device store), so App Store Connect does not ask on each build.
+- `docs/app-store-privacy.md` gives the answers to App Store Connect's App
+  Privacy questionnaire, from the same facts as the Google Play data safety
+  sheet, which now records how its two open questions were answered.
 - Photo previews: each photograph gets a small preview at capture, kept
   encrypted with it and deleted with it once sent (store schema v6). Records
   are listed as cards showing their first photograph, and a record's or an
@@ -76,6 +66,10 @@ in [docs/releasing.md](docs/releasing.md).
 ### Fixed
 
 - Launch on iOS 27, by adopting the UIKit scene lifecycle.
+- On iOS, the prompts that ask for the microphone, location, camera and photos
+  are in Spanish, English or Portuguese, following the device's language,
+  instead of always in English. They also mention field records as well as
+  interviews.
 - Media uploads, which failed when the server sent signed headers as lists.
 - Edits made while an interview was being pushed are no longer lost.
 - A list that cannot be read no longer leaves its tab loading forever.
