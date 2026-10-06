@@ -98,9 +98,11 @@ in the build through the `expo-font` plugin in `app.json`. Colours, radii and
 type live in `src/theme.ts`, where a test checks every text colour against the
 surfaces it is drawn on.
 
-Everything user-facing is localized in all three languages; the local store is
-versioned by `PRAGMA user_version` (`src/db/schema.ts`), so schema changes reach
-devices that already hold data.
+Everything user-facing is localized in all three languages, including the
+prompts iOS shows when the app asks for a permission (`src/i18n/native/`, wired
+through `locales` in `app.json`). The local store is versioned by
+`PRAGMA user_version` (`src/db/schema.ts`), so schema changes reach devices
+that already hold data.
 
 ## How sync works (summary)
 

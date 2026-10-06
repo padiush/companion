@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "NSMicrophoneUsageDescription": "Padiush records interview audio and voice notes on field records.",
+    "NSLocationWhenInUseUsageDescription": "Padiush saves where each interview and each field record was made.",
+    "NSCameraUsageDescription": "Padiush uses the camera to take photos for interviews and field records.",
+    "NSPhotoLibraryUsageDescription": "Padiush attaches photos from your library to interviews and field records."
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "NSMicrophoneUsageDescription": "Padiush graba el audio de las entrevistas y las notas de voz de los registros de campo.",
+    "NSLocationWhenInUseUsageDescription": "Padiush guarda dónde se hizo cada entrevista y cada registro de campo.",
+    "NSCameraUsageDescription": "Padiush usa la cámara para tomar fotos de las entrevistas y los registros de campo.",
+    "NSPhotoLibraryUsageDescription": "Padiush adjunta fotos de tu galería a las entrevistas y los registros de campo."
+  }
+}

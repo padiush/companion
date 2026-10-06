@@ -18,6 +18,13 @@ in [docs/releasing.md](docs/releasing.md).
 - iOS builds declare that the app uses only exempt encryption (HTTPS and the
   encrypted on-device store), so App Store Connect does not ask on each build.
 
+### Fixed
+
+- On iOS, the prompts that ask for the microphone, location, camera and photos
+  are in Spanish, English or Portuguese, following the device's language,
+  instead of always in English. They also mention field records as well as
+  interviews.
+
 ## [1.1.0] — 2026-10-05
 
 ### Changed
