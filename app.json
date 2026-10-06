@@ -13,6 +13,9 @@
       "appleTeamId": "XD8M2W9X4S",
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true
       }
     },
     "android": {
@@ -35,6 +38,11 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "locales": {
+      "es": "./src/i18n/native/es.json",
+      "en": "./src/i18n/native/en.json",
+      "pt": "./src/i18n/native/pt.json"
     },
     "plugins": [
       "expo-secure-store",
@@ -98,14 +106,14 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Padiush tags each interview with where in the field it was recorded."
+          "locationWhenInUsePermission": "Padiush saves where each interview and each field record was made."
         }
       ],
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Padiush uses the camera to attach photos to an interview.",
-          "photosPermission": "Padiush attaches photos from your library to an interview."
+          "cameraPermission": "Padiush uses the camera to take photos for interviews and field records.",
+          "photosPermission": "Padiush attaches photos from your library to interviews and field records."
         }
       ],
       [
