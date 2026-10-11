@@ -1,0 +1,11 @@
+appId: com.padiushbio.companion
+---
+- tapOn:
+    text: 'Ahora no|Not Now|Agora Não|Agora não'
+    optional: true
+- tapOn:
+    id: intro-skip
+    optional: true
+- tapOn:
+    id: whats-new-dismiss
+    optional: true
