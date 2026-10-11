@@ -71,3 +71,6 @@ CLAUDE.md
 
 # scripts/android build caches
 /.cache/
+
+# Screenshot runs (scripts/screenshots)
+scripts/screenshots/out/

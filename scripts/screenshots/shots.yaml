@@ -1,0 +1,157 @@
+appId: com.padiushbio.companion
+---
+# Screenshots of the field app for the website and the store listings, in one
+# language. The words come from the environment (see run-shots.sh), so the same
+# flow serves every language; the project is the example study in it.
+#
+# Text is pasted rather than typed: the form updates while a name is typed and
+# a character-by-character entry loses focus after the first letter. A number
+# pad has no return key, so it is closed by tapping the field's own label.
+- runFlow: 01-sign-in.yaml
+- runFlow: 02-dismiss.yaml
+- tapOn:
+    id: sync
+- waitForAnimationToEnd
+
+# A finished interview, so the lists have something in them.
+- tapOn:
+    id: new-interview
+- tapOn:
+    id: 'form-.*'
+- tapOn:
+    id: 'option-.*-San Antonio'
+- tapOn:
+    id: 'input-.*'
+    index: 0
+- inputText: '63'
+- tapOn: "${AGE_LABEL} \\*"
+- scrollUntilVisible:
+    element:
+      text: '${PLANT_LABEL}.*'
+    direction: DOWN
+- tapOn:
+    id: 'input-.*'
+    index: 2
+- setClipboard: ${PLANT}
+- pasteText
+- tapOn: '${PLANT_LABEL}.*'
+- scrollUntilVisible:
+    element:
+      text: ${CATEGORY}
+    direction: DOWN
+- tapOn: ${CATEGORY}
+- scrollUntilVisible:
+    element:
+      text: ${PART}
+    direction: DOWN
+- tapOn: ${PART}
+- scrollUntilVisible:
+    element:
+      text: ${PREP}
+    direction: DOWN
+- tapOn: ${PREP}
+- scrollUntilVisible:
+    element:
+      id: interview-done
+    direction: DOWN
+- tapOn:
+    id: interview-done
+- waitForAnimationToEnd
+- tapOn:
+    id: BackButton
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: tab-Interviews
+    timeout: 10000
+- tapOn:
+    id: tab-Interviews
+
+# A second one in progress, recording, for its own screenshot.
+- tapOn:
+    id: new-interview
+- tapOn:
+    id: 'form-.*'
+- tapOn:
+    id: record-audio
+- tapOn:
+    text: 'Permitir|Allow|OK'
+    optional: true
+- tapOn:
+    id: 'option-.*-El Zapote'
+- tapOn:
+    id: 'input-.*'
+    index: 0
+- inputText: '47'
+- tapOn: "${AGE_LABEL} \\*"
+- swipe:
+    direction: DOWN
+- waitForAnimationToEnd:
+    timeout: 6000
+- takeScreenshot: 02-interview
+- tapOn:
+    id: stop-recording
+    optional: true
+- tapOn:
+    id: BackButton
+- tapOn:
+    id: BackButton
+    optional: true
+
+# A field record with its photograph, location and permit.
+- tapOn:
+    id: tab-Records
+- tapOn:
+    id: new-field-record
+- tapOn:
+    id: record-basis-preserved_specimen
+- tapOn:
+    id: record-vernacularName
+- setClipboard: ${PLANT}
+- pasteText
+- tapOn: ${NAME_LABEL}
+- tapOn:
+    id: record-collectionNumber
+- inputText: '214'
+- tapOn: ${NUMBER_LABEL}
+- tapOn:
+    id: add-photo
+# The library loads slowly the first time after an erase.
+- extendedWaitUntil:
+    visible:
+      id: 'PXGGridLayout-Info'
+    timeout: 60000
+- tapOn:
+    point: '50%,24%'
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: 'record-permit-.*'
+    direction: DOWN
+- tapOn:
+    id: 'record-permit-.*'
+- swipe:
+    direction: DOWN
+- swipe:
+    direction: DOWN
+- swipe:
+    direction: DOWN
+- waitForAnimationToEnd
+- takeScreenshot: 03-record
+- scrollUntilVisible:
+    element:
+      id: record-done
+    direction: DOWN
+- tapOn:
+    id: record-done
+- waitForAnimationToEnd
+- takeScreenshot: 04-records
+
+- tapOn:
+    id: tab-Interviews
+- waitForAnimationToEnd
+- takeScreenshot: 01-interviews
+- tapOn:
+    id: tab-Outbox
+- waitForAnimationToEnd
+- takeScreenshot: 05-outbox

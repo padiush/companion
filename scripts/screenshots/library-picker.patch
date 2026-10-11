@@ -1,0 +1,20 @@
+diff --git a/src/capture/MediaSection.tsx b/src/capture/MediaSection.tsx
+index ecead8b..da6a350 100644
+--- a/src/capture/MediaSection.tsx
++++ b/src/capture/MediaSection.tsx
+@@ -58,13 +58,13 @@ export function MediaSection(props: MediaOwnerProps) {
+ 
+   const addPhoto = async () => {
+     setError(null);
+-    const permission = await ImagePicker.requestCameraPermissionsAsync();
++    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+     if (!permission.granted) {
+       setError(t('interview.mediaPermission'));
+       return;
+     }
+ 
+-    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
++    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
+     if (result.canceled) {
+       return;
+     }

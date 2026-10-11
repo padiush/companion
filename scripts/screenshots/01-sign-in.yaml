@@ -1,0 +1,24 @@
+appId: com.padiushbio.companion
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: 'email|new-interview|intro-skip|whats-new-dismiss'
+    timeout: 20000
+- runFlow:
+    when:
+      visible:
+        id: email
+    commands:
+      - tapOn:
+          id: email
+      - inputText: ${EMAIL}
+      - tapOn:
+          id: password
+      - inputText: ${PASSWORD}
+      - tapOn:
+          id: submit
+      - extendedWaitUntil:
+          visible:
+            id: 'intro-skip|whats-new-dismiss|new-interview'
+          timeout: 20000
