@@ -275,8 +275,9 @@ in [CITATION.cff](CITATION.cff), and GitHub will format a citation for you from
 the sidebar.
 
 Cite **[10.5281/zenodo.21943749](https://doi.org/10.5281/zenodo.21943749)** when
-you mean the app; it always resolves to the newest release. For version 1.0.0
-specifically, cite
-[10.5281/zenodo.21943750](https://doi.org/10.5281/zenodo.21943750).
+you mean the app; it always resolves to the newest release. Cite the DOI of the
+specific version you ran when reproducibility depends on it — for 1.1.0 that is
+[10.5281/zenodo.23175203](https://doi.org/10.5281/zenodo.23175203), and for
+1.0.0 [10.5281/zenodo.21943750](https://doi.org/10.5281/zenodo.21943750).
 
 A methods paper is in preparation and will be linked here once published.
