@@ -19,6 +19,7 @@ import { useOutbox } from '../hooks/useOutbox';
 import type { RootStackParamList } from '../navigation/types';
 import type { PushSummary } from '../sync/push';
 import { radius, space, type, useTheme } from '../theme';
+import { TipAnchor, useTour } from '../tips/TipsContext';
 import { Banner } from '../ui/Banner';
 import { Button } from '../ui/Button';
 import { Icon } from '../ui/Icon';
@@ -54,6 +55,9 @@ export function OutboxScreen() {
   const unsent = count + fieldRecords;
   const [sent, setSent] = useState<PushSummary | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Its tour waits until there is something to send, so it points at real work.
+  useTour('outbox', !loading && hasWork);
 
   const waitingInterviews = drafts.filter((draft) => draft.sync_status !== 'synced');
 
@@ -114,16 +118,18 @@ export function OutboxScreen() {
                 <Text style={[styles.contents, { color: theme.heroMuted }]}>{contents}</Text>
               </View>
             </View>
-            <Button
-              testID="send"
-              variant="inverse"
-              icon="send"
-              label={
-                unsent > 0 ? t('outbox.sendNow') : t('drafts.sendMedia', { count: pendingMedia })
-              }
-              onPress={onSend}
-              busy={sending}
-            />
+            <TipAnchor id="outbox.send">
+              <Button
+                testID="send"
+                variant="inverse"
+                icon="send"
+                label={
+                  unsent > 0 ? t('outbox.sendNow') : t('drafts.sendMedia', { count: pendingMedia })
+                }
+                onPress={onSend}
+                busy={sending}
+              />
+            </TipAnchor>
           </View>
         ) : null}
 
@@ -182,22 +188,23 @@ export function OutboxScreen() {
               <View>
                 <SectionLabel>{t('drafts.interviews')}</SectionLabel>
                 <View style={styles.list}>
-                  {waitingInterviews.map((draft) => (
-                    <StatusRow
-                      key={draft.id}
-                      testID={`draft-${draft.id}`}
-                      status={draft.sync_status}
-                      icon="interview"
-                      {...interviewRow(draft, t, i18n.language)}
-                      onPress={() =>
-                        navigation.navigate('Interview', {
-                          formId: draft.form_id,
-                          projectId: draft.project_id,
-                          formName: draft.form_name ?? '',
-                          instanceId: draft.id,
-                        })
-                      }
-                    />
+                  {waitingInterviews.map((draft, index) => (
+                    <TipAnchor key={draft.id} id={index === 0 ? 'outbox.waiting' : null}>
+                      <StatusRow
+                        testID={`draft-${draft.id}`}
+                        status={draft.sync_status}
+                        icon="interview"
+                        {...interviewRow(draft, t, i18n.language)}
+                        onPress={() =>
+                          navigation.navigate('Interview', {
+                            formId: draft.form_id,
+                            projectId: draft.project_id,
+                            formName: draft.form_name ?? '',
+                            instanceId: draft.id,
+                          })
+                        }
+                      />
+                    </TipAnchor>
                   ))}
                 </View>
               </View>
@@ -207,20 +214,24 @@ export function OutboxScreen() {
               <View>
                 <SectionLabel>{t('drafts.fieldRecords')}</SectionLabel>
                 <View style={styles.list}>
-                  {waitingRecords.map((record) => (
-                    <StatusRow
+                  {waitingRecords.map((record, index) => (
+                    <TipAnchor
                       key={record.client_id}
-                      testID={`waiting-record-${record.client_id}`}
-                      status={record.sync_status}
-                      icon="record"
-                      {...fieldRecordRow(record, t)}
-                      onPress={() =>
-                        navigation.navigate('FieldRecord', {
-                          projectId: record.project_id,
-                          clientId: record.client_id,
-                        })
-                      }
-                    />
+                      id={index === 0 && waitingInterviews.length === 0 ? 'outbox.waiting' : null}
+                    >
+                      <StatusRow
+                        testID={`waiting-record-${record.client_id}`}
+                        status={record.sync_status}
+                        icon="record"
+                        {...fieldRecordRow(record, t)}
+                        onPress={() =>
+                          navigation.navigate('FieldRecord', {
+                            projectId: record.project_id,
+                            clientId: record.client_id,
+                          })
+                        }
+                      />
+                    </TipAnchor>
                   ))}
                 </View>
               </View>

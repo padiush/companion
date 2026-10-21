@@ -17,6 +17,7 @@ import { BASES, EXEMPTIONS, permitLabel, type FieldRecordDraft } from '../captur
 import { useFieldRecord } from '../capture/useFieldRecord';
 import type { RootStackParamList } from '../navigation/types';
 import { border, radius, space, type, useTheme } from '../theme';
+import { TipAnchor, useTour } from '../tips/TipsContext';
 import { Banner } from '../ui/Banner';
 import { Button } from '../ui/Button';
 import { Chip, ChipGroup } from '../ui/Chip';
@@ -86,6 +87,9 @@ export function FieldRecordScreen() {
       ? { answerClientId: params.answerClientId, vernacularName: params.vernacularName }
       : undefined
   );
+
+  // A sent record is read-only, so its tour waits for one that can be edited.
+  useTour('fieldRecord', !loading && Boolean(draft) && !readOnly);
 
   if (loading || !draft) {
     return (
@@ -178,21 +182,23 @@ export function FieldRecordScreen() {
           </Text>
         ) : null}
 
-        <Field label={t('fieldRecord.basis')} hint={t(`fieldRecord.basisHint.${draft.basis}`)}>
-          <ChoiceGrid>
-            {BASES.map((basis) => (
-              <ChoiceTile
-                key={basis}
-                testID={`record-basis-${basis}`}
-                icon={BASIS_ICONS[basis] ?? 'record'}
-                label={t(`fieldRecord.bases.${basis}`)}
-                selected={draft.basis === basis}
-                disabled={readOnly}
-                onPress={() => update({ basis })}
-              />
-            ))}
-          </ChoiceGrid>
-        </Field>
+        <TipAnchor id="fieldRecord.basis">
+          <Field label={t('fieldRecord.basis')} hint={t(`fieldRecord.basisHint.${draft.basis}`)}>
+            <ChoiceGrid>
+              {BASES.map((basis) => (
+                <ChoiceTile
+                  key={basis}
+                  testID={`record-basis-${basis}`}
+                  icon={BASIS_ICONS[basis] ?? 'record'}
+                  label={t(`fieldRecord.bases.${basis}`)}
+                  selected={draft.basis === basis}
+                  disabled={readOnly}
+                  onPress={() => update({ basis })}
+                />
+              ))}
+            </ChoiceGrid>
+          </Field>
+        </TipAnchor>
 
         <Field label={t('fieldRecord.vernacularName')} hint={t('fieldRecord.vernacularNameHint')}>
           {input('vernacularName')}
@@ -211,11 +217,13 @@ export function FieldRecordScreen() {
           voice note, for the name as it was said or what was told about the
           plant. Keeping either stores the record if nothing else has yet.
         */}
-        <MediaSection
-          fieldRecordId={clientId}
-          ensureFieldRecord={ensureStored}
-          readOnly={readOnly}
-        />
+        <TipAnchor id="fieldRecord.media">
+          <MediaSection
+            fieldRecordId={clientId}
+            ensureFieldRecord={ensureStored}
+            readOnly={readOnly}
+          />
+        </TipAnchor>
 
         <AudioRecorder
           fieldRecordId={clientId}

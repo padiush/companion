@@ -13,6 +13,7 @@ import {
 import { useForms } from '../hooks/useForms';
 import type { RootStackParamList } from '../navigation/types';
 import { border, radius, space, type, useTheme } from '../theme';
+import { TipAnchor, useTour } from '../tips/TipsContext';
 import { Icon } from '../ui/Icon';
 import { SectionLabel } from '../ui/SectionLabel';
 
@@ -28,6 +29,7 @@ export function ProjectScreen() {
   const { params } = useRoute<RouteProp<RootStackParamList, 'Project'>>();
   const navigation = useNavigation<Nav>();
   const { forms, loading } = useForms(params.projectId);
+  useTour('project', !loading);
 
   const activeForms = forms.filter((form) => form.isActive);
 
@@ -44,37 +46,40 @@ export function ProjectScreen() {
         ) : activeForms.length === 0 ? (
           <Text style={[styles.empty, { color: theme.muted }]}>{t('project.empty')}</Text>
         ) : (
-          activeForms.map((form) => (
-            <TouchableOpacity
-              key={form.id}
-              testID={`form-${form.id}`}
-              style={[styles.row, { backgroundColor: theme.card, borderColor: theme.border }]}
-              onPress={() =>
-                navigation.navigate('Interview', {
-                  formId: form.id,
-                  projectId: params.projectId,
-                  formName: form.name,
-                })
-              }
-              accessibilityRole="button"
-            >
-              <View style={[styles.badge, { backgroundColor: theme.primarySoft }]}>
-                <Icon name="form" color={theme.primaryText} size={22} />
-              </View>
-              <View style={styles.rowText}>
-                <Text style={[styles.rowTitle, { color: theme.text }]}>{form.name}</Text>
-                {form.description ? (
-                  <Text style={[styles.rowDetail, { color: theme.muted }]}>{form.description}</Text>
-                ) : null}
-                <View style={styles.start}>
-                  <Icon name="interview" color={theme.primaryText} size={16} strokeWidth={2.4} />
-                  <Text style={[styles.startText, { color: theme.primaryText }]}>
-                    {t('project.newInterview')}
-                  </Text>
+          activeForms.map((form, index) => (
+            <TipAnchor key={form.id} id={index === 0 ? 'project.forms' : null}>
+              <TouchableOpacity
+                testID={`form-${form.id}`}
+                style={[styles.row, { backgroundColor: theme.card, borderColor: theme.border }]}
+                onPress={() =>
+                  navigation.navigate('Interview', {
+                    formId: form.id,
+                    projectId: params.projectId,
+                    formName: form.name,
+                  })
+                }
+                accessibilityRole="button"
+              >
+                <View style={[styles.badge, { backgroundColor: theme.primarySoft }]}>
+                  <Icon name="form" color={theme.primaryText} size={22} />
                 </View>
-              </View>
-              <Icon name="chevronRight" color={theme.muted} size={20} />
-            </TouchableOpacity>
+                <View style={styles.rowText}>
+                  <Text style={[styles.rowTitle, { color: theme.text }]}>{form.name}</Text>
+                  {form.description ? (
+                    <Text style={[styles.rowDetail, { color: theme.muted }]}>
+                      {form.description}
+                    </Text>
+                  ) : null}
+                  <View style={styles.start}>
+                    <Icon name="interview" color={theme.primaryText} size={16} strokeWidth={2.4} />
+                    <Text style={[styles.startText, { color: theme.primaryText }]}>
+                      {t('project.newInterview')}
+                    </Text>
+                  </View>
+                </View>
+                <Icon name="chevronRight" color={theme.muted} size={20} />
+              </TouchableOpacity>
+            </TipAnchor>
           ))
         )}
       </View>

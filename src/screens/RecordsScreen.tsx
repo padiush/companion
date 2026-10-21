@@ -19,6 +19,7 @@ import { useProjects } from '../hooks/useProjects';
 import { useRecordCovers } from '../hooks/useRecordCovers';
 import type { RootStackParamList } from '../navigation/types';
 import { radius, space, touch, type, useTheme } from '../theme';
+import { TipAnchor, useTipsHold, useTour } from '../tips/TipsContext';
 import { ChoiceRow } from '../ui/ChoiceRow';
 import { Hero } from '../ui/Hero';
 import { Icon } from '../ui/Icon';
@@ -49,6 +50,9 @@ export function RecordsScreen() {
   const [chosenId, setChosenId] = useState<number | null>(null);
   const [choosing, setChoosing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+
+  useTour('records', !loading);
+  useTipsHold(choosing);
 
   const projectIds = projects.map((project) => project.id);
   const targetId =
@@ -110,7 +114,12 @@ export function RecordsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
         }
       >
-        <Hero title={t('records.title')} subtitle={projectLine} />
+        <Hero
+          title={t('records.title')}
+          subtitle={
+            projectLine ? <TipAnchor id="records.project">{projectLine}</TipAnchor> : undefined
+          }
+        />
 
         <View style={styles.body}>
           {target ? null : (
