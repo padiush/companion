@@ -376,6 +376,13 @@
     "empty": "Ainda não há notas de versão.",
     "releases": [
       {
+        "version": "1.2.0",
+        "date": null,
+        "items": [
+          "Na primeira vez que você chega a cada tela, dicas mostram os controles um de cada vez e para que serve cada um. Você pode pulá-las e vê-las de novo em Entrevistas."
+        ]
+      },
+      {
         "version": "1.1.0",
         "date": "2026-10-05",
         "items": [

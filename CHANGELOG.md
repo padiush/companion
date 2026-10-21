@@ -11,6 +11,17 @@ in [docs/releasing.md](docs/releasing.md).
 
 ## [Unreleased]
 
+### Added
+
+- Tips on each screen: the first time an account reaches Entrevistas, a
+  project, an interview, Registros, a field record or Por enviar, the screen
+  dims around one control at a time, with a card saying what it is for, how
+  many steps remain, and a way to skip. Each tour runs once per account on the
+  device, existing accounts included, after the release notes and the intro and
+  never over a sheet or a system permission prompt. A step whose control is not
+  on screen is left out. "Volver a ver los consejos", at the foot of
+  Entrevistas, runs them all again.
+
 ## [1.1.0] — 2026-10-05
 
 ### Changed

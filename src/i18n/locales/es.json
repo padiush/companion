@@ -376,6 +376,13 @@
     "empty": "Todavía no hay notas de versión.",
     "releases": [
       {
+        "version": "1.2.0",
+        "date": null,
+        "items": [
+          "La primera vez que llegas a cada pantalla, unos consejos te muestran sus controles uno por uno y para qué sirve cada uno. Puedes saltarlos y volver a verlos desde Entrevistas."
+        ]
+      },
+      {
         "version": "1.1.0",
         "date": "2026-10-05",
         "items": [
