@@ -61,7 +61,20 @@ describe('useIntro', () => {
     mockSeen.mockRejectedValue(new Error('keystore'));
     const { result } = await renderHook(() => useIntro(7, false));
 
-    await waitFor(() => expect(mockSeen).toHaveBeenCalled());
+    await waitFor(() => expect(result.current.decided).toBe(true));
+    expect(result.current.open).toBe(false);
+  });
+
+  /** The tips wait on this, so they never start under a walkthrough about to open. */
+  it('says once it has worked out whether to open', async () => {
+    let answer: (seen: boolean) => void = () => undefined;
+    mockSeen.mockReturnValue(new Promise<boolean>((resolve) => (answer = resolve)));
+    const { result } = await renderHook(() => useIntro(7, false));
+    expect(result.current.decided).toBe(false);
+
+    await act(async () => answer(true));
+
+    expect(result.current.decided).toBe(true);
     expect(result.current.open).toBe(false);
   });
 });
