@@ -37,6 +37,10 @@ every project, a new one going to the project the last one did; **Por enviar**
 gathers what the server does not have yet, with the one Send that carries it.
 The first time an account signs in on a device, a short walkthrough introduces
 the app and the three tabs; it can be skipped and seen again from Entrevistas.
+After it, each screen points out its own controls the first time it is
+reached — the screen dims around one control at a time, with a card saying what
+it is for — and each of those tours can be skipped too, or run again from
+Entrevistas.
 
 ## Scope — capture only
 
