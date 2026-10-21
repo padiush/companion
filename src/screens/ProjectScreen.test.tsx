@@ -9,6 +9,7 @@ jest.mock('react-i18next', () => ({
 
 const mockNavigate = jest.fn();
 jest.mock('@react-navigation/native', () => ({
+  useIsFocused: () => true,
   useNavigation: () => ({ navigate: mockNavigate }),
   useRoute: () => ({ params: { projectId: 9, projectName: 'Cloud forest' } }),
 }));

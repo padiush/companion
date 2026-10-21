@@ -30,7 +30,14 @@ jest.mock('../hooks/useLastSync', () => ({
 
 const mockNavigate = jest.fn();
 jest.mock('@react-navigation/native', () => ({
+  useIsFocused: () => true,
   useNavigation: () => ({ navigate: mockNavigate }),
+}));
+
+const mockReplayTips = jest.fn().mockResolvedValue(undefined);
+jest.mock('../tips/TipsContext', () => ({
+  ...jest.requireActual('../tips/TipsContext'),
+  useReplayTips: () => mockReplayTips,
 }));
 
 const mockUseAuth = useAuth as jest.Mock;
@@ -361,6 +368,14 @@ describe('InterviewsScreen', () => {
     await fireEvent.press(getByTestId('intro-link'));
 
     expect(queryByText('intro.welcome.title')).toBeTruthy();
+  });
+
+  it('runs the tips again from the foot of the page', async () => {
+    const { getByTestId } = await render(<InterviewsScreen />);
+
+    await fireEvent.press(getByTestId('tips-replay-link'));
+
+    expect(mockReplayTips).toHaveBeenCalledTimes(1);
   });
 
   it('says when the device last synced', async () => {

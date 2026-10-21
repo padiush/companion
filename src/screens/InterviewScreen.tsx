@@ -1,6 +1,6 @@
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -23,6 +23,7 @@ import { answerKey, emptyValueFor, isAnswered } from '../capture/values';
 import { useAnswerRecords } from '../hooks/useAnswerRecords';
 import type { RootStackParamList } from '../navigation/types';
 import { border, radius, space, type, useTheme } from '../theme';
+import { TipAnchor, useTour } from '../tips/TipsContext';
 import { Button } from '../ui/Button';
 
 /** Fill a form: renders its sections and items, saving each answer as it changes. */
@@ -55,6 +56,8 @@ export function InterviewScreen() {
   // required field the moment the screen opens would mark the whole interview
   // red before a word has been recorded.
   const [checked, setChecked] = useState(false);
+
+  useTour('interview', !loading && Boolean(form));
 
   if (loading || !form) {
     return (
@@ -140,6 +143,17 @@ export function InterviewScreen() {
       },
     ]);
   };
+
+  /** The form's first question is where its tip points. */
+  const anchorFirst = (node: ReactElement, first: boolean) =>
+    first ? (
+      <TipAnchor key={node.key} id="interview.questions">
+        {node}
+      </TipAnchor>
+    ) : (
+      node
+    );
+  const firstRepeatable = form.sections.find((section) => section.repeatable)?.id;
 
   /** The banner is only about refusals; a plain draft says nothing. */
   const refused = syncStatus === 'rejected' || syncStatus === 'partial';
@@ -230,9 +244,13 @@ export function InterviewScreen() {
         </View>
       ) : null}
 
-      {instanceId ? <AudioRecorder instanceId={instanceId} /> : null}
+      {instanceId ? (
+        <TipAnchor id="interview.recorder">
+          <AudioRecorder instanceId={instanceId} />
+        </TipAnchor>
+      ) : null}
 
-      {form.sections.map((section) => (
+      {form.sections.map((section, sectionIndex) => (
         <View key={section.id} style={styles.section}>
           <Text style={[styles.sectionName, { color: theme.text }]}>{section.name}</Text>
 
@@ -243,19 +261,26 @@ export function InterviewScreen() {
                   <Text style={[styles.setLabel, { color: theme.muted }]}>
                     {t('interview.set', { number: setIndex + 1 })}
                   </Text>
-                  {section.items.map((item) => renderItem(item, section.id, setIndex))}
+                  {section.items.map((item, itemIndex) =>
+                    anchorFirst(
+                      renderItem(item, section.id, setIndex),
+                      sectionIndex === 0 && setIndex === 0 && itemIndex === 0
+                    )
+                  )}
                 </View>
               ))}
               <View style={styles.setActions}>
-                <TouchableOpacity
-                  testID={`add-set-${section.id}`}
-                  onPress={() => addRepeat(section.id)}
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.addSetText, { color: theme.primaryText }]}>
-                    + {t('interview.addSet')}
-                  </Text>
-                </TouchableOpacity>
+                <TipAnchor id={section.id === firstRepeatable ? 'interview.addSet' : null}>
+                  <TouchableOpacity
+                    testID={`add-set-${section.id}`}
+                    onPress={() => addRepeat(section.id)}
+                    accessibilityRole="button"
+                  >
+                    <Text style={[styles.addSetText, { color: theme.primaryText }]}>
+                      + {t('interview.addSet')}
+                    </Text>
+                  </TouchableOpacity>
+                </TipAnchor>
                 {(repeats[section.id] ?? 1) > 1 ? (
                   <TouchableOpacity
                     testID={`remove-set-${section.id}`}
@@ -270,7 +295,9 @@ export function InterviewScreen() {
               </View>
             </>
           ) : (
-            section.items.map((item) => renderItem(item, section.id, null))
+            section.items.map((item, itemIndex) =>
+              anchorFirst(renderItem(item, section.id, null), sectionIndex === 0 && itemIndex === 0)
+            )
           )}
         </View>
       ))}

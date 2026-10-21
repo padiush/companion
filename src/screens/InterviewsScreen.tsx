@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -24,6 +24,7 @@ import { useProjects } from '../hooks/useProjects';
 import type { RootStackParamList } from '../navigation/types';
 import { describeLastSync } from '../sync/lastSync';
 import { radius, space, type, useTheme } from '../theme';
+import { TipAnchor, useReplayTips, useTipsHold, useTour } from '../tips/TipsContext';
 import { ActionTile } from '../ui/ActionTile';
 import { Banner } from '../ui/Banner';
 import { ChoiceRow } from '../ui/ChoiceRow';
@@ -60,6 +61,12 @@ export function InterviewsScreen() {
   const [syncedOk, setSyncedOk] = useState(false);
   const [choosingProject, setChoosingProject] = useState(false);
   const [replayingIntro, setReplayingIntro] = useState(false);
+  const scroll = useRef<ScrollView>(null);
+  const replayTips = useReplayTips();
+
+  useTour('home', !loading);
+  // This screen's own sheets come first; its tour waits for them to close.
+  useTipsHold(choosingProject || replayingIntro);
 
   // Opening the app online — signed in just now, or a session the server
   // confirmed at launch — brings the projects and their forms up to date
@@ -132,9 +139,16 @@ export function InterviewsScreen() {
 
   const noProjects = projects.length === 0;
 
+  /** Every tour runs again; this screen's starts at once, from the top where its controls are. */
+  const onReplayTips = () => {
+    scroll.current?.scrollTo({ y: 0, animated: false });
+    void replayTips();
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <ScrollView
+        ref={scroll}
         testID="projects-scroll"
         contentContainerStyle={styles.scroll}
         refreshControl={
@@ -144,13 +158,15 @@ export function InterviewsScreen() {
         <Hero
           title={t('home.greeting', { name: user?.name ?? '' })}
           subtitle={
-            <HeroLine testID="last-sync">
-              <Icon name="synced" color={theme.heroMuted} size={16} />
-              <Text style={[styles.heroLine, { color: theme.heroMuted }]}>
-                {describeLastSync(lastSync.at, t, i18n.language)}
-                {count > 0 ? `  ·  ${t('home.unsent', { count })}` : ''}
-              </Text>
-            </HeroLine>
+            <TipAnchor id="home.sync">
+              <HeroLine testID="last-sync">
+                <Icon name="synced" color={theme.heroMuted} size={16} />
+                <Text style={[styles.heroLine, { color: theme.heroMuted }]}>
+                  {describeLastSync(lastSync.at, t, i18n.language)}
+                  {count > 0 ? `  ·  ${t('home.unsent', { count })}` : ''}
+                </Text>
+              </HeroLine>
+            </TipAnchor>
           }
           end={
             <View style={styles.heroActions}>
@@ -186,20 +202,24 @@ export function InterviewsScreen() {
           }
           tiles={
             <>
-              <ActionTile
-                testID="new-interview"
-                icon="interview"
-                label={t('project.newInterview')}
-                onPress={newInterview}
-                disabled={noProjects}
-              />
-              <ActionTile
-                testID="new-record"
-                icon="record"
-                label={t('records.new')}
-                onPress={newRecord}
-                disabled={noProjects}
-              />
+              <TipAnchor id="home.newInterview" style={styles.tile}>
+                <ActionTile
+                  testID="new-interview"
+                  icon="interview"
+                  label={t('project.newInterview')}
+                  onPress={newInterview}
+                  disabled={noProjects}
+                />
+              </TipAnchor>
+              <TipAnchor id="home.newRecord" style={styles.tile}>
+                <ActionTile
+                  testID="new-record"
+                  icon="record"
+                  label={t('records.new')}
+                  onPress={newRecord}
+                  disabled={noProjects}
+                />
+              </TipAnchor>
             </>
           }
         />
@@ -269,7 +289,7 @@ export function InterviewsScreen() {
           </View>
 
           {/*
-            The walkthrough again, for whoever skipped it; the version running and
+            The walkthrough and the tips again, for whoever skipped them; the version running and
             what each release brought; then attribution
             for the packages this app is built from. Shipping a binary is
             distribution, and the licences require their notice to travel with
@@ -283,6 +303,14 @@ export function InterviewsScreen() {
               style={styles.footerLink}
             >
               <Text style={[styles.footerText, { color: theme.muted }]}>{t('intro.replay')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="tips-replay-link"
+              onPress={onReplayTips}
+              accessibilityRole="button"
+              style={styles.footerLink}
+            >
+              <Text style={[styles.footerText, { color: theme.muted }]}>{t('tips.replay')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               testID="whats-new-link"
@@ -332,6 +360,9 @@ export function InterviewsScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  tile: {
     flex: 1,
   },
   scroll: {

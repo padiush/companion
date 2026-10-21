@@ -12,6 +12,7 @@ jest.mock('react-i18next', () => ({
 const mockGoBack = jest.fn();
 let mockParams: Record<string, unknown> = { projectId: 9 };
 jest.mock('@react-navigation/native', () => ({
+  useIsFocused: () => true,
   useNavigation: () => ({ goBack: mockGoBack }),
   useRoute: () => ({ params: mockParams }),
 }));
