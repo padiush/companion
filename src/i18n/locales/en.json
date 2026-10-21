@@ -81,6 +81,73 @@
       "body": "What you record waits here until you send it. When you have a connection, tap Send now and you will see it on the web. Pull down on Interviews to download new forms."
     }
   },
+  "tips": {
+    "skip": "Skip",
+    "next": "Next",
+    "done": "Got it",
+    "progress": "{{current}} of {{total}}",
+    "replay": "Show the tips again",
+    "home": {
+      "newInterview": {
+        "title": "New interview",
+        "body": "Choose one of your project's forms and begin. Your answers are saved on the phone as you go."
+      },
+      "newRecord": {
+        "title": "New record",
+        "body": "Note down a plant you collect or observe, with photos, a voice note and where it was."
+      },
+      "sync": {
+        "title": "Keep your projects up to date",
+        "body": "This shows when they were last updated. To get new forms, tap the sync button or pull the screen down."
+      }
+    },
+    "project": {
+      "forms": {
+        "title": "Forms",
+        "body": "Each form starts a new interview. If one is missing, ask for it to be published on the web, then sync again."
+      }
+    },
+    "interview": {
+      "recorder": {
+        "title": "Record the conversation",
+        "body": "You can start recording before the first question. Recording carries on even if you lock the screen."
+      },
+      "questions": {
+        "title": "Answer at your own pace",
+        "body": "Questions marked * are required. Everything saves itself, so you can leave and come back whenever you like."
+      },
+      "addSet": {
+        "title": "Repeat a section",
+        "body": "Tap {{addSet}} each time you need this section again, for example for each plant the person mentions."
+      }
+    },
+    "records": {
+      "project": {
+        "title": "Where your records go",
+        "body": "What you note down here is saved to the project shown above. If you have more than one, tap it to change it."
+      }
+    },
+    "fieldRecord": {
+      "basis": {
+        "title": "Did you collect it?",
+        "body": "Choose whether you collected the plant or only saw it. The record asks for different details depending on your choice."
+      },
+      "media": {
+        "title": "Photos and a voice note",
+        "body": "Add photos and a voice note; they are kept encrypted on the phone until you send them. Further down you can save where you are."
+      }
+    },
+    "outbox": {
+      "send": {
+        "title": "Send when you're online",
+        "body": "Tap {{sendNow}} to send everything at once. If the connection drops, long recordings pick up where they left off."
+      },
+      "waiting": {
+        "title": "Keep editing",
+        "body": "Anything not sent yet can be opened and finished."
+      }
+    }
+  },
   "project": {
     "forms": "Forms",
     "newInterview": "New interview",

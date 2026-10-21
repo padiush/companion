@@ -81,6 +81,73 @@
       "body": "Lo que registres queda aquí hasta que lo envíes. Cuando tengas conexión, toca Enviar ahora y lo verás en la web. Desliza hacia abajo en Entrevistas para descargar los formularios nuevos."
     }
   },
+  "tips": {
+    "skip": "Saltar",
+    "next": "Siguiente",
+    "done": "Entendido",
+    "progress": "{{current}} de {{total}}",
+    "replay": "Volver a ver los consejos",
+    "home": {
+      "newInterview": {
+        "title": "Nueva entrevista",
+        "body": "Elige un formulario de tu proyecto y empieza. Lo que respondes se guarda en el teléfono mientras avanzas."
+      },
+      "newRecord": {
+        "title": "Nuevo registro",
+        "body": "Anota una planta que colectes u observes, con fotos, una nota de voz y su ubicación."
+      },
+      "sync": {
+        "title": "Tus proyectos, al día",
+        "body": "Aquí ves cuándo se actualizaron por última vez. Para traer formularios nuevos, toca el botón de sincronizar o desliza la pantalla hacia abajo."
+      }
+    },
+    "project": {
+      "forms": {
+        "title": "Formularios",
+        "body": "Cada formulario empieza una entrevista nueva. Si falta alguno, pide que lo publiquen en la web y vuelve a sincronizar."
+      }
+    },
+    "interview": {
+      "recorder": {
+        "title": "Graba la conversación",
+        "body": "Puedes empezar a grabar antes de la primera pregunta. La grabación sigue aunque bloquees la pantalla."
+      },
+      "questions": {
+        "title": "Responde a tu ritmo",
+        "body": "Las preguntas con * son obligatorias. Todo se guarda solo, así que puedes salir y volver cuando quieras."
+      },
+      "addSet": {
+        "title": "Repite una sección",
+        "body": "Toca {{addSet}} cada vez que necesites esta sección otra vez, por ejemplo, por cada planta que mencione la persona."
+      }
+    },
+    "records": {
+      "project": {
+        "title": "El proyecto de tus registros",
+        "body": "Lo que anotes aquí se guarda en el proyecto que ves arriba. Si tienes varios, tócalo para cambiarlo."
+      }
+    },
+    "fieldRecord": {
+      "basis": {
+        "title": "¿La recolectaste?",
+        "body": "Elige si colectaste la planta o solo la observaste. Según lo que elijas, el registro te pide unos datos u otros."
+      },
+      "media": {
+        "title": "Fotos y nota de voz",
+        "body": "Agrega fotos y una nota de voz; se guardan cifradas en el teléfono hasta que las envíes. Más abajo puedes guardar la ubicación del lugar."
+      }
+    },
+    "outbox": {
+      "send": {
+        "title": "Envía cuando tengas conexión",
+        "body": "Toca {{sendNow}} para mandar todo de una vez. Si la conexión se corta, los audios largos siguen donde se quedaron."
+      },
+      "waiting": {
+        "title": "Sigue editando",
+        "body": "Lo que todavía no envías se puede abrir y completar."
+      }
+    }
+  },
   "project": {
     "forms": "Formularios",
     "newInterview": "Nueva entrevista",
