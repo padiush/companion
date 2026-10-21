@@ -8,11 +8,15 @@ import { hasSeenIntro, markIntroSeen } from './introSeen';
  * back while the release notes are still to be decided or on screen. Closing
  * it in any way, finished or skipped, counts as seen.
  *
+ * `decided` says whether it has been worked out yet, so whatever should not
+ * open under it (the tips) can wait for the answer rather than race it.
+ *
  * Storage failing is not worth an error on screen: the walkthrough is simply
  * not shown, or shows again next time.
  */
 export function useIntro(userId: number | null, waiting: boolean) {
   const [open, setOpen] = useState(false);
+  const [decided, setDecided] = useState(false);
   const checked = useRef<number | null>(null);
 
   useEffect(() => {
@@ -23,7 +27,8 @@ export function useIntro(userId: number | null, waiting: boolean) {
 
     hasSeenIntro(userId)
       .then((seen) => setOpen(!seen))
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => setDecided(true));
   }, [userId, waiting]);
 
   const finish = useCallback(() => {
@@ -33,5 +38,5 @@ export function useIntro(userId: number | null, waiting: boolean) {
     }
   }, [userId]);
 
-  return { open, finish };
+  return { open, decided, finish };
 }
