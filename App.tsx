@@ -11,6 +11,7 @@ import { useIntro } from './src/intro/useIntro';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { useTheme } from './src/theme';
+import { TipsProvider } from './src/tips/TipsContext';
 import { WhatsNewSheet } from './src/whatsNew/WhatsNewSheet';
 import { useUnseenRelease } from './src/whatsNew/useUnseenRelease';
 
@@ -19,10 +20,11 @@ function AuthGate() {
   const theme = useTheme();
   const whatsNew = useUnseenRelease(status);
   // The walkthrough waits for the release notes, so the two never stack.
-  const intro = useIntro(
-    status === 'signedIn' ? (user?.id ?? null) : null,
-    !whatsNew.decided || whatsNew.since !== null
-  );
+  const userId = status === 'signedIn' ? (user?.id ?? null) : null;
+  const notesPending = !whatsNew.decided || whatsNew.since !== null;
+  const intro = useIntro(userId, notesPending);
+  // The tips come last: after the release notes and the intro, never under them.
+  const tipsHeld = notesPending || !intro.decided || intro.open;
 
   if (status === 'loading') {
     return (
@@ -37,13 +39,13 @@ function AuthGate() {
   }
 
   return (
-    <>
+    <TipsProvider userId={userId} held={tipsHeld}>
       <RootNavigator />
       {whatsNew.since ? (
         <WhatsNewSheet since={whatsNew.since} onDismiss={whatsNew.dismiss} />
       ) : null}
       <IntroSheet visible={intro.open} onDone={intro.finish} />
-    </>
+    </TipsProvider>
   );
 }
 

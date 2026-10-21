@@ -1,6 +1,7 @@
 import * as Location from 'expo-location';
 
 import type { DraftLocation } from '../db/instancesRepository';
+import { whilePrompting } from '../tips/systemPrompts';
 
 /**
  * Best-effort GPS fix for a new interview. Returns null if permission is denied
@@ -8,7 +9,9 @@ import type { DraftLocation } from '../db/instancesRepository';
  */
 export async function captureLocation(): Promise<DraftLocation | null> {
   try {
-    const { status } = await Location.requestForegroundPermissionsAsync();
+    // The first time, this is a system prompt over the screen just opened;
+    // the tips wait for it to be answered.
+    const { status } = await whilePrompting(() => Location.requestForegroundPermissionsAsync());
     if (status !== 'granted') {
       return null;
     }
