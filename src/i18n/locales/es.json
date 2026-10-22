@@ -14,6 +14,7 @@
     "errors": {
       "missingFields": "Ingresa tu correo y contraseña.",
       "invalidCredentials": "Correo o contraseña incorrectos.",
+      "emailUnverified": "Antes de entrar, confirma tu correo con el enlace que te enviamos al registrarte. Si no lo encuentras, inicia sesión en la web y pide otro.",
       "generic": "No se pudo iniciar sesión. Inténtalo de nuevo."
     },
     "replaceStoreTitle": "Este dispositivo tiene trabajo de otra cuenta",

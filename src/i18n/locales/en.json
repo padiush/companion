@@ -14,6 +14,7 @@
     "errors": {
       "missingFields": "Enter your email and password.",
       "invalidCredentials": "Incorrect email or password.",
+      "emailUnverified": "Before you sign in, confirm your email address with the link we sent you when you registered. If you can't find it, sign in on the web and ask for another.",
       "generic": "Couldn't sign in. Please try again."
     },
     "replaceStoreTitle": "This device holds another account’s work",
