@@ -11,6 +11,8 @@ in [docs/releasing.md](docs/releasing.md).
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-10-22
+
 ### Added
 
 - Tips on each screen: the first time an account reaches Entrevistas, a
@@ -105,6 +107,7 @@ First public release: offline interview capture against the project's forms,
 with audio, photographs and location, kept in an encrypted store and sent when
 the device is back online.
 
-[Unreleased]: https://github.com/padiush/companion/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/padiush/companion/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/padiush/companion/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/padiush/companion/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/padiush/companion/releases/tag/v1.0.0
