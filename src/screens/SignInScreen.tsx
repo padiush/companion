@@ -12,11 +12,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '../api/client';
+import { ThemeButton } from '../appearance/ThemeButton';
 import { SignInCancelled } from '../auth/accountStore';
 import { useAuth, type ConfirmReplace } from '../auth/AuthContext';
 import { AppLogo } from '../components/AppLogo';
 import type { PendingWork } from '../db/ownership';
-import { radius, space, type, useTheme } from '../theme';
+import { radius, space, touch, type, useTheme } from '../theme';
 import { Banner } from '../ui/Banner';
 import { Button } from '../ui/Button';
 import { Field } from '../ui/Field';
@@ -102,7 +103,10 @@ export function SignInScreen() {
             { backgroundColor: theme.primary, paddingTop: insets.top + space.xxl },
           ]}
         >
-          <AppLogo size={64} color={theme.onPrimary} style={styles.logo} />
+          <View style={styles.headerTop}>
+            <AppLogo size={64} color={theme.onPrimary} />
+            <ThemeButton style={styles.headerButton} color={theme.onPrimary} />
+          </View>
           <Text style={[styles.brand, { color: theme.onPrimary }]}>{t('app.name')}</Text>
           <Text style={[styles.tagline, { color: theme.heroMuted }]}>{t('app.tagline')}</Text>
         </View>
@@ -169,8 +173,20 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: radius.hero,
     borderBottomRightRadius: radius.hero,
   },
-  logo: {
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     marginBottom: space.lg,
+  },
+  // The same round button the Entrevistas header uses.
+  headerButton: {
+    width: touch.min,
+    height: touch.min,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   brand: {
     ...type.title,

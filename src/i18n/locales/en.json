@@ -150,6 +150,14 @@
       }
     }
   },
+  "theme": {
+    "title": "Theme",
+    "intro": "This applies to the app on this device.",
+    "button": "Theme: {{mode}}",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "Match the device"
+  },
   "project": {
     "forms": "Forms",
     "newInterview": "New interview",

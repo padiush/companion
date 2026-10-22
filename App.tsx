@@ -4,6 +4,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import './src/i18n';
+import { ThemePreferenceProvider, useThemePreference } from './src/appearance/ThemePreference';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { sweepCaptureCache } from './src/capture/sweepCaptureCache';
 import { IntroSheet } from './src/intro/IntroSheet';
@@ -18,6 +19,7 @@ import { useUnseenRelease } from './src/whatsNew/useUnseenRelease';
 function AuthGate() {
   const { status, user } = useAuth();
   const theme = useTheme();
+  const { ready: themeReady } = useThemePreference();
   const whatsNew = useUnseenRelease(status);
   // The walkthrough waits for the release notes, so the two never stack.
   const userId = status === 'signedIn' ? (user?.id ?? null) : null;
@@ -26,7 +28,9 @@ function AuthGate() {
   // The tips come last: after the release notes and the intro, never under them.
   const tipsHeld = notesPending || !intro.decided || intro.open;
 
-  if (status === 'loading') {
+  // The stored theme is applied before the first real screen, so it never
+  // opens in the device's theme and then switches.
+  if (status === 'loading' || !themeReady) {
     return (
       <View style={[styles.loading, { backgroundColor: theme.bg }]}>
         <ActivityIndicator color={theme.primary} />
@@ -58,10 +62,12 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <AuthGate />
-        <StatusBar style="auto" />
-      </AuthProvider>
+      <ThemePreferenceProvider>
+        <AuthProvider>
+          <AuthGate />
+          <StatusBar style="auto" />
+        </AuthProvider>
+      </ThemePreferenceProvider>
     </SafeAreaProvider>
   );
 }

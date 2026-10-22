@@ -61,6 +61,14 @@ describe('SignInScreen', () => {
     );
   });
 
+  it('offers the theme before anyone has signed in', async () => {
+    mockAuth();
+
+    const { getByTestId } = await render(<SignInScreen />);
+
+    expect(getByTestId('theme')).toBeTruthy();
+  });
+
   it('requires both fields before calling signIn', async () => {
     const signIn = jest.fn();
     mockAuth({ signIn });

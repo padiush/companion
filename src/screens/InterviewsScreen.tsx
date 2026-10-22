@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 
+import { ThemeButton } from '../appearance/ThemeButton';
 import { useAuth } from '../auth/AuthContext';
 import { interviewRow } from '../capture/listing';
 import { defaultRecordProject } from '../capture/recordProject';
@@ -170,6 +171,7 @@ export function InterviewsScreen() {
           }
           end={
             <View style={styles.heroActions}>
+              <ThemeButton style={styles.heroButton} color={theme.onPrimary} />
               <TouchableOpacity
                 testID="sync"
                 onPress={onSync}
