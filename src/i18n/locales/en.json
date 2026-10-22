@@ -381,7 +381,8 @@
         "version": "1.2.0",
         "date": null,
         "items": [
-          "The first time you reach each screen, tips show you its controls one at a time and what each one is for. You can skip them and see them again from Interviews."
+          "The first time you reach each screen, tips show you its controls one at a time and what each one is for. You can skip them and see them again from Interviews.",
+          "When you sign in, you can tap the eye in the password field to check what you typed."
         ]
       },
       {

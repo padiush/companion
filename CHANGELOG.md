@@ -21,6 +21,9 @@ in [docs/releasing.md](docs/releasing.md).
   never over a sheet or a system permission prompt. A step whose control is not
   on screen is left out. "Volver a ver los consejos", at the foot of
   Entrevistas, runs them all again.
+- An eye at the end of the password field on the sign-in screen shows the
+  password as typed and hides it again. It starts hidden, and while it is shown
+  the keyboard does not correct it or offer it as a suggestion.
 
 ## [1.1.0] — 2026-10-05
 
