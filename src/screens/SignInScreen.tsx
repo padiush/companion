@@ -21,6 +21,7 @@ import { Banner } from '../ui/Banner';
 import { Button } from '../ui/Button';
 import { Field } from '../ui/Field';
 import { Input } from '../ui/Input';
+import { PasswordInput } from '../ui/PasswordInput';
 
 export function SignInScreen() {
   const { t } = useTranslation();
@@ -123,13 +124,12 @@ export function SignInScreen() {
           </Field>
 
           <Field label={t('auth.passwordLabel')}>
-            <Input
+            <PasswordInput
               testID="password"
               icon="encrypted"
               value={password}
               onChangeText={setPassword}
               placeholder={t('auth.passwordPlaceholder')}
-              secureTextEntry
               textContentType="password"
               editable={!submitting}
             />

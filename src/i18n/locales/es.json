@@ -8,6 +8,8 @@
     "emailPlaceholder": "tu@correo.org",
     "passwordLabel": "Contraseña",
     "passwordPlaceholder": "Tu contraseña",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
     "submit": "Iniciar sesión",
     "errors": {
       "missingFields": "Ingresa tu correo y contraseña.",

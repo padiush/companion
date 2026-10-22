@@ -8,6 +8,8 @@
     "emailPlaceholder": "you@email.org",
     "passwordLabel": "Password",
     "passwordPlaceholder": "Your password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "submit": "Sign in",
     "errors": {
       "missingFields": "Enter your email and password.",

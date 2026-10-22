@@ -43,6 +43,24 @@ describe('SignInScreen', () => {
     );
   });
 
+  it('hides the password until the eye is tapped, and signs in with it either way', async () => {
+    const signIn = jest.fn().mockResolvedValue(undefined);
+    mockAuth({ signIn });
+
+    const { getByTestId } = await render(<SignInScreen />);
+    await fireEvent.changeText(getByTestId('email'), 'field@example.org');
+    await fireEvent.changeText(getByTestId('password'), 'password');
+    expect(getByTestId('password').props.secureTextEntry).toBe(true);
+
+    await fireEvent.press(getByTestId('password-visibility'));
+    expect(getByTestId('password').props.secureTextEntry).toBeFalsy();
+
+    await fireEvent.press(getByTestId('submit'));
+    await waitFor(() =>
+      expect(signIn).toHaveBeenCalledWith('field@example.org', 'password', expect.any(Function))
+    );
+  });
+
   it('requires both fields before calling signIn', async () => {
     const signIn = jest.fn();
     mockAuth({ signIn });
