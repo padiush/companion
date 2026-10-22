@@ -8,6 +8,8 @@
     "emailPlaceholder": "voce@email.org",
     "passwordLabel": "Senha",
     "passwordPlaceholder": "Sua senha",
+    "showPassword": "Mostrar senha",
+    "hidePassword": "Ocultar senha",
     "submit": "Entrar",
     "errors": {
       "missingFields": "Digite seu e-mail e senha.",

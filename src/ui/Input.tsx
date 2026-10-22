@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, type ReactNode } from 'react';
 import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { border, font, radius, space, touch, useTheme } from '../theme';
@@ -7,6 +7,8 @@ import { Icon, type IconName } from './Icon';
 interface Props extends Omit<TextInputProps, 'style'> {
   /** Drawn inside the box, before the text: what kind of value this is. */
   icon?: IconName;
+  /** Drawn inside the box, after the text: a control that acts on the value. */
+  end?: ReactNode;
 }
 
 /**
@@ -15,7 +17,7 @@ interface Props extends Omit<TextInputProps, 'style'> {
  * where tests type into it.
  */
 export const Input = forwardRef<TextInput, Props>(function Input(
-  { icon, multiline, editable = true, ...rest },
+  { icon, end, multiline, editable = true, ...rest },
   ref
 ) {
   const theme = useTheme();
@@ -45,6 +47,7 @@ export const Input = forwardRef<TextInput, Props>(function Input(
         style={[styles.input, multiline ? styles.multiline : null, { color: theme.text }]}
         {...rest}
       />
+      {end}
     </View>
   );
 });

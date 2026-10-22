@@ -9,6 +9,7 @@ import {
   Clock,
   CloudCheck,
   Eye,
+  EyeOff,
   FileCheck,
   FileText,
   Folder,
@@ -72,6 +73,9 @@ const ICONS = {
   permit: FileCheck,
   date: Calendar,
   discard: Trash,
+  /** A password field's toggle: show what is typed, or hide it again. */
+  show: Eye,
+  hide: EyeOff,
 } satisfies Record<string, LucideIcon>;
 
 /** Drawn solid rather than outlined: playback controls read better filled. */
