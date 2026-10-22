@@ -390,7 +390,8 @@
         "date": null,
         "items": [
           "La primera vez que llegas a cada pantalla, unos consejos te muestran sus controles uno por uno y para qué sirve cada uno. Puedes saltarlos y volver a verlos desde Entrevistas.",
-          "Al iniciar sesión, puedes tocar el ojo del campo de contraseña para ver lo que escribiste antes de entrar."
+          "Al iniciar sesión, puedes tocar el ojo del campo de contraseña para ver lo que escribiste antes de entrar.",
+          "Puedes elegir el tema de la app (claro, oscuro o según el dispositivo) desde el botón del encabezado de Entrevistas o de la pantalla de inicio de sesión."
         ]
       },
       {
