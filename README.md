@@ -41,6 +41,10 @@ After it, each screen points out its own controls the first time it is
 reached — the screen dims around one control at a time, with a card saying what
 it is for — and each of those tours can be skipped too, or run again from
 Entrevistas.
+A round button in the Entrevistas header, also on the sign-in screen, chooses
+the theme: light, dark, or as the device is set. The choice is kept on the
+device. On the sign-in screen an eye at the end of the password field shows the
+password as typed; shown, it is still kept out of the keyboard's suggestions.
 
 ## Scope — capture only
 
