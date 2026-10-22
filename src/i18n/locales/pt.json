@@ -150,6 +150,14 @@
       }
     }
   },
+  "theme": {
+    "title": "Tema",
+    "intro": "Vale para o app neste dispositivo.",
+    "button": "Tema: {{mode}}",
+    "light": "Claro",
+    "dark": "Escuro",
+    "system": "Conforme o dispositivo"
+  },
   "project": {
     "forms": "Formulários",
     "newInterview": "Nova entrevista",

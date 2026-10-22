@@ -21,13 +21,16 @@ import {
   LogOut,
   MapPin,
   Mic,
+  Moon,
   Pause,
   Play,
   Plus,
   RefreshCw,
   Scissors,
+  Smartphone,
   Sprout,
   Square,
+  Sun,
   Trash,
   Upload,
   User,
@@ -76,6 +79,10 @@ const ICONS = {
   /** A password field's toggle: show what is typed, or hide it again. */
   show: Eye,
   hide: EyeOff,
+  /** The app's theme: always light, always dark, or as the device is set. */
+  light: Sun,
+  dark: Moon,
+  system: Smartphone,
 } satisfies Record<string, LucideIcon>;
 
 /** Drawn solid rather than outlined: playback controls read better filled. */

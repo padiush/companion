@@ -378,6 +378,12 @@ describe('InterviewsScreen', () => {
     expect(mockReplayTips).toHaveBeenCalledTimes(1);
   });
 
+  it('offers the theme in the header', async () => {
+    const { getByTestId } = await render(<InterviewsScreen />);
+
+    expect(getByTestId('theme')).toBeTruthy();
+  });
+
   it('says when the device last synced', async () => {
     const { getByTestId } = await render(<InterviewsScreen />);
 
