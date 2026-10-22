@@ -24,6 +24,9 @@ in [docs/releasing.md](docs/releasing.md).
 - An eye at the end of the password field on the sign-in screen shows the
   password as typed and hides it again. It starts hidden, and while it is shown
   the keyboard does not correct it or offer it as a suggestion.
+- A theme setting: light, dark, or following the device, from a button in the
+  header of Entrevistas and of the sign-in screen. It is kept on the device and
+  applies before sign-in too, including to the system's own dialogs.
 
 ## [1.1.0] — 2026-10-05
 
