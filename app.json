@@ -9,7 +9,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.padiushbio.companion",
-      "buildNumber": "3",
+      "buildNumber": "4",
       "appleTeamId": "XD8M2W9X4S",
       "config": {
         "usesNonExemptEncryption": false
@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "com.padiushbio.companion",
-      "versionCode": 7,
+      "versionCode": 8,
       "adaptiveIcon": {
         "backgroundColor": "#3c6200",
         "foregroundImage": "./assets/android-icon-foreground.png"
