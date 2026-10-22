@@ -28,6 +28,12 @@ in [docs/releasing.md](docs/releasing.md).
   header of Entrevistas and of the sign-in screen. It is kept on the device and
   applies before sign-in too, including to the system's own dialogs.
 
+### Fixed
+
+- Signing in with an account whose email address is not confirmed yet says so,
+  and how to confirm it, rather than showing the generic sign-in error. The
+  platform refuses such an account a device token from now on.
+
 ## [1.1.0] — 2026-10-05
 
 ### Changed

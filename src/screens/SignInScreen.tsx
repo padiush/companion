@@ -24,6 +24,21 @@ import { Field } from '../ui/Field';
 import { Input } from '../ui/Input';
 import { PasswordInput } from '../ui/PasswordInput';
 
+/**
+ * What to tell someone whose sign-in failed. An account made on the web has to
+ * confirm its email address before a device may sign in with it; the server
+ * only says so once the password is right.
+ */
+function signInError(error: unknown): string {
+  if (error instanceof ApiError && error.body?.message === 'api.tokens.email_unverified') {
+    return 'auth.errors.emailUnverified';
+  }
+  if (error instanceof ApiError && error.status === 422) {
+    return 'auth.errors.invalidCredentials';
+  }
+  return 'auth.errors.generic';
+}
+
 export function SignInScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -81,11 +96,7 @@ export function SignInScreen() {
         return;
       }
 
-      setError(
-        e instanceof ApiError && e.status === 422
-          ? t('auth.errors.invalidCredentials')
-          : t('auth.errors.generic')
-      );
+      setError(t(signInError(e)));
     } finally {
       setSubmitting(false);
     }

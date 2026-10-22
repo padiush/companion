@@ -69,6 +69,22 @@ describe('SignInScreen', () => {
     expect(getByTestId('theme')).toBeTruthy();
   });
 
+  it('asks an account that has not confirmed its email address to confirm it', async () => {
+    const signIn = jest
+      .fn()
+      .mockRejectedValue(
+        new ApiError(403, { message: 'api.tokens.email_unverified', message_type: 'error' })
+      );
+    mockAuth({ signIn });
+
+    const { getByTestId, findByText } = await render(<SignInScreen />);
+    await fireEvent.changeText(getByTestId('email'), 'field@example.org');
+    await fireEvent.changeText(getByTestId('password'), 'password');
+    await fireEvent.press(getByTestId('submit'));
+
+    expect(await findByText('auth.errors.emailUnverified')).toBeTruthy();
+  });
+
   it('requires both fields before calling signIn', async () => {
     const signIn = jest.fn();
     mockAuth({ signIn });

@@ -14,6 +14,7 @@
     "errors": {
       "missingFields": "Digite seu e-mail e senha.",
       "invalidCredentials": "E-mail ou senha incorretos.",
+      "emailUnverified": "Antes de entrar, confirme seu e-mail pelo link que enviamos quando você se cadastrou. Se não o encontrar, entre na web e peça outro.",
       "generic": "Não foi possível entrar. Tente novamente."
     },
     "replaceStoreTitle": "Este dispositivo tem trabalho de outra conta",
